@@ -41,7 +41,13 @@ progress:
 Phase: 08 (creature-builder-animation) — EXECUTING
 Plan: 08-05 complete (gap-closure: cube_slime + ghost hostile soft-body wobble re-wired)
 Status: Executing Phase 08
-Last activity: 2026-06-10 -- 08-05 gap-closure: cube_slime (3 tiers) + ghost re-wired to ShaderWobbleAnimator (SLIME/GHOST); SC1 soft-body set complete
+Last activity: 2026-06-11 -- quick 260611-qyz: export include_filter fix (non-resource data files now bundled in .pck on all platforms)
+
+## Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260611-qyz | Add include_filter to all export presets so non-resource data files ship in the pck | 2026-06-11 | f2c42ab | [260611-qyz-add-include-filter-to-all-export-presets](./quick/260611-qyz-add-include-filter-to-all-export-presets/) |
 
 ## Phase Roster
 
