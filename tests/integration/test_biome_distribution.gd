@@ -30,11 +30,13 @@ func test_10000_cell_distribution_per_seed() -> void:
 	if biome_map == null:
 		return
 
-	# Sample a 100×100 grid with 10 m spacing → 10 000 cells in a 1 000×1 000 m area.
+	# Sample a 100×100 grid with 20 m spacing → 10 000 cells in a 2 000×2 000 m area.
+	# Widened from 1 000 m when BIOME_NOISE_FREQUENCY halved (0.001 → 0.0005): the sample
+	# area tracks the biome wavelength so all 6 biomes still appear.
 	var seen_biomes: Dictionary = {}
 	var grid_size: int = 100
-	var spacing: float = 10.0
-	var origin_offset: float = -500.0  # centre the grid around (0, 0)
+	var spacing: float = 20.0
+	var origin_offset: float = -1000.0  # centre the grid around (0, 0)
 
 	for ix: int in range(grid_size):
 		for iz: int in range(grid_size):

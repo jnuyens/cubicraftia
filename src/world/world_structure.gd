@@ -19,14 +19,16 @@ extends Node3D
 const _MODEL_DIR: String = "res://assets/meshes/structures/"
 
 ## Longest-axis world size (m) every structure is scaled to (big, walkable-up-to landmarks).
-const TARGET_SIZE_M: float = 6.0
+## Bumped 6 -> 10 (v1.1 QA): castle tower / igloo / generic landmarks read too small.
+const TARGET_SIZE_M: float = 10.0
 
 ## Per-structure size override (longest-axis metres). Ocean structures (lighthouse, ship-
 ## wreck) were dwarfed at 6 m — a shipwreck should read as a big landmark. Keyed by the
 ## model id (file name without .glb).
 const SIZE_OVERRIDE: Dictionary = {
-	"structure_1_03": 16.0,  # OCEAN landmark (lighthouse/shipwreck)
+	"structure_1_03": 28.0,  # OCEAN lighthouse — big + walkable to the top (v1.1 QA #18)
 	"structure_3_02": 16.0,  # OCEAN landmark
+	"structure_ice_castle": 22.0,  # SNOW ice castle landmark (wired in v1.1)
 }
 
 ## Model id (file name without .glb); set by main_scene.spawn_structure before add_child.

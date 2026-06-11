@@ -42,10 +42,10 @@ enum Biome {
 
 ## Frequency of BOTH the temperature and moisture noise channels. Lower = larger, more
 ## continental biomes (you travel further between them); higher = smaller, patchier biomes.
-## Wavelength ≈ 1 / frequency metres. Lowered 0.002 → 0.001 (v1.1) to roughly double biome
-## size per the "make each biome bigger" request — keep test_biome_distribution's sample
-## area in sync (it must still contain all 6 biomes).
-const BIOME_NOISE_FREQUENCY: float = 0.001
+## Wavelength ≈ 1 / frequency metres. Lowered 0.002 → 0.001 → 0.0005 (v1.1 QA) to enlarge
+## every biome's surface area further — keep test_biome_distribution's sample area in sync
+## (its grid was widened to 2000 m so it still contains all 6 biomes).
+const BIOME_NOISE_FREQUENCY: float = 0.0005
 
 # ─── Private state ────────────────────────────────────────────────────────────
 
