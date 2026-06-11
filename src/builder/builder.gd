@@ -1821,6 +1821,11 @@ func _finalize_avatar(av: Node3D) -> void:
 			1.0 / maxf(ws.x, 1e-6), 1.0 / maxf(ws.y, 1e-6), 1.0 / maxf(ws.z, 1e-6))
 		_hand_root.position = _HAND_GRIP_OFFSET
 		_hand_root.rotation_degrees = _HAND_GRIP_ROT
+		# v1.1 QA #5: on the textured avatars the held tool's RightHand-bone-local grip is not yet
+		# tuned, so the default wood pickaxe reads as a stray block behind the builder. Hide the
+		# held item until tool-in-hand is implemented + tuned properly (#16), rather than show a
+		# mis-placed block on the back.
+		_hand_root.visible = false
 
 
 ## Snap the avatar skeleton back to its bind/rest pose (clean standing idle). Called when
