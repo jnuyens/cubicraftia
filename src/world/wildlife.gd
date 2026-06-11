@@ -199,6 +199,24 @@ const _GROUND_RAY_UP: float = 6.0
 ## meshed terrain can sit below the formula's guess).
 const _GROUND_RAY_DOWN: float = 16.0
 
+## Voxel ids that are TREE geometry, NOT walkable terrain — wood_log (trunk, id 10) and
+## leaves (canopy, id 12), matching terrain.tscn's VoxelBlockyLibrary / multipass_generator.gd.
+## The ground raycast (collision_mask 1) hits these because trees are voxels in the SAME
+## VoxelTerrain body on layer 1 (the leaves model has collision enabled), so a naive cast
+## seated animals up inside a canopy ("panda in a tree"). _ground_to_collision rejects a hit
+## on either id and keeps casting downward past it until it reaches real ground.
+const _TREE_VOXEL_WOOD_LOG: int = 10
+const _TREE_VOXEL_LEAVES: int = 12
+
+## Maximum number of tree-voxel hits to skip past in a single grounding cast before giving
+## up (keeps the worst case bounded — a tall jungle tree is a few canopy/trunk cells deep).
+## After this many rejections we leave the body on the noise clamp rather than loop forever.
+const _GROUND_TREE_SKIP_MAX: int = 24
+
+## Small downward step (m) to nudge the ray restart just BELOW a rejected tree-voxel hit, so
+## the next cast doesn't re-hit the same surface. One voxel is 1 m; half a cell clears the face.
+const _GROUND_TREE_SKIP_STEP: float = 0.5
+
 ## Move distance (m) that retriggers a re-ground while walking. A per-frame raycast for
 ## every animal would be mobile-costly, so we only recast after the animal has crossed
 ## roughly one voxel cell — enough to track slopes/steps as it walks while keeping the
@@ -229,6 +247,11 @@ const _DRIFT_SPEED: float = 0.35
 
 ## Air hover height above spawn Y (metres).
 const _AIR_HOVER_HEIGHT: float = 2.0
+
+## WATER voxel id in the VoxelTerrain (must match terrain.tscn / main_scene._WATER_VOXEL_ID /
+## fluid_sim.gd). Water animals test the next drift position against this id and turn back if
+## it would carry them onto non-water terrain (so orcas/fish never beach themselves on land).
+const _WATER_VOXEL_ID: int = 7
 
 # ─── Combat (issue #17: animals are killable for meat) ────────────────────────
 # Passive wildlife is harmless but no longer invulnerable: the builder's LMB attack
@@ -291,11 +314,27 @@ var _hurtbox: Area3D = null
 ## Resolved behaviour type (_TYPE_LAND / _TYPE_WATER / _TYPE_AIR).
 var _behaviour_type: String = _TYPE_LAND
 
+## Cached VoxelTool of the world's "Terrain" VoxelTerrain, resolved lazily from _main_scene
+## (injected via set_main_scene). Used to read voxel ids: the land grounding cast rejects
+## tree voxels (wood_log/leaves) and water animals test the next cell for the water id.
+## Re-fetched when null (the tool can briefly be unavailable while the terrain streams).
+var _voxel_tool: Object = null
+
 ## Internal phase accumulator for water/air bob animations.
 var _phase: float = 0.0
 
 ## Drift phase offset for water (separate from bob, decorrelated).
 var _drift_phase: float = 0.0
+
+## Direction the water drift phase advances (+1 / -1). Flipped when the next drift step would
+## carry a water animal out of the water onto land, so it reverses along its loop and stays
+## submerged instead of beaching itself (orca-on-land fix). Air drift ignores this.
+var _drift_dir: float = 1.0
+
+## Last position a water animal occupied that was confirmed inside a water voxel. When the
+## next drift step would leave the water we hold here instead of stepping onto land, so the
+## animal never visibly crosses the shoreline. INF.x marks "not yet established".
+var _last_water_pos: Vector3 = Vector3(INF, 0.0, 0.0)
 
 ## Spawn origin — water/air animals drift relative to this point.
 var _spawn_origin: Vector3 = Vector3.ZERO
@@ -885,15 +924,34 @@ func _ground_to_collision() -> void:
 
 	var origin: Vector3 = _body.global_position
 	var from: Vector3 = origin + Vector3(0.0, _GROUND_RAY_UP, 0.0)
-	var to: Vector3 = origin + Vector3(0.0, -_GROUND_RAY_DOWN, 0.0)
-	var q := PhysicsRayQueryParameters3D.create(from, to)
+	var ray_bottom: float = origin.y - _GROUND_RAY_DOWN
+	var q := PhysicsRayQueryParameters3D.create(from, Vector3(origin.x, ray_bottom, origin.z))
 	q.collision_mask = 1  # terrain / statics only (same layer main_scene uses to probe ground).
 	q.exclude = [_body.get_rid()]
-	var hit: Dictionary = space.intersect_ray(q)
-	if hit.is_empty():
-		return  # no terrain under the animal this frame — keep noise clamp / gravity.
 
-	var surface_y: float = (hit["position"] as Vector3).y
+	# Trees (wood_log / leaves) are voxels in the SAME VoxelTerrain on layer 1, so a single
+	# downward cast can land ON the canopy and seat the animal up in the tree ("panda in a
+	# tree"). Reject any hit whose voxel is tree geometry and restart the cast just BELOW it,
+	# so the animal only ever grounds on real terrain. Bounded by _GROUND_TREE_SKIP_MAX so a
+	# pathological column can't loop forever; on exhaustion we leave the noise clamp in charge.
+	var surface_y: float = INF
+	for _attempt: int in range(_GROUND_TREE_SKIP_MAX):
+		var hit: Dictionary = space.intersect_ray(q)
+		if hit.is_empty():
+			break  # no terrain below — keep noise clamp / gravity.
+		var hit_pos: Vector3 = hit["position"] as Vector3
+		if not _is_tree_voxel_at(hit_pos):
+			surface_y = hit_pos.y  # real ground — accept.
+			break
+		# Tree hit: restart the cast from just below this surface to look for ground beneath it.
+		var next_top: float = hit_pos.y - _GROUND_TREE_SKIP_STEP
+		if next_top <= ray_bottom:
+			break  # exhausted the cast depth without finding non-tree terrain.
+		q.from = Vector3(origin.x, next_top, origin.z)
+
+	if surface_y == INF:
+		return  # no real terrain under the animal this frame — keep noise clamp / gravity.
+
 	# Place the body so the visible mesh foot sits ON the surface (minus the contact
 	# settle), regardless of where the body origin is relative to the foot.
 	_body.global_position.y = surface_y - foot_offset - _GROUND_SETTLE + float(_GROUND_LIFT.get(kind, 0.0))
@@ -903,13 +961,68 @@ func _ground_to_collision() -> void:
 	_last_ground_xz = Vector3(_body.global_position.x, 0.0, _body.global_position.z)
 
 
+# ─── Terrain voxel queries (tree rejection + water containment) ───────────────
+# Both the land grounding cast and the water-animal movement need to read voxel ids from the
+# authoritative VoxelTerrain grid. We resolve the Terrain VoxelTool lazily from the injected
+# main_scene (the same node main_scene._voxel_is_water_at / fluid_sim use) and cache it.
+
+## Lazily fetch (and cache) the world Terrain's VoxelTool. Returns null when the terrain or
+## tool is unavailable (headless tests / mid-stream) so callers degrade gracefully.
+func _terrain_voxel_tool() -> Object:
+	if _voxel_tool != null:
+		return _voxel_tool
+	var scene: Node = _main_scene
+	if scene == null or not is_instance_valid(scene):
+		scene = get_tree().get_first_node_in_group("main_scene") if is_inside_tree() else null
+	if scene == null or not is_instance_valid(scene):
+		return null
+	var terrain: Node = scene.get_node_or_null("Terrain")
+	if terrain == null or not terrain.has_method("get_voxel_tool"):
+		return null
+	var tool: Object = terrain.get_voxel_tool()
+	if tool == null:
+		return null
+	if "channel" in tool:
+		tool.channel = 0  # VoxelBuffer.CHANNEL_TYPE — the block-id channel.
+	_voxel_tool = tool
+	return _voxel_tool
+
+
+## Read the terrain voxel id at world position `pos`. Returns -1 when no terrain tool is
+## available so callers can tell "unknown" apart from any real id (air is 0).
+func _voxel_id_at(pos: Vector3) -> int:
+	var tool: Object = _terrain_voxel_tool()
+	if tool == null:
+		return -1
+	var cell := Vector3i(floori(pos.x), floori(pos.y), floori(pos.z))
+	return int(tool.get_voxel(cell))
+
+
+## True when the voxel containing the ground-ray hit at `hit_pos` is tree geometry (wood_log
+## or leaves). The raycast hit sits ON the top face of the struck voxel, so we sample a hair
+## BELOW it to land inside that voxel's cell rather than the air cell above the face.
+func _is_tree_voxel_at(hit_pos: Vector3) -> bool:
+	var id: int = _voxel_id_at(hit_pos - Vector3(0.0, 0.05, 0.0))
+	return id == _TREE_VOXEL_WOOD_LOG or id == _TREE_VOXEL_LEAVES
+
+
+## True when world position `pos` is inside a WATER voxel. Used to keep water animals (orca,
+## fish, dolphin, ...) inside water bodies — false when the terrain tool is unavailable so a
+## headless test never wrongly turns them back (movement just proceeds as before).
+func _is_water_at(pos: Vector3) -> bool:
+	return _voxel_id_at(pos) == _WATER_VOXEL_ID
+
+
 # ─── Process ──────────────────────────────────────────────────────────────────
 
 func _process(delta: float) -> void:
 	if kind.is_empty():
 		return
 	_phase += _BOB_SPEED * delta
-	_drift_phase += _DRIFT_SPEED * delta
+	# Water advances its OWN drift phase (direction-aware, so it can reverse off a shoreline —
+	# see _process_water); land/air keep the simple forward advance here.
+	if _behaviour_type != _TYPE_WATER:
+		_drift_phase += _DRIFT_SPEED * delta
 
 	match _behaviour_type:
 		_TYPE_LAND:
@@ -1013,22 +1126,58 @@ func _process_land(delta: float) -> void:
 		_proc_anim.update(_mesh_root, delta, _is_walking, _mesh_base_y)
 
 
-## Water animal drift: sine-based circular drift + vertical bob.
-## No physics — all motion computed from spawn_origin.
-func _process_water(delta: float) -> void:
-	var drift_x: float = sin(_drift_phase) * _WATER_DRIFT_RADIUS
-	var drift_z: float = cos(_drift_phase * 0.7) * _WATER_DRIFT_RADIUS
-	var bob_y: float = sin(_phase) * _BOB_AMPLITUDE
-	global_position = Vector3(
-		_spawn_origin.x + drift_x,
-		_spawn_origin.y + bob_y,
-		_spawn_origin.z + drift_z
+## Horizontal (XZ) drift position for the given drift phase, around _spawn_origin. The Y bob
+## is applied separately at commit time. Factored out so the water step can test a CANDIDATE
+## phase for water before committing to it (shoreline containment).
+func _water_drift_xz(phase: float) -> Vector3:
+	return Vector3(
+		_spawn_origin.x + sin(phase) * _WATER_DRIFT_RADIUS,
+		_spawn_origin.y,
+		_spawn_origin.z + cos(phase * 0.7) * _WATER_DRIFT_RADIUS
 	)
-	# Face direction of motion.
+
+
+## Water animal drift: sine-based circular drift + vertical bob, CONSTRAINED to water.
+## No physics — all motion computed from spawn_origin. Before committing each step we test
+## the next drift position against the WATER voxel id; if it would leave the water (onto a
+## beach / dry land) we reverse the drift direction and hold the last in-water position, so
+## orcas/fish/dolphins stay swimming inside water bodies instead of beaching themselves.
+func _process_water(delta: float) -> void:
+	# Advance the drift phase in the current direction, then test the resulting position.
+	var step: float = _DRIFT_SPEED * delta * _drift_dir
+	var candidate_phase: float = _drift_phase + step
+	var candidate: Vector3 = _water_drift_xz(candidate_phase)
+
+	# Containment: only block the step when we KNOW the candidate is dry land. _is_water_at
+	# returns false for "no terrain tool" too, so we additionally require the tool to be present
+	# (id != -1) before turning back — otherwise headless tests / mid-stream frames would freeze
+	# every water animal in place.
+	var blocked: bool = false
+	if _terrain_voxel_tool() != null:
+		if not _is_water_at(candidate):
+			blocked = true
+
+	if blocked:
+		# Reverse along the loop and stay put this frame (hold the last confirmed water spot if
+		# we have one, else the current position). Next frames swim back the way we came.
+		_drift_dir = -_drift_dir
+		if _last_water_pos.x != INF:
+			global_position = Vector3(_last_water_pos.x,
+				_spawn_origin.y + sin(_phase) * _BOB_AMPLITUDE, _last_water_pos.z)
+	else:
+		_drift_phase = candidate_phase
+		global_position = Vector3(candidate.x,
+			_spawn_origin.y + sin(_phase) * _BOB_AMPLITUDE, candidate.z)
+		# Remember this as a known-good water position (when terrain is being sampled). When no
+		# terrain tool exists we leave _last_water_pos unset so behaviour matches the old drift.
+		if _terrain_voxel_tool() != null:
+			_last_water_pos = Vector3(candidate.x, 0.0, candidate.z)
+
+	# Face direction of motion (account for the drift direction so the head leads when reversed).
 	var motion_dir: Vector3 = Vector3(
-		cos(_drift_phase) * _WATER_DRIFT_RADIUS * _DRIFT_SPEED,
+		cos(_drift_phase) * _WATER_DRIFT_RADIUS * _DRIFT_SPEED * _drift_dir,
 		0.0,
-		-sin(_drift_phase * 0.7) * _WATER_DRIFT_RADIUS * _DRIFT_SPEED * 0.7
+		-sin(_drift_phase * 0.7) * _WATER_DRIFT_RADIUS * _DRIFT_SPEED * 0.7 * _drift_dir
 	)
 	if motion_dir.length_squared() > 0.001:
 		var look_target: Vector3 = global_position + motion_dir.normalized()
