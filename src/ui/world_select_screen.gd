@@ -84,7 +84,6 @@ var _modal_panel: PanelContainer = null
 var _modal_name_field: LineEdit = null
 var _modal_name_counter: Label = null
 var _modal_name_error: Label = null
-var _modal_seed_field: LineEdit = null
 var _modal_survival_button: Button = null
 var _modal_creative_button: Button = null
 var _modal_create_button: Button = null
@@ -407,28 +406,8 @@ func _build_new_world_modal() -> void:
 	_modal_name_error.visible = false
 	modal_vbox.add_child(_modal_name_error)
 
-	# Seed field.
-	var seed_label := Label.new()
-	seed_label.text = tr("ui.new_world.seed_label")
-	seed_label.add_theme_font_size_override("font_size", 14)
-	seed_label.add_theme_color_override("font_color", COLOR_WHITE)
-	modal_vbox.add_child(seed_label)
-
-	_modal_seed_field = LineEdit.new()
-	_modal_seed_field.placeholder_text = tr("ui.new_world.seed_placeholder")
-	# Godot 4.6 renamed LineEdit.keyboard_type → virtual_keyboard_type.
-	_modal_seed_field.virtual_keyboard_type = LineEdit.KEYBOARD_TYPE_NUMBER
-	_modal_seed_field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_modal_seed_field.custom_minimum_size = Vector2(0, 40)
-	_modal_seed_field.text_submitted.connect(_on_modal_field_submitted)
-	modal_vbox.add_child(_modal_seed_field)
-
-	var seed_hint := Label.new()
-	seed_hint.text = tr("ui.new_world.seed_hint")
-	seed_hint.add_theme_font_size_override("font_size", 14)
-	seed_hint.add_theme_color_override("font_color",
-		Color(COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, 0.50))
-	modal_vbox.add_child(seed_hint)
+	# Seed input removed (v1.1 QA): a youth game should not ask for a procedural seed.
+	# Every new world silently uses a fresh random seed (see _on_modal_create_pressed).
 
 	# Mode toggle.
 	var mode_label := Label.new()
@@ -863,8 +842,6 @@ func _on_new_world_pressed() -> void:
 		_modal_name_counter.text = "%d/24" % _modal_name_field.text.length()
 	if _modal_name_error != null:
 		_modal_name_error.visible = false
-	if _modal_seed_field != null:
-		_modal_seed_field.text = ""
 	_selected_mode = "survival"
 	_update_mode_buttons()
 	if _modal_create_button != null:
@@ -973,9 +950,8 @@ func _on_create_world_pressed() -> void:
 			_modal_name_error.visible = true
 		return
 
-	# Seed.
-	var seed_text: String = _modal_seed_field.text.strip_edges() if _modal_seed_field != null else ""
-	var world_seed: int = int(seed_text) if not seed_text.is_empty() else randi()
+	# Seed: always a fresh random seed (the seed prompt was removed for v1.1 — youth game).
+	var world_seed: int = randi()
 	print("[world_select] seed=", world_seed, " mode=", _selected_mode)
 
 	# Loading state.
