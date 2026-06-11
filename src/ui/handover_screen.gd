@@ -41,6 +41,9 @@ const COLOR_BACKGROUND := Color(0.106, 0.173, 0.337, 0.88)
 
 # ─── Node refs ────────────────────────────────────────────────────────────────
 
+# CanvasLayer has no `modulate` (that is a CanvasItem property), so all fade/alpha
+# operations target the Background ColorRect, which is the visible CanvasItem.
+@onready var _background: ColorRect = $Background
 @onready var _heading_label: Label = $Background/Content/Heading
 @onready var _subtitle_label: Label = $Background/Content/Subtitle
 @onready var _spinner: AnimatedSprite2D = $Background/Content/Spinner
@@ -58,7 +61,7 @@ var _slow_subtitle_timer: Timer = null
 func _ready() -> void:
 	# Start hidden — shown only on host_failover_started.
 	visible = false
-	modulate.a = 1.0
+	_background.modulate.a = 1.0
 
 	# Create the slow-subtitle one-shot timer.
 	_slow_subtitle_timer = Timer.new()
@@ -78,7 +81,7 @@ func _ready() -> void:
 ## Show the overlay when host failover begins.
 func _on_failover_started() -> void:
 	visible = true
-	modulate.a = 1.0
+	_background.modulate.a = 1.0
 	# Set heading and subtitle via tr() — defaults in .tscn are empty.
 	_heading_label.text = tr("ui.handover.heading")
 	_subtitle_label.text = tr("ui.handover.subtitle")
@@ -93,7 +96,7 @@ func _on_failover_complete(_new_host_peer_id: int) -> void:
 	if _tween != null and _tween.is_running():
 		_tween.kill()
 	_tween = create_tween()
-	_tween.tween_property(self, "modulate:a", 0.0, FADE_DURATION_S) \
+	_tween.tween_property(_background, "modulate:a", 0.0, FADE_DURATION_S) \
 		.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	_tween.tween_callback(queue_free)
 

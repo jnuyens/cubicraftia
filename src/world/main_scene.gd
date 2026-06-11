@@ -815,8 +815,8 @@ func _check_eula_on_sign_in(_user_id: String = "") -> void:
 		return
 	var modal: Node = modal_scene.instantiate()
 	get_tree().root.add_child(modal)
-	if modal.has_method("show"):
-		modal.show()
+	if modal.has_method("show_modal"):
+		modal.show_modal()
 
 
 # ─── Plan 06-06: FTUE overlay ───────────────────────────────────────────────
