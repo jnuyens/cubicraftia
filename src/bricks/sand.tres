@@ -4,7 +4,8 @@
 ; SPDX-License-Identifier: GPL-3.0-or-later
 ;
 ; sand.tres — BrickDefinition for the sand terrain material brick.
-; natural_colour_token=17 (sand-yellow #E3CC7B per BrickPalette index 17).
+; natural_colour_token=16 (tan #D7B97A per BrickPalette index 16): a natural warm
+; sand tone. Toned down from 17 (sand-yellow #E3CC7B), which rendered too bright/white.
 ; Mesh: assets/meshes/sand.glb (null until Plan 02-09).
 
 [ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
@@ -23,7 +24,7 @@ mesh = null
 category = 7
 palette_colour_index = -1
 colour_swappable = false
-natural_colour_token = 17
+natural_colour_token = 16
 iap_pack_origin = ""
 footprint_cells = [Vector3i(0, 0, 0)]
 icon_path = "res://assets/textures/icons/voxel_sand.png"
