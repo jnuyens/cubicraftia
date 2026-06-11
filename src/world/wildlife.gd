@@ -181,6 +181,34 @@ const _IDLE_DURATION_MAX: float = 5.0
 ## walking off into unloaded chunks.
 const _LAND_WANDER_RADIUS: float = 12.0
 
+# ─── Collision-based grounding (general fix) ──────────────────────────────────
+# The capsule + is_on_floor() path grounds the COLLIDER, not the rendered mesh, and the
+# noise spawn-estimate disagrees with the meshed voxel surface, so feet sank (reindeer in
+# snow sat too low). The general fix raycasts the REAL terrain collision and drops the
+# animal so the lowest point of its VISIBLE mesh rests on that hit — works for every kind,
+# every mesh origin/proportion, rigged-walk or static idle. Falls back to the noise
+# estimate when no collision is available (headless / chunk not yet meshed).
+
+## Height (m) above the body the down-ray starts from. Must clear the tallest land
+## creature (giraffe target ~5 m) so the cast begins above all geometry and looks DOWN
+## onto the terrain rather than starting inside the mesh.
+const _GROUND_RAY_UP: float = 6.0
+
+## Depth (m) below the body the down-ray reaches. Generous so the cast still finds the
+## surface when the noise spawn-estimate placed the body several metres too high (the real
+## meshed terrain can sit below the formula's guess).
+const _GROUND_RAY_DOWN: float = 16.0
+
+## Move distance (m) that retriggers a re-ground while walking. A per-frame raycast for
+## every animal would be mobile-costly, so we only recast after the animal has crossed
+## roughly one voxel cell — enough to track slopes/steps as it walks while keeping the
+## raycast count low.
+const _REGROUND_MOVE_DIST_SQ: float = 1.0 * 1.0
+
+## Minimum seconds between re-ground raycasts per animal (throttle). Belt-and-braces with
+## the move-distance gate so nothing can spam casts.
+const _REGROUND_INTERVAL_S: float = 0.3
+
 ## Gravity magnitude (m/s²) for land CharacterBody3D fall when airborne.
 ## Matches Godot default project gravity (9.8 m/s²).
 const _GRAVITY: float = 9.8
@@ -239,6 +267,17 @@ var ground_y: float = INF
 ## True once the land creature has rested on real floor at least once; the spawn-time
 ## ground clamp is released afterwards so it can still walk down slopes / off ledges.
 var _landed_once: bool = false
+
+## Throttle accumulator for the collision re-ground raycast (seconds).
+var _reground_accum: float = 0.0
+
+## XZ position of the last collision re-ground; we recast once the animal has moved
+## _REGROUND_MOVE_DIST_SQ from here (so it tracks terrain height without a per-frame ray).
+var _last_ground_xz: Vector3 = Vector3.ZERO
+
+## True once the collision re-ground has hit real terrain at least once. Until then the
+## animal keeps recasting every throttle tick (the chunk under it may still be meshing).
+var _ground_cast_hit_once: bool = false
 
 ## Child CharacterBody3D for land animals (null for water/air).
 var _body: CharacterBody3D = null
@@ -361,6 +400,13 @@ func _ready() -> void:
 
 	if _behaviour_type == _TYPE_LAND:
 		_setup_land(mesh_scene)
+		# Collision-based spawn grounding (general fix): drop the body so the visible mesh's
+		# feet rest on the REAL meshed terrain, not the noise estimate. Deferred one frame so
+		# the freshly added mesh has a valid global transform AND the spawn chunk has had a
+		# chance to bake collision; if it hasn't yet, the throttled re-ground in _process_land
+		# retries until terrain is under the animal (and the noise clamp covers the gap).
+		_last_ground_xz = Vector3(global_position.x, 0.0, global_position.z)
+		call_deferred("_ground_to_collision")
 	else:
 		_setup_floating(mesh_scene)
 
@@ -698,6 +744,76 @@ func _find_mesh_instance(node: Node) -> MeshInstance3D:
 	return null
 
 
+# ─── Collision-based grounding ────────────────────────────────────────────────
+
+## World-space minimum-Y of every CURRENTLY-VISIBLE MeshInstance3D under `root` — i.e.
+## the true foot level of whatever the player actually sees this frame (the rigged walk
+## GLB while moving, or the static idle mesh while idling). Uses each mesh's global
+## transform so it is correct regardless of the mesh's own origin, proportions or scale.
+## Returns INF when no visible mesh is found (nothing to ground against).
+func _visible_mesh_min_world_y(root: Node3D) -> float:
+	if root == null:
+		return INF
+	var lowest: float = INF
+	var stack: Array = [root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		# Skip subtrees hidden via a hidden ancestor (idle/walk visibility swap) so we
+		# ground against the visual that is actually on screen, not the hidden twin.
+		if node is Node3D and not (node as Node3D).visible:
+			continue
+		if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+			var mi := node as MeshInstance3D
+			var box: AABB = mi.global_transform * mi.mesh.get_aabb()
+			lowest = minf(lowest, box.position.y)
+		for child: Node in node.get_children():
+			stack.append(child)
+	return lowest
+
+
+## Raycast the REAL terrain collision (layer 1) straight down and drop the body so the
+## lowest point of its visible rendered mesh rests on the hit surface. This is the general
+## grounding fix: it ignores the noise spawn-estimate AND the capsule geometry, so every
+## animal — whatever its mesh origin, proportions, scale, rig or idle/walk state — has its
+## feet on the actual meshed ground. No collision hit (headless / chunk not yet meshed) →
+## leaves the body where it is so the existing noise-estimate clamp + gravity still apply.
+func _ground_to_collision() -> void:
+	if _body == null or not _body.is_inside_tree():
+		return
+	var world := _body.get_world_3d()
+	if world == null:
+		return
+	var space := world.direct_space_state
+	if space == null:
+		return  # headless / no physics — fall back to the noise clamp in _process_land.
+
+	# Measure the visible mesh's foot level BEFORE moving, as an offset from the body
+	# origin (origin-relative so it survives the body translation we are about to apply).
+	var foot_world_y: float = _visible_mesh_min_world_y(_body)
+	if foot_world_y == INF:
+		return  # no visible mesh yet — nothing to ground.
+	var foot_offset: float = foot_world_y - _body.global_position.y
+
+	var origin: Vector3 = _body.global_position
+	var from: Vector3 = origin + Vector3(0.0, _GROUND_RAY_UP, 0.0)
+	var to: Vector3 = origin + Vector3(0.0, -_GROUND_RAY_DOWN, 0.0)
+	var q := PhysicsRayQueryParameters3D.create(from, to)
+	q.collision_mask = 1  # terrain / statics only (same layer main_scene uses to probe ground).
+	q.exclude = [_body.get_rid()]
+	var hit: Dictionary = space.intersect_ray(q)
+	if hit.is_empty():
+		return  # no terrain under the animal this frame — keep noise clamp / gravity.
+
+	var surface_y: float = (hit["position"] as Vector3).y
+	# Place the body so the visible mesh foot sits ON the surface (minus the contact
+	# settle), regardless of where the body origin is relative to the foot.
+	_body.global_position.y = surface_y - foot_offset - _GROUND_SETTLE + float(_GROUND_LIFT.get(kind, 0.0))
+	_vy = 0.0
+	_landed_once = true
+	_ground_cast_hit_once = true
+	_last_ground_xz = Vector3(_body.global_position.x, 0.0, _body.global_position.z)
+
+
 # ─── Process ──────────────────────────────────────────────────────────────────
 
 func _process(delta: float) -> void:
@@ -764,6 +880,20 @@ func _process_land(delta: float) -> void:
 			_body.global_position.y = ground_y
 			_vy = 0.0
 			_landed_once = true
+
+	# Collision re-ground (general fix): re-snap the visible mesh's feet onto the REAL meshed
+	# terrain when the animal moves to a new spot, so it tracks slopes/steps and corrects any
+	# drift between the capsule contact and the true foot level (the cause of the "sinks into
+	# terrain" reports). Throttled: only when it has crossed ~one voxel cell AND the per-animal
+	# timer has elapsed, so this stays a sparse raycast, not a per-frame cost. Keep recasting
+	# until the first hit lands (the spawn chunk may still be meshing under the animal).
+	_reground_accum += delta
+	if _reground_accum >= _REGROUND_INTERVAL_S:
+		var here_xz := Vector3(_body.global_position.x, 0.0, _body.global_position.z)
+		if not _ground_cast_hit_once \
+				or here_xz.distance_squared_to(_last_ground_xz) >= _REGROUND_MOVE_DIST_SQ:
+			_reground_accum = 0.0
+			_ground_to_collision()
 
 	# Phase 8: drive the animator. Skip when the builder is far (ANIM-06 LOD).
 	if _anim_lod_should_skip():
