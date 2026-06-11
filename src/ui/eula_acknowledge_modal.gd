@@ -43,7 +43,10 @@ func _ready() -> void:
 
 ## Show the EULA re-acknowledge modal.
 ## Call this when FriendsClient.check_eula_acknowledgement() returns false.
-func show() -> void:
+## NOTE: named show_modal() (not show()): CanvasLayer inherits a native show()
+## from Node, and overriding it is a load-blocking NATIVE_METHOD_OVERRIDE error
+## in Godot 4.6, plus the engine would never dispatch the override anyway.
+func show_modal() -> void:
 	visible = true
 
 
