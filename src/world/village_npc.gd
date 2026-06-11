@@ -87,7 +87,8 @@ var _skinned_anim: AnimationPlayer = null
 ## "Armature|clip0|baselayer"). Empty when no rigged figure / no clip.
 var _skinned_clip_name: String = ""
 
-## Rigged figure GLB awaiting the one-frame-deferred runtime size guard (see _apply_rigged_figure).
+## Rigged figure GLB awaiting the one-frame-deferred posed-skeleton scale+ground
+## (see _apply_rigged_figure / _ground_rigged_to_target).
 var _rigged_glb_ref: Node3D = null
 
 # ─── Public API ───────────────────────────────────────────────────────────────
@@ -219,24 +220,9 @@ func _apply_rigged_figure() -> bool:
 		return false
 	add_child(glb)
 
-	# Scale to the placeholder figure height by the MESH-subtree bounds (NOT the skeleton bone
-	# span: Meshy rigs carry a root bone at the armature origin that inflates the span and would
-	# shrink the model — same lesson as wildlife/hostile_mob).
-	var ab: AABB = _figure_aabb(glb)
-	var span: float = maxf(ab.size.x, maxf(ab.size.y, ab.size.z))
-	span = maxf(span, 0.001)
-	var sc: float = _RIGGED_TARGET_HEIGHT / span
-	glb.scale = Vector3.ONE * sc
-
 	# Face head-first: Meshy meshes are authored +Z, but look_at() (in _physics_process) points
 	# the body's -Z at the movement direction, so a 180° yaw makes the figure lead with its front.
 	glb.rotation.y = PI
-
-	# Ground the feet at the NPC origin (y=0 = capsule bottom). 180° yaw negates x,z so the
-	# centre maps to +center; min-Y → 0.
-	var center: Vector3 = ab.get_center() * sc
-	var min_y: float = ab.position.y * sc
-	glb.position = Vector3(center.x, -min_y, center.z)
 
 	# Wire the AnimationPlayer + baked clip0. Loop it so it cycles while walking; start PAUSED so
 	# idle shows the rest pose (the asset ships no separate idle clip). _physics_process drives
@@ -261,44 +247,56 @@ func _apply_rigged_figure() -> bool:
 	if body is MeshInstance3D:
 		(body as MeshInstance3D).visible = false
 
-	# Runtime size guard (deferred one frame so the skeleton is posed): some Meshy rigs render
-	# much larger than their bind-pose mesh AABB, spawning giant villagers. Next frame, measure
-	# the real posed-skeleton height and shrink + re-ground any figure that comes out giant.
+	# Scale + ground from the POSED skeleton, deferred one frame so the Skeleton3D is in-tree and
+	# posed. These Meshy rigs carry a skinned mesh whose raw mesh.get_aabb() is the PRE-SKIN local
+	# bounds (~0.017 m), NOT the rendered height — the mesh only reaches its real ~1.7 m once the
+	# Skeleton3D (armature import scale ~0.01) deforms it. Scaling by the raw mesh AABB over-scales
+	# by ~108x → a ~180 m giant villager. _ground_rigged_to_target() measures the posed-skeleton
+	# bounds (which reflect what renders) and scales from THAT. Mirrors hostile_mob's rigged path.
 	_rigged_glb_ref = glb
-	call_deferred("_correct_rigged_scale")
+	call_deferred("_ground_rigged_to_target")
 	return true
 
 
-## Deferred runtime guard against giant rigged figures. Measures the posed skeleton's world-space
-## height; if the figure is more than ~1.18x _RIGGED_TARGET_HEIGHT, shrink it to target and re-ground
-## its feet to the NPC origin. Only ever SHRINKS (never grows) so a correctly-sized figure is left
-## untouched. Robust to the unknown skinning-scale cause because the skeleton reflects what renders.
-func _correct_rigged_scale() -> void:
+## Deferred (one frame) scale + ground for the rigged figure. Measures the posed-skeleton bounds
+## in the rig-root's local frame (the bbox of every bone origin — this reflects the RENDERED size,
+## unlike the pre-skin mesh.get_aabb()), scales so the posed height equals _RIGGED_TARGET_HEIGHT,
+## then grounds the lowest posed bone at the NPC origin (y=0 = capsule bottom). Robust to the
+## armature import-scale: whatever makes the model render large is captured by the posed bounds, so
+## the result is always target height. Mirrors hostile_mob._ground_rigged_to_target.
+func _ground_rigged_to_target() -> void:
 	var glb: Node3D = _rigged_glb_ref
 	if not is_instance_valid(glb):
 		return
 	var skel: Skeleton3D = glb.find_child("Skeleton3D", true, false) as Skeleton3D
 	if skel == null or skel.get_bone_count() == 0:
 		return
-	var lo: float = INF
-	var hi: float = -INF
-	for i in skel.get_bone_count():
-		var wy: float = (skel.global_transform * skel.get_bone_global_pose(i).origin).y
-		lo = minf(lo, wy)
-		hi = maxf(hi, wy)
-	var h: float = hi - lo
-	if h <= 0.01:
-		return
-	var correction: float = _RIGGED_TARGET_HEIGHT / h
-	if correction > 0.85:
-		return  # within ~1.18x of target (or smaller) — leave it alone; never grow figures
-	glb.scale *= correction
-	# Re-ground: drop the figure so its lowest posed bone sits at the NPC origin (feet at y=0).
-	lo = INF
-	for i in skel.get_bone_count():
-		lo = minf(lo, (skel.global_transform * skel.get_bone_global_pose(i).origin).y)
-	if lo != INF:
-		glb.position.y += (global_position.y - lo)
+	# Reset any prior scale so the posed-bounds measurement is in the rig's native units.
+	glb.scale = Vector3.ONE
+	var ab: AABB = _posed_skeleton_aabb(glb, skel)
+	var span: float = maxf(ab.size.y, 0.001)  # height drives the scale (humanoids are tallest in Y)
+	var sc: float = _RIGGED_TARGET_HEIGHT / span
+	glb.scale = Vector3.ONE * sc
+	# Ground feet: drop so the lowest posed bone (scaled) sits at the NPC origin (y=0).
+	# 180° yaw negates x,z so the posed centre maps to +center.
+	var center: Vector3 = ab.get_center() * sc
+	var min_y: float = ab.position.y * sc
+	glb.position = Vector3(center.x, -min_y, center.z)
+
+
+## Posed-skeleton AABB (in `rig_root`'s local frame): the bbox of every bone's global-pose origin,
+## transformed back into the rig root. Unlike the pre-skin mesh.get_aabb(), this reflects the height
+## the rig actually RENDERS at (the skeleton's armature scale is baked in). Mirrors
+## hostile_mob._posed_skeleton_aabb.
+func _posed_skeleton_aabb(rig_root: Node3D, skel: Skeleton3D) -> AABB:
+	var inv: Transform3D = rig_root.global_transform.affine_inverse()
+	var lo := Vector3(INF, INF, INF)
+	var hi := -lo
+	for i: int in range(skel.get_bone_count()):
+		var p: Vector3 = inv * (skel.global_transform * skel.get_bone_global_pose(i).origin)
+		lo = lo.min(p)
+		hi = hi.max(p)
+	return AABB(lo, hi - lo)
 
 
 ## Load a STATIC (non-rigged) biome-themed figure GLB and stand it on the NPC origin (feet at

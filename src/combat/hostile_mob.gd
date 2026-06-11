@@ -317,12 +317,18 @@ func _setup_procedural_anim(motion: ProceduralCreatureAnimator.Motion) -> void:
 
 ## Phase 8: set up a skinned, animated Meshy mob (_RIGGED_GLB) — the HOSTILE analog of
 ## wildlife._setup_skinned_glb (the giraffe). Instantiates the rigged GLB as the live
-## visual, scales it to the mob's target height by its MESH-subtree AABB, grounds its feet
-## at the body origin (= the collision-capsule feet plane), faces it head-first (PI yaw, so
-## look_at's -Z lead points at the walk dir — same convention as the static art path and
-## wildlife), finds the AnimationPlayer + baked clip, loops the clip, and starts it PAUSED
-## (the asset ships no separate idle clip, so IDLE shows the rest pose). The static
-## _art_mesh_root is hidden so there's no doubled mesh. _update_animator drives play/pause.
+## visual, faces it head-first (PI yaw, so look_at's -Z lead points at the walk dir — same
+## convention as the static art path and wildlife), finds the AnimationPlayer + baked clip,
+## loops the clip, and starts it PAUSED (the asset ships no separate idle clip, so IDLE shows
+## the rest pose). The static _art_mesh_root is hidden so there's no doubled mesh.
+##
+## SCALE/GROUND is deferred one frame to _ground_rigged_to_target(): these Meshy rigs carry a
+## skinned mesh whose raw mesh.get_aabb() is the PRE-SKIN local bounds (~0.017 m), NOT the
+## rendered height. The mesh only reaches its real ~1.7 m height once the Skeleton3D (armature
+## import scale ~0.01) deforms it. Scaling by the raw mesh AABB therefore over-scales by ~108x
+## and renders a ~180 m giant. The robust fix measures the POSED-skeleton bounds (which reflect
+## what actually renders) and scales from THAT — see _ground_rigged_to_target(). _update_animator
+## drives play/pause.
 func _setup_skinned_rig() -> void:
 	var path: String = _RIGGED_GLB[_art_kind()]
 	if not ResourceLoader.exists(path):
@@ -336,25 +342,9 @@ func _setup_skinned_rig() -> void:
 		return
 	add_child(glb)
 
-	# Scale to the mob's target height by the MESH-subtree bounds (NOT the skeleton bone
-	# span: Meshy rigs carry a root bone at the armature origin that inflates the span and
-	# would shrink the model — same lesson as wildlife._setup_skinned_glb).
-	var ab: AABB = _subtree_local_aabb(glb)
-	var target_h: float = _art_target_height()
-	var span: float = maxf(ab.size.x, maxf(ab.size.y, ab.size.z))
-	span = maxf(span, 0.001)
-	var sc: float = target_h / span
-	glb.scale = Vector3.ONE * sc
-
 	# Face head-first: Meshy meshes are authored +Z, but look_at()/_steer_toward point the
 	# body's -Z at the movement direction, so a 180° yaw makes the model lead with its front.
 	glb.rotation.y = PI
-
-	# Ground the feet at the body origin (y=0 = the collision-capsule feet plane, where the
-	# scene's capsule sits). 180° yaw negates x,z so the centre maps to +center; min-Y → 0.
-	var center: Vector3 = ab.get_center() * sc
-	var min_y: float = ab.position.y * sc
-	glb.position = Vector3(center.x, -min_y, center.z)
 
 	# Wire the AnimationPlayer + baked clip. Loop it so it cycles while the mob is active;
 	# start PAUSED so IDLE shows the rest pose (no separate idle clip ships on the asset).
@@ -378,6 +368,51 @@ func _setup_skinned_rig() -> void:
 	# Hide the static art mesh so the rigged skinned visual is the only one shown.
 	if _art_mesh_root != null:
 		_art_mesh_root.visible = false
+
+	# Scale + ground from the POSED skeleton, deferred one frame so the Skeleton3D is in-tree
+	# and posed (its bind/rest pose is enough — the posed span is constant across the clip).
+	call_deferred("_ground_rigged_to_target")
+
+
+## Deferred (one frame) scale + ground for a skinned rigged mob. Measures the posed-skeleton
+## bounds in the rig-root's local frame (the bbox of every bone origin — this reflects the
+## RENDERED size, unlike the pre-skin mesh.get_aabb()), scales the rig so its posed height
+## equals _art_target_height(), then grounds the lowest posed bone at the body origin (y=0 =
+## the collision-capsule feet plane). Robust to the armature import-scale: whatever makes the
+## model render large is captured by the posed-skeleton bounds, so the result is always target
+## height. Mirrors village_npc._ground_rigged_to_target so both rigged paths behave identically.
+func _ground_rigged_to_target() -> void:
+	var glb: Node3D = _rigged_root
+	if glb == null or not is_instance_valid(glb):
+		return
+	var skel := glb.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skel == null or skel.get_bone_count() == 0:
+		return
+	# Reset any prior scale so the posed-bounds measurement is in the rig's native units.
+	glb.scale = Vector3.ONE
+	var ab: AABB = _posed_skeleton_aabb(glb, skel)
+	var span: float = maxf(ab.size.y, 0.001)  # height drives the scale (humanoids are tallest in Y)
+	var sc: float = _art_target_height() / span
+	glb.scale = Vector3.ONE * sc
+	# Ground feet: drop so the lowest posed bone (scaled) sits at the body origin (y=0).
+	# 180° yaw negates x,z so the posed centre maps to +center.
+	var center: Vector3 = ab.get_center() * sc
+	var min_y: float = ab.position.y * sc
+	glb.position = Vector3(center.x, -min_y, center.z)
+
+
+## Posed-skeleton AABB (in `rig_root`'s local frame): the bbox of every bone's global-pose
+## origin, transformed back into the rig root. Unlike the pre-skin mesh.get_aabb(), this
+## reflects the height the rig actually RENDERS at (the skeleton's armature scale is baked in).
+func _posed_skeleton_aabb(rig_root: Node3D, skel: Skeleton3D) -> AABB:
+	var inv: Transform3D = rig_root.global_transform.affine_inverse()
+	var lo := Vector3(INF, INF, INF)
+	var hi := -lo
+	for i: int in range(skel.get_bone_count()):
+		var p: Vector3 = inv * (skel.global_transform * skel.get_bone_global_pose(i).origin)
+		lo = lo.min(p)
+		hi = hi.max(p)
+	return AABB(lo, hi - lo)
 
 
 ## Recursively find the first MeshInstance3D with a mesh in a subtree.
