@@ -228,6 +228,25 @@ const _WATER_GRAVITY_SCALE: float = 0.35
 ## strokes can repeat while submerged this gives controllable buoyant ascent.
 const _WATER_STROKE_VELOCITY: float = 5.0
 
+# ─── Climb constants (#18 — slide up the lighthouse) ─────────────────────────
+# The ocean lighthouse (structure_1_03) has no interior stairs model, so the builder rides
+# UP its outer surface instead: while it is pressing into a collider whose owner is in group
+# "climbable", we set an upward velocity so it slides to the top. Tuned by feel; no climb
+# happens when the builder is not in contact with (or not pushing into) a climbable surface,
+# so normal walking / jumping / gravity / swimming are untouched.
+
+## Group a structure must belong to for the builder to climb it (matches world_structure.gd).
+const _CLIMBABLE_GROUP: String = "climbable"
+
+## Upward slide speed (m/s) applied while the builder presses into a climbable surface.
+## ~3.5 reads as a steady clamber up the lighthouse, comfortably under a fall-death speed.
+const _CLIMB_UP_SPEED: float = 3.5
+
+## Minimum horizontal speed (m/s) toward the surface that counts as "pressing into it". Below
+## this the builder is just brushing the wall (or standing still against it) and does not climb,
+## so you can stand next to the lighthouse without being yanked upward.
+const _CLIMB_PRESS_SPEED: float = 0.3
+
 # ─── Camera state ─────────────────────────────────────────────────────────────
 
 ## Active camera mode. Defaults to CHASE per user decision 2026-05-26.
@@ -337,6 +356,28 @@ var _avatar_skeleton: Skeleton3D = null
 var _hand_attach: BoneAttachment3D = null
 var _hand_root: Node3D = null
 
+## Right-hand bone name candidates, tried in order by _find_right_hand_bone(). A headless
+## probe of the builder avatars (builder_avatar.glb, skin_builder1.glb, skin_fem.glb — all
+## 24-bone rigs) showed every one exposes a bone literally named "RightHand", so that is
+## first; the remaining variants cover mixamorig-prefixed rigs and Blender/Rigify .R naming
+## so a future skin attaches its tool without a code change. #16: the held tool is shown
+## ONLY when one of these resolves; otherwise the HandItem stays hidden (we never fall back
+## to the old fixed upper-back offset, which rendered the pickaxe as a block on the back).
+const _RIGHT_HAND_BONE_NAMES: Array[String] = [
+	"RightHand",
+	"mixamorig:RightHand",
+	"mixamorig1:RightHand",
+	"hand.R",
+	"Hand_R",
+	"hand_r",
+	"Bip01_R_Hand",
+]
+
+## True once the HandItem has been bone-attached to a real right-hand bone. Drives held-tool
+## visibility (#16): the tool is shown only when this is true, so it can never fall back to
+## the fixed upper-back offset and render as a stray block on the builder's back.
+var _has_hand_bone: bool = false
+
 ## Held-pickaxe tier → art-tools model. The builder shows the model for its current tier
 ## (default wood); equip_pickaxe_tier() swaps it. Falls back to a procedural handle+head
 ## when the model asset is absent (headless/CI).
@@ -348,7 +389,10 @@ const _PICKAXE_TIER_MODELS: Dictionary = {
 }
 ## Longest-axis size (m) the held pickaxe model is scaled to, and its grip orientation in the
 ## hand-item frame (tuned so it reads as carried). The HandItem rides the RightHand bone.
-const _PICKAXE_HELD_SIZE_M: float = 0.95
+## Size trimmed 0.95 -> 0.7: a 0.95 m head read oversized in the fist; ~0.7 m sits like a
+## hand tool. Owner can fine-tune _PICKAXE_HELD_SIZE_M (overall scale) and _PICKAXE_GRIP_ROT
+## (head tilt in the hand-item frame) by feel.
+const _PICKAXE_HELD_SIZE_M: float = 0.7
 const _PICKAXE_GRIP_ROT: Vector3 = Vector3(-20.0, 0.0, 18.0)
 ## Current held pickaxe tier (key into _PICKAXE_TIER_MODELS).
 var _pickaxe_tier: String = "wood"
@@ -356,9 +400,14 @@ var _pickaxe_tier: String = "wood"
 ## Horizontal speed below which the rig is "idle" (ANIM-04).
 const _RIG_IDLE_SPEED_THRESHOLD: float = 0.5
 
-## Pickaxe grip pose in the avatar's RightHand-bone local frame (tuned visually so the
-## tool sits in the fist rather than floating beside it).
-const _HAND_GRIP_OFFSET: Vector3 = Vector3(0.0, 0.0, 0.0)
+## Pickaxe grip pose in the avatar's RightHand-bone local frame. The offset/rotation are
+## applied to _hand_root in _finalize_avatar AFTER the bone's tiny import scale is divided
+## out, so these read in metres / degrees. The values nudge the tool into the closed fist
+## (a small offset along the bone toward the fingers) and tip the haft so the head points
+## up-and-forward, so it reads as gripped rather than floating beside the hand. #16: these
+## are owner-tunable by feel — adjust _HAND_GRIP_OFFSET to slide the haft through the fist
+## and _HAND_GRIP_ROT to roll/pitch the head into view.
+const _HAND_GRIP_OFFSET: Vector3 = Vector3(0.0, 0.05, 0.0)
 const _HAND_GRIP_ROT: Vector3 = Vector3(0.0, 0.0, 0.0)
 
 ## Last avatar colours applied (skin, body, legs) so the rig can be recoloured
@@ -728,6 +777,18 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
+	# ─── #18: climb the lighthouse (slide up a "climbable" surface) ──────────────
+	# The ocean lighthouse has no interior stairs, so the builder rides up its outer wall:
+	# after move_and_slide() we inspect this frame's slide collisions, and if any is against a
+	# collider whose owner (or an ancestor) is in group "climbable" AND the builder is actively
+	# pressing into that surface, we set an upward velocity so the next integration carries it up.
+	# No contact (or no inward press) → no upward slide, so walking/jumping/gravity/swimming and
+	# the fall-velocity tracking below are all untouched on every other surface.
+	if _is_climbing_surface():
+		velocity.y = _CLIMB_UP_SPEED
+		# Keep the fall tracker honest: we are ascending, so this is not a fall this frame.
+		_last_fall_velocity = 0.0
+
 	# ─── Drive the avatar animation from horizontal speed (v1.1 textured rigged avatar;
 	#     falls back to the MinifigureAnimator rig when the avatar asset is absent) ─
 	var h_speed: float = Vector2(velocity.x, velocity.z).length()
@@ -801,6 +862,48 @@ func _is_in_water() -> bool:
 	var sample: Vector3 = global_position + Vector3(0.0, _WATER_SAMPLE_HEIGHT_M, 0.0)
 	var cell := Vector3i(floori(sample.x), floori(sample.y), floori(sample.z))
 	return voxel_tool.get_voxel(cell) == _WATER_VOXEL_ID
+
+
+# ─── #18: lighthouse climb ────────────────────────────────────────────────────
+
+## True when, after move_and_slide(), the builder is pressing into a "climbable" surface
+## (the ocean lighthouse). Scans this frame's slide collisions; for each, it walks the
+## collider's ancestor chain to find a node in group "climbable" (the StaticBody3D collision
+## bodies are nested several levels under the WorldStructure that carries the group). A
+## collision counts only when the builder's horizontal velocity pushes INTO the surface
+## (velocity · -normal on the XZ plane exceeds _CLIMB_PRESS_SPEED), so merely standing beside
+## the lighthouse does not trigger a climb. Returns false when not touching any climbable body.
+func _is_climbing_surface() -> bool:
+	for i: int in range(get_slide_collision_count()):
+		var col: KinematicCollision3D = get_slide_collision(i)
+		if col == null:
+			continue
+		var collider: Object = col.get_collider()
+		if not (collider is Node):
+			continue
+		if not _collider_is_climbable(collider as Node):
+			continue
+		# Press test: the collision normal points from the surface toward the builder, so the
+		# builder is pushing inward when its horizontal velocity opposes the normal. Use only
+		# the XZ components so an upward climb velocity (set last frame) never self-sustains.
+		var n: Vector3 = col.get_normal(i)
+		var into: Vector3 = Vector3(-n.x, 0.0, -n.z)
+		var horizontal_vel: Vector3 = Vector3(velocity.x, 0.0, velocity.z)
+		if into.length() > 0.0001 and horizontal_vel.dot(into.normalized()) > _CLIMB_PRESS_SPEED:
+			return true
+	return false
+
+
+## True when `collider` or any of its ancestors is in the "climbable" group. The trimesh
+## collision StaticBody3D nodes are descendants of the WorldStructure node (which carries the
+## group), so we climb the parent chain rather than checking the collider alone.
+func _collider_is_climbable(collider: Node) -> bool:
+	var node: Node = collider
+	while node != null:
+		if node.is_in_group(_CLIMBABLE_GROUP):
+			return true
+		node = node.get_parent()
+	return false
 
 
 # ─── Camera API (Plan 08.5) ───────────────────────────────────────────────────
@@ -2032,17 +2135,14 @@ func _finalize_avatar(av: Node3D) -> void:
 			1.0 / maxf(ws.x, 1e-6), 1.0 / maxf(ws.y, 1e-6), 1.0 / maxf(ws.z, 1e-6))
 		_hand_root.position = _HAND_GRIP_OFFSET
 		_hand_root.rotation_degrees = _HAND_GRIP_ROT
-	# v1.1 QA #5 / "brown block on the back": on the textured avatars the held tool's grip is not yet
-	# tuned, so the default wood pickaxe reads as a stray brown block on the upper back/shoulder. Hide
-	# the held item until tool-in-hand is implemented + tuned (#16). This hide MUST run regardless of
-	# whether the avatar exposes a RightHand bone (_hand_attach): when the skin lacks that bone the
-	# HandItem falls back to a FIXED upper-back offset on _avatar_mesh_root (see the box-fallback branch
-	# in _setup_avatar_mesh_nodes), and the previous `if is_instance_valid(_hand_attach)` guard skipped
-	# the hide entirely on those skins — that is exactly the brown block QA reported. _finalize_avatar
-	# runs deferred (after apply_avatar_config has re-shown the pickaxe via hand_accessory="pickaxe"),
-	# so this is the authoritative last word on hand visibility.
+	# #16 (re-enable tool-in-hand): show the held tool when it actually rides a hand bone, and
+	# hide it only when no usable hand bone exists. The earlier "brown block on the back" QA was
+	# caused by the box-mesh / no-bone fallback parking the HandItem at a FIXED upper-back offset
+	# on _avatar_mesh_root — so we gate visibility on _has_hand_bone (true only when the BoneAttach
+	# or the rig hand-pivot owns the HandItem), never on the back-offset path. _finalize_avatar runs
+	# deferred (after apply_avatar_config), so this is the authoritative last word on hand visibility.
 	if is_instance_valid(_hand_root):
-		_hand_root.visible = false
+		_hand_root.visible = _has_hand_bone
 
 
 ## Snap the avatar skeleton back to its bind/rest pose (clean standing idle). Called when
@@ -2116,6 +2216,19 @@ func _build_procedural_pickaxe(pickaxe_mi: MeshInstance3D) -> void:
 	pickaxe_head_mat.roughness = 0.55
 	pickaxe_head.set_surface_override_material(0, pickaxe_head_mat)
 	pickaxe_mi.add_child(pickaxe_head)
+
+
+## Resolve the avatar's right-hand bone name on _avatar_skeleton, trying each candidate in
+## _RIGHT_HAND_BONE_NAMES in order. Returns the first bone name that exists on the skeleton,
+## or "" when none match (or there is no skeleton). #16: the held tool is bone-attached to
+## this bone; if nothing matches we keep the tool hidden rather than parking it on the back.
+func _find_right_hand_bone() -> String:
+	if _avatar_skeleton == null:
+		return ""
+	for candidate: String in _RIGHT_HAND_BONE_NAMES:
+		if _avatar_skeleton.find_bone(candidate) != -1:
+			return candidate
+	return ""
 
 
 func _setup_avatar_mesh_nodes() -> void:
@@ -2246,22 +2359,28 @@ func _setup_avatar_mesh_nodes() -> void:
 	var _rig_hand: Node3D = null
 	if _rig_anim != null:
 		_rig_hand = _rig_anim.get_right_hand_pivot()
-	if _avatar_skeleton != null and _avatar_skeleton.find_bone("RightHand") != -1:
-		# Textured avatar: ride the RightHand bone via a BoneAttachment3D so the pickaxe
-		# stays in the fist and swings with the walk animation. The bone inherits the
-		# skeleton's tiny import scale, so _finalize_avatar divides that out (sets
-		# hand_root world-scale ~1) and applies the grip offset/rotation once settled.
+	var _hand_bone_name: String = _find_right_hand_bone()
+	if _hand_bone_name != "":
+		# Textured avatar: ride the resolved right-hand bone via a BoneAttachment3D so the
+		# pickaxe stays in the fist and swings with the walk animation. The bone inherits the
+		# skeleton's tiny import scale, so _finalize_avatar divides that out (sets hand_root
+		# world-scale ~1) and applies the grip offset/rotation once settled.
 		_hand_attach = BoneAttachment3D.new()
 		_hand_attach.name = "HandBone"
 		_avatar_skeleton.add_child(_hand_attach)
-		_hand_attach.bone_name = "RightHand"
+		_hand_attach.bone_name = _hand_bone_name
 		_hand_attach.add_child(hand_root)
 		hand_root.position = Vector3.ZERO
+		_has_hand_bone = true  # #16: a usable hand bone exists → the held tool may be shown.
 	elif _rig_hand != null:
 		_rig_hand.add_child(hand_root)
 		hand_root.position = Vector3(0.0, -0.22, -0.05)
+		_has_hand_bone = true  # the procedural rig exposes a right-hand pivot → tool may show.
 	else:
-		# Box-mesh fallback (no rig): sit the tool past the right hand, in front of the torso.
+		# Box-mesh fallback (no rig and no hand bone): the only home for the tool would be a
+		# fixed upper-back offset on _avatar_mesh_root, which reads as a stray block on the
+		# back (the #16 bug). Park the HandItem there so it stays in the tree, but leave
+		# _has_hand_bone false so the held tool is never shown on this path.
 		_avatar_mesh_root.add_child(hand_root)
 		hand_root.position = Vector3(0.46, 0.72, -0.3)
 
@@ -2426,14 +2545,14 @@ func apply_avatar_config(cfg: Dictionary) -> void:
 		var node: Node = _hand_nodes[key]
 		if node != null:
 			node.visible = (key == hand_acc)
-	# Held tool stays hidden until the in-hand grip is tuned (#16). DEFAULT_AVATAR_CFG sets
-	# hand_accessory="pickaxe", and the loop above re-shows that pickaxe MeshInstance3D — on the
-	# textured avatars (and on the box-mesh fallback, which _finalize_avatar never touches because
-	# it only runs for a loaded avatar GLB) that pickaxe renders as a stray brown block on the upper
-	# back/shoulder. Force the whole HandItem hidden here so the builder reads clean (head, hair,
-	# body, legs) on EVERY code path, not just the bone-attached one.
+	# #16 (re-enable tool-in-hand): the loop above sets per-accessory visibility (pickaxe shown
+	# when hand_accessory=="pickaxe"). Gate the HandItem itself on _has_hand_bone: when the tool
+	# rides a real right-hand bone (or the rig hand-pivot) it is shown in the fist; when no hand
+	# bone exists it would otherwise sit at the fixed upper-back offset and read as a stray block,
+	# so we keep the whole HandItem hidden on that path only. (On the textured avatar GLB path the
+	# deferred _finalize_avatar is the authoritative last word and applies the same gate.)
 	if is_instance_valid(_hand_root):
-		_hand_root.visible = false
+		_hand_root.visible = _has_hand_bone
 
 	# ── Body accessory visibility ────────────────────────────────────────────
 	var body_acc: String = str(cfg.get("body_accessory", "none"))
