@@ -31,6 +31,11 @@ const SIZE_OVERRIDE: Dictionary = {
 	"structure_ice_castle": 22.0,  # SNOW ice castle landmark (wired in v1.1)
 }
 
+## Structure that the builder can climb (#18). The ocean lighthouse ships with no interior
+## stairs, so it is tagged "climbable" in _ready and the builder slides up its outer surface
+## instead. Keep this id in sync with SIZE_OVERRIDE's lighthouse entry.
+const _CLIMBABLE_STRUCTURE_ID: String = "structure_1_03"
+
 ## Model id (file name without .glb); set by main_scene.spawn_structure before add_child.
 @export var structure_id: String = ""
 
@@ -42,6 +47,13 @@ const SIZE_OVERRIDE: Dictionary = {
 
 func _ready() -> void:
 	add_to_group("structure")
+	# #18 (climb the lighthouse): the lighthouse has no interior stairs model, so the builder
+	# can't walk to the top. Tag it "climbable"; builder.gd detects a slide-collision against any
+	# descendant collider of a node in this group and slides the builder upward while it presses
+	# into the surface (see Builder._physics_process / _CLIMB_*). Only the ocean lighthouse
+	# (structure_1_03) climbs; every other structure is a normal solid prop.
+	if structure_id == _CLIMBABLE_STRUCTURE_ID:
+		add_to_group("climbable")
 	var ps: PackedScene = preloaded_scene
 	if ps == null:
 		var path: String = _MODEL_DIR + structure_id + ".glb"

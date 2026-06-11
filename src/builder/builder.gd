@@ -228,6 +228,25 @@ const _WATER_GRAVITY_SCALE: float = 0.35
 ## strokes can repeat while submerged this gives controllable buoyant ascent.
 const _WATER_STROKE_VELOCITY: float = 5.0
 
+# ─── Climb constants (#18 — slide up the lighthouse) ─────────────────────────
+# The ocean lighthouse (structure_1_03) has no interior stairs model, so the builder rides
+# UP its outer surface instead: while it is pressing into a collider whose owner is in group
+# "climbable", we set an upward velocity so it slides to the top. Tuned by feel; no climb
+# happens when the builder is not in contact with (or not pushing into) a climbable surface,
+# so normal walking / jumping / gravity / swimming are untouched.
+
+## Group a structure must belong to for the builder to climb it (matches world_structure.gd).
+const _CLIMBABLE_GROUP: String = "climbable"
+
+## Upward slide speed (m/s) applied while the builder presses into a climbable surface.
+## ~3.5 reads as a steady clamber up the lighthouse, comfortably under a fall-death speed.
+const _CLIMB_UP_SPEED: float = 3.5
+
+## Minimum horizontal speed (m/s) toward the surface that counts as "pressing into it". Below
+## this the builder is just brushing the wall (or standing still against it) and does not climb,
+## so you can stand next to the lighthouse without being yanked upward.
+const _CLIMB_PRESS_SPEED: float = 0.3
+
 # ─── Camera state ─────────────────────────────────────────────────────────────
 
 ## Active camera mode. Defaults to CHASE per user decision 2026-05-26.
@@ -758,6 +777,18 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
+	# ─── #18: climb the lighthouse (slide up a "climbable" surface) ──────────────
+	# The ocean lighthouse has no interior stairs, so the builder rides up its outer wall:
+	# after move_and_slide() we inspect this frame's slide collisions, and if any is against a
+	# collider whose owner (or an ancestor) is in group "climbable" AND the builder is actively
+	# pressing into that surface, we set an upward velocity so the next integration carries it up.
+	# No contact (or no inward press) → no upward slide, so walking/jumping/gravity/swimming and
+	# the fall-velocity tracking below are all untouched on every other surface.
+	if _is_climbing_surface():
+		velocity.y = _CLIMB_UP_SPEED
+		# Keep the fall tracker honest: we are ascending, so this is not a fall this frame.
+		_last_fall_velocity = 0.0
+
 	# ─── Drive the avatar animation from horizontal speed (v1.1 textured rigged avatar;
 	#     falls back to the MinifigureAnimator rig when the avatar asset is absent) ─
 	var h_speed: float = Vector2(velocity.x, velocity.z).length()
@@ -831,6 +862,48 @@ func _is_in_water() -> bool:
 	var sample: Vector3 = global_position + Vector3(0.0, _WATER_SAMPLE_HEIGHT_M, 0.0)
 	var cell := Vector3i(floori(sample.x), floori(sample.y), floori(sample.z))
 	return voxel_tool.get_voxel(cell) == _WATER_VOXEL_ID
+
+
+# ─── #18: lighthouse climb ────────────────────────────────────────────────────
+
+## True when, after move_and_slide(), the builder is pressing into a "climbable" surface
+## (the ocean lighthouse). Scans this frame's slide collisions; for each, it walks the
+## collider's ancestor chain to find a node in group "climbable" (the StaticBody3D collision
+## bodies are nested several levels under the WorldStructure that carries the group). A
+## collision counts only when the builder's horizontal velocity pushes INTO the surface
+## (velocity · -normal on the XZ plane exceeds _CLIMB_PRESS_SPEED), so merely standing beside
+## the lighthouse does not trigger a climb. Returns false when not touching any climbable body.
+func _is_climbing_surface() -> bool:
+	for i: int in range(get_slide_collision_count()):
+		var col: KinematicCollision3D = get_slide_collision(i)
+		if col == null:
+			continue
+		var collider: Object = col.get_collider()
+		if not (collider is Node):
+			continue
+		if not _collider_is_climbable(collider as Node):
+			continue
+		# Press test: the collision normal points from the surface toward the builder, so the
+		# builder is pushing inward when its horizontal velocity opposes the normal. Use only
+		# the XZ components so an upward climb velocity (set last frame) never self-sustains.
+		var n: Vector3 = col.get_normal(i)
+		var into: Vector3 = Vector3(-n.x, 0.0, -n.z)
+		var horizontal_vel: Vector3 = Vector3(velocity.x, 0.0, velocity.z)
+		if into.length() > 0.0001 and horizontal_vel.dot(into.normalized()) > _CLIMB_PRESS_SPEED:
+			return true
+	return false
+
+
+## True when `collider` or any of its ancestors is in the "climbable" group. The trimesh
+## collision StaticBody3D nodes are descendants of the WorldStructure node (which carries the
+## group), so we climb the parent chain rather than checking the collider alone.
+func _collider_is_climbable(collider: Node) -> bool:
+	var node: Node = collider
+	while node != null:
+		if node.is_in_group(_CLIMBABLE_GROUP):
+			return true
+		node = node.get_parent()
+	return false
 
 
 # ─── Camera API (Plan 08.5) ───────────────────────────────────────────────────

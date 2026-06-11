@@ -369,3 +369,34 @@ func test_held_tool_attached_to_right_hand_bone_name() -> void:
 		"bone_name '%s' must be one of the known right-hand candidates" % attach.bone_name)
 	assert_ne(skel.find_bone(attach.bone_name), -1,
 		"the chosen bone '%s' must exist on the skeleton" % attach.bone_name)
+
+
+# ─── #18: builder recognises a climbable collider via the ancestor chain ───────
+# The lighthouse's trimesh StaticBody3D bodies are nested several levels below the
+# WorldStructure node that carries the "climbable" group, so the builder walks the collider's
+# parent chain to detect climbability. These tests exercise that walk in isolation.
+
+func test_collider_is_climbable_walks_ancestor_chain() -> void:
+	# Build: climbable_root (in group) → mid Node3D → StaticBody3D (the "collider").
+	var climbable_root := Node3D.new()
+	climbable_root.add_to_group("climbable")
+	var mid := Node3D.new()
+	var body := StaticBody3D.new()
+	climbable_root.add_child(mid)
+	mid.add_child(body)
+	add_child(climbable_root)
+	assert_true(_builder._collider_is_climbable(body),
+		"#18: a collider nested under a climbable node must be detected as climbable")
+	climbable_root.queue_free()
+
+
+func test_collider_is_climbable_false_for_plain_structure() -> void:
+	# A structure with NO climbable group must not be detected as climbable.
+	var plain_root := Node3D.new()
+	plain_root.add_to_group("structure")  # normal structure, not climbable
+	var body := StaticBody3D.new()
+	plain_root.add_child(body)
+	add_child(plain_root)
+	assert_false(_builder._collider_is_climbable(body),
+		"#18: a non-climbable structure's collider must NOT be detected as climbable")
+	plain_root.queue_free()

@@ -120,3 +120,32 @@ func test_no_overlapping_structures() -> void:
 	# With 100 cells × 0.60 chance → expect 40-80 spawns (very generous margin for hash variance).
 	assert_true(village_count >= 10 and village_count <= 100,
 		"Village spawn count %d should be non-zero and at most 100 across 100 cells." % village_count)
+
+
+# ─── Test 3: lighthouse is tagged "climbable" (#18) ───────────────────────────
+# The ocean lighthouse (structure_1_03) has no interior stairs, so WorldStructure tags it
+# "climbable" in _ready; the builder slides up its outer wall. Every other structure stays a
+# plain solid prop. The group-add runs before the model load, so it works headlessly even
+# when the .glb is not present.
+
+const WorldStructureScene := preload("res://src/world/world_structure.gd")
+
+
+func test_lighthouse_is_tagged_climbable() -> void:
+	var ws := WorldStructureScene.new() as Node3D
+	ws.structure_id = "structure_1_03"  # ocean lighthouse
+	add_child(ws)
+	assert_true(ws.is_in_group("climbable"),
+		"#18: the lighthouse (structure_1_03) must be in the 'climbable' group")
+	assert_true(ws.is_in_group("structure"),
+		"the lighthouse must still be a normal 'structure' as well")
+	ws.queue_free()
+
+
+func test_non_lighthouse_structure_is_not_climbable() -> void:
+	var ws := WorldStructureScene.new() as Node3D
+	ws.structure_id = "structure_3_02"  # a different ocean landmark
+	add_child(ws)
+	assert_false(ws.is_in_group("climbable"),
+		"#18: a non-lighthouse structure must NOT be in the 'climbable' group")
+	ws.queue_free()
