@@ -69,13 +69,29 @@ func _ready() -> void:
 	call_deferred("_build_collision", m)
 
 
-## Build trimesh collision for every mesh under the model (deferred so the spawn frame isn't
-## also the collision-build frame).
+## Build trimesh collision for EVERY MeshInstance3D under the model, recursively, so the
+## full geometry is collidable — tall multi-mesh towers (interior stairs/ramps) included,
+## not just the first/root mesh.
+##
+## find_children(owned=false) is required: an instantiated .glb scene's mesh nodes are owned
+## by the .glb root, not by `m`, so owned=true would miss every sub-mesh. owned=false walks
+## the whole subtree and create_trimesh_collision() builds concave collision in each mesh's
+## local space, which inherits `m`'s scale via the node transform chain — so the collision
+## tracks the scaled-up geometry exactly (v1.1 QA #18: lighthouse walkable to the top).
+##
+## Note: a single-mesh model (e.g. the lighthouse, one mesh) is fully covered by this loop —
+## the single MeshInstance3D still gets trimesh collision following its whole surface. If a
+## structure has no modeled interior (a solid exterior shell), there is simply nothing inside
+## to climb; the collision build is still correct and complete.
 func _build_collision(m: Node3D) -> void:
 	if not is_instance_valid(m):
 		return
 	for child: Node in m.find_children("*", "MeshInstance3D", true, false):
-		(child as MeshInstance3D).create_trimesh_collision()
+		var mi := child as MeshInstance3D
+		# Skip empty MeshInstance3D nodes — create_trimesh_collision() on a null mesh
+		# logs an error and adds an empty StaticBody. Matches the _aabb() null guard.
+		if mi != null and mi.mesh != null:
+			mi.create_trimesh_collision()
 
 
 ## Merged local-space AABB of every MeshInstance3D under `root` (static mesh, valid now).
