@@ -40,6 +40,10 @@ const ROTATION_SPEED_RAD: float = 0.5  # rad/s per UI-SPEC.md
 ## Palette colour index (-1 = material/natural colour).
 @export var colour_index: int = -1
 
+## Optional 2D icon path (BrickDefinition.icon_path). When set + loadable, the tile shows this
+## 2D icon instead of the flat untextured 3D mesh preview (real art + no per-tile Camera3D cost).
+@export var icon_path: String = ""
+
 # ─── Signals ──────────────────────────────────────────────────────────────────
 
 ## Emitted when this tile is tapped/clicked. Parent BrickPalette connects to this.
@@ -73,6 +77,13 @@ func _ready() -> void:
 ## Build the SubViewportContainer + SubViewport + Camera3D + lights + MeshInstance3D tree.
 ## This is the D-12 3D preview structure per UI-SPEC.md §PaletteTile spec.
 func _build_viewport_tree() -> void:
+	# Prefer a 2D icon when the brick provides one (real art + no per-tile Camera3D cost). The
+	# flat untextured 3D preview made every brick read as the same pale silhouette (v1.1 QA #3).
+	if icon_path != "" and ResourceLoader.exists(icon_path):
+		var tex := load(icon_path) as Texture2D
+		if tex != null:
+			_build_icon_tile(tex)
+			return
 	# SubViewportContainer (full_rect)
 	var svc := SubViewportContainer.new()
 	svc.name = "SubViewportContainer"
@@ -163,6 +174,38 @@ func _build_viewport_tree() -> void:
 
 	# Render the preview exactly once now that camera/lights/mesh are in place.
 	_request_preview_render()
+
+
+## Build a 2D-icon tile (TextureRect + name label + hover overlay) used instead of the 3D viewport
+## preview when the brick supplies an icon_path. Renders the real art and skips the Camera3D cost.
+func _build_icon_tile(tex: Texture2D) -> void:
+	var icon := TextureRect.new()
+	icon.name = "Icon2D"
+	icon.texture = tex
+	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(icon)
+	var name_label := Label.new()
+	name_label.name = "NameLabel"
+	name_label.text = _display_name()
+	name_label.add_theme_font_size_override("font_size", 9)
+	name_label.add_theme_color_override("font_color", Color(0.96, 0.96, 0.92))
+	name_label.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+	name_label.add_theme_constant_override("outline_size", 3)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	name_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(name_label)
+	_hover_overlay = ColorRect.new()
+	_hover_overlay.name = "HoverOverlay"
+	_hover_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hover_overlay.color = Color(COLOR_NAVY.r, COLOR_NAVY.g, COLOR_NAVY.b, 0.0)
+	_hover_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_hover_overlay)
 
 
 ## Render the 3D preview a single frame (UPDATE_ONCE), then it idles again. Called after

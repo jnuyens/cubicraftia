@@ -372,6 +372,9 @@ func _instantiate_tile(bid: String, cindex: int) -> Control:
 	var def := BrickRegistry.get_definition(bid)
 	if def != null and def.mesh != null:
 		tile.set_mesh(def.mesh)
+	# Prefer the brick's 2D icon over the flat 3D preview when it has one (v1.1 QA #1/#3).
+	if def != null and def.icon_path != "":
+		tile.icon_path = def.icon_path
 
 	# Apply current preview mode
 	if _previews_mode == "on_tap":
