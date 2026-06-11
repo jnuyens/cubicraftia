@@ -295,8 +295,13 @@ const MAX_HP: int = 3
 const MEAT_DROP_COUNT: int = 1
 
 ## def_id of the meat brick-drop (registered in BrickRegistry via manifest.json). Awarded
-## through the same Inventory ADD path as mined materials.
+## through the same Inventory ADD path as mined materials. LAND creatures drop this.
 const _MEAT_DEF_ID: String = "raw_meat"
+
+## def_id of the sashimi brick-drop (registered in BrickRegistry via manifest.json). WATER
+## creatures (fish/shark/whale/squid/...) drop this instead of raw_meat, with the same drop
+## mechanism, same count, same no-double-drop guard; only the dropped def_id differs by type.
+const _SASHIMI_DEF_ID: String = "sashimi"
 
 ## Physics layer the attack-hurtbox sits on (bit value, layer 3). DELIBERATELY separate from
 ## the land body's movement collider (layer 0, so animals never block the player/hostiles) and
@@ -1264,20 +1269,32 @@ func _die() -> void:
 	queue_free()
 
 
-## Drop MEAT_DROP_COUNT raw_meat at the animal's position so the builder collects it.
-## Preferred path: main_scene.spawn_dropped_item() (the same collectable-pickup flow mined
-## materials and hostile-mob loot use). Fallback: a direct Inventory ADD to the local builder
-## when no main_scene is wired (detached test node) so meat is never silently lost.
+## def_id this creature drops on death, branched by behaviour type: WATER creatures
+## (fish/shark/whale/squid/...) yield sashimi; LAND (and AIR) creatures yield raw_meat.
+## Resolved straight from _KIND_TYPE by `kind` (the SAME table the water-bound movement uses),
+## so it stays correct for every WATER kind without re-listing them, and is right even on a
+## bare instance whose _ready() (which sets _behaviour_type) has not run, e.g. headless tests.
+func _drop_def_id() -> String:
+	var type: String = _KIND_TYPE.get(kind, _behaviour_type)
+	return _SASHIMI_DEF_ID if type == _TYPE_WATER else _MEAT_DEF_ID
+
+
+## Drop MEAT_DROP_COUNT of this creature's meat-drop at its position so the builder collects it.
+## Land animals drop raw_meat; WATER creatures drop sashimi (see _drop_def_id). Preferred path:
+## main_scene.spawn_dropped_item() (the same collectable-pickup flow mined materials and
+## hostile-mob loot use). Fallback: a direct Inventory ADD to the local builder when no
+## main_scene is wired (detached test node) so the drop is never silently lost.
 func _drop_meat() -> void:
-	if BrickRegistry.get_definition(_MEAT_DEF_ID) == null:
-		return  # meat brick not registered (shouldn't happen — manifest entry) → drop nothing
+	var def_id: String = _drop_def_id()
+	if BrickRegistry.get_definition(def_id) == null:
+		return  # drop brick not registered (shouldn't happen; manifest entry) so drop nothing
 	var drop_pos: Vector3 = global_position + Vector3(0.0, 0.4, 0.0)
 	if _main_scene != null and is_instance_valid(_main_scene) \
 			and _main_scene.has_method("spawn_dropped_item"):
 		for _i: int in range(MEAT_DROP_COUNT):
-			# colour_index -1 = use the brick's natural colour (red, per raw_meat.tres). Physics
-			# spawn so it pops out and settles like other loot the player walks over to collect.
-			_main_scene.spawn_dropped_item(_MEAT_DEF_ID, -1, drop_pos, true)
+			# colour_index -1 = use the brick's natural colour (raw_meat red / sashimi pink).
+			# Physics spawn so it pops out and settles like other loot the player collects.
+			_main_scene.spawn_dropped_item(def_id, -1, drop_pos, true)
 		return
 	# Fallback: no main_scene → award straight to the local builder's inventory.
 	var builder: Node = get_tree().get_first_node_in_group("builder") if is_inside_tree() else null
@@ -1289,7 +1306,7 @@ func _drop_meat() -> void:
 	Inventory.apply_event({
 		"kind": "ADD",
 		"builder_id": builder_id,
-		"def_id": _MEAT_DEF_ID,
+		"def_id": def_id,
 		"count": MEAT_DROP_COUNT,
 	})
 

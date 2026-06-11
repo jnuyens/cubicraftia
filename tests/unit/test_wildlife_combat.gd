@@ -52,6 +52,17 @@ func test_meat_brick_is_registered() -> void:
 			"raw_meat is a MOB_DROP")
 
 
+func test_sashimi_brick_is_registered() -> void:
+	# sashimi (the WATER-creature drop) must resolve via BrickRegistry so the sea-creature
+	# death drop + inventory path work, exactly like raw_meat for land animals.
+	var def = BrickRegistry.get_definition("sashimi")
+	assert_not_null(def, "sashimi BrickDefinition must be registered in BrickRegistry")
+	if def != null:
+		assert_eq(def.brick_id, "sashimi", "sashimi def has the expected brick_id")
+		assert_eq(int(def.category), int(BrickDefinition.Category.MOB_DROP),
+			"sashimi is a MOB_DROP")
+
+
 func test_builder_attack_layer_matches_wildlife_hurtbox() -> void:
 	# The builder's attack ray queries _WILDLIFE_HURTBOX_MASK; the hurtbox sits on
 	# _HURTBOX_LAYER_BIT. If these drift apart, the attack ray silently stops hitting animals.
@@ -75,6 +86,8 @@ func test_non_fatal_hit_decrements_hp_without_dying() -> void:
 
 
 func test_fatal_hit_emits_died_and_drops_meat() -> void:
+	# LAND creature (pig): a fatal hit drops raw_meat (sea creatures drop sashimi instead,
+	# see test_killing_water_creature_drops_sashimi).
 	var stub := StubMainScene.new()
 	add_child_autofree(stub)
 	var w = WildlifeScript.new()
@@ -90,8 +103,31 @@ func test_fatal_hit_emits_died_and_drops_meat() -> void:
 	assert_eq(stub.drops.size(), WildlifeScript.MEAT_DROP_COUNT,
 		"a killed animal drops MEAT_DROP_COUNT meat via spawn_dropped_item")
 	if stub.drops.size() > 0:
-		assert_eq(str(stub.drops[0]["def_id"]), "raw_meat", "the drop is raw_meat")
+		assert_eq(str(stub.drops[0]["def_id"]), "raw_meat", "a land animal drops raw_meat")
 		assert_true(bool(stub.drops[0]["active"]), "meat drops as an active (collectable) pickup")
+	# w is freed by _die() (queue_free); nothing to free here.
+
+
+func test_killing_water_creature_drops_sashimi() -> void:
+	# WATER creature (shark): a fatal hit drops sashimi instead of raw_meat, via the SAME
+	# spawn_dropped_item flow, count, and active-pickup behaviour. Branch is keyed off
+	# _KIND_TYPE by kind, so it's correct on this bare instance (no _ready / no display).
+	var stub := StubMainScene.new()
+	add_child_autofree(stub)
+	var w = WildlifeScript.new()
+	w.kind = "shark_great_white"
+	w.hp = WildlifeScript.MAX_HP
+	w.set_main_scene(stub)
+	var died := [false]
+	w.died.connect(func() -> void: died[0] = true)
+	w.take_damage(WildlifeScript.MAX_HP, Vector3(4, 5, 6))
+	assert_eq(w.hp, 0, "hp clamps to 0 on a lethal hit")
+	assert_true(died[0], "a lethal hit emits died")
+	assert_eq(stub.drops.size(), WildlifeScript.MEAT_DROP_COUNT,
+		"a killed sea creature drops MEAT_DROP_COUNT items via spawn_dropped_item")
+	if stub.drops.size() > 0:
+		assert_eq(str(stub.drops[0]["def_id"]), "sashimi", "a sea creature drops sashimi, not raw_meat")
+		assert_true(bool(stub.drops[0]["active"]), "sashimi drops as an active (collectable) pickup")
 	# w is freed by _die() (queue_free); nothing to free here.
 
 
