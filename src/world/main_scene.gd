@@ -218,6 +218,27 @@ const _SUN_ENERGY_NIGHT: float = 0.1
 @onready var _moon: DirectionalLight3D = $Moon
 @onready var _world_env: WorldEnvironment = $WorldEnvironment
 
+# ─── WATER overhaul: finite-volume discrete fluid sim ─────────────────────────
+## FluidSim node (src/world/fluid_sim.gd). Created in _ready(), wired to the Terrain
+## VoxelTerrain. The builder's mine path calls _fluid_sim.notify_block_mined(cell) so
+## damming a block lets the water flow into the lower terrain (volume-conserved,
+## animated). Null in headless/no-terrain contexts.
+var _fluid_sim: FluidSim = null
+
+## Cached "is the camera underwater" state so the underwater fog/tint is only
+## re-applied on a transition, not every frame. Throttled sample (see _process).
+var _camera_submerged: bool = false
+var _water_fog_accum: float = 0.0
+## How often (s) we sample whether the active camera is submerged. Cheap single
+## voxel read; 0.2 s is responsive enough for an enter/exit fog swap.
+const _WATER_FOG_SAMPLE_INTERVAL_S: float = 0.2
+## Underwater fog distance (m) before the view goes murky (behaviour 4: ~30 m).
+const _UNDERWATER_FOG_FAR_M: float = 30.0
+## Underwater fog colour — a deep blue-green murk matching the water tint.
+const _UNDERWATER_FOG_COLOR: Color = Color(0.10, 0.34, 0.46, 1.0)
+## WATER voxel id (must match terrain.tscn / fluid_sim.gd / multipass_generator.gd).
+const _WATER_VOXEL_ID: int = 7
+
 ## Cached sky ShaderMaterial reference (avoid repeated tree lookups in _process).
 var _sky_shader_material: ShaderMaterial = null
 
@@ -725,6 +746,17 @@ func _ready() -> void:
 		if not _mpgen.chunk_loaded.is_connected(_on_chunk_loaded):
 			_mpgen.chunk_loaded.connect(_on_chunk_loaded)
 
+	# ─── WATER overhaul: create the finite-volume fluid sim ───────────────────
+	# One FluidSim beside the terrain. The builder's mine path notifies it when a
+	# damming block is removed, and it floods the lower terrain over several ticks
+	# (volume-conserving). Wired to the "Terrain" VoxelTerrain (where the real node
+	# lives — see the block_loaded note above).
+	_fluid_sim = FluidSim.new()
+	_fluid_sim.name = "FluidSim"
+	add_child(_fluid_sim)
+	var _fluid_terrain: Node = _terrain_alias if _terrain_alias != null else get_node_or_null("Terrain")
+	_fluid_sim.set_terrain(_fluid_terrain)
+
 	# ─── Plan 05-09: EULA re-acknowledge gate ────────────────────────────────
 	# If the user is already signed in, check immediately. Otherwise, connect to
 	# FriendsClient.signed_in so the check fires after every sign-in.
@@ -775,6 +807,16 @@ func _process(delta: float) -> void:
 	if _wildlife_cull_accum >= _WILDLIFE_CULL_INTERVAL_S:
 		_wildlife_cull_accum = 0.0
 		_cull_distant_wildlife()
+
+	# ─── WATER overhaul (behaviour 4): underwater fog/tint ────────────────────
+	# Sample whether the active camera is submerged (throttled). On a transition
+	# we toggle a murky underwater fog on the WorldEnvironment so visibility is
+	# limited to ~30 m, restored above water. Runs regardless of the clock so the
+	# fog is correct even while time is paused.
+	_water_fog_accum += delta
+	if _water_fog_accum >= _WATER_FOG_SAMPLE_INTERVAL_S:
+		_water_fog_accum = 0.0
+		_update_underwater_fog()
 
 	if not WorldClock._running:
 		return
@@ -1187,6 +1229,61 @@ func _open_settings() -> void:
 ##   the sky renders as solid colour.
 ##
 ## Called by the §7.6 adaptive-quality hook in settings_menu.gd (Plan 14).
+# ─── WATER overhaul (behaviour 4): underwater fog ────────────────────────────
+
+## Sample whether the active camera is submerged in a WATER voxel and toggle a
+## murky underwater fog on the WorldEnvironment accordingly.
+##
+## When submerged: enable depth fog (light = deep blue-green, far = ~30 m) so the
+## view goes murky past the visibility limit — behaviour 4. When the camera surfaces
+## the fog is disabled and the environment reverts to its above-water state.
+##
+## Only re-applies on a transition (tracked by _camera_submerged) so we don't thrash
+## the Environment every sample. Cheap: one VoxelTool.get_voxel read per sample tick.
+func _update_underwater_fog() -> void:
+	if _world_env == null or _world_env.environment == null:
+		return
+	var cam: Camera3D = get_viewport().get_camera_3d()
+	if cam == null:
+		return
+	var submerged: bool = _voxel_is_water_at(cam.global_position)
+	if submerged == _camera_submerged:
+		return  # no transition — nothing to do
+	_camera_submerged = submerged
+	var env: Environment = _world_env.environment
+	if submerged:
+		env.fog_enabled = true
+		env.fog_mode = Environment.FOG_MODE_DEPTH
+		env.fog_light_color = _UNDERWATER_FOG_COLOR
+		env.fog_light_energy = 1.0
+		# Aerial-perspective fog: dense near the far plane so 30 m reads as the murk wall.
+		env.fog_depth_begin = 1.0
+		env.fog_depth_end = _UNDERWATER_FOG_FAR_M
+		env.fog_depth_curve = 1.0
+		env.fog_density = 1.0
+		# Don't let the bright sky bleed through underwater.
+		env.fog_sky_affect = 0.0
+	else:
+		# Restore the above-water default: the scene ships with fog disabled.
+		env.fog_enabled = false
+
+
+## True if the WATER voxel id occupies the cell containing world position `pos`.
+## Uses the Terrain VoxelTool (the authoritative voxel grid, which the fluid sim
+## also writes to). Returns false if no terrain/tool is available.
+func _voxel_is_water_at(pos: Vector3) -> bool:
+	var terrain: Node = get_node_or_null("Terrain")
+	if terrain == null or not terrain.has_method("get_voxel_tool"):
+		return false
+	var tool: Object = terrain.get_voxel_tool()
+	if tool == null:
+		return false
+	if "channel" in tool:
+		tool.channel = 0  # VoxelBuffer.CHANNEL_TYPE
+	var cell := Vector3i(floori(pos.x), floori(pos.y), floori(pos.z))
+	return tool.get_voxel(cell) == _WATER_VOXEL_ID
+
+
 func set_sky_mode(mode: String) -> void:
 	if _world_env == null or _world_env.environment == null:
 		return

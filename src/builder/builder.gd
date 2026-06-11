@@ -1144,6 +1144,11 @@ func _try_break() -> void:
 	if vid == 0 or vid == _WATER_VOXEL_ID:
 		return  # air or water — nothing to mine
 	voxel_tool.set_voxel(vpos, 0)  # remove the voxel
+	# ─── WATER overhaul: let water flow into the mined (damming) block ─────────
+	# If this block bordered water, notify the FluidSim so the water floods the
+	# newly-opened space over the next ticks (volume-conserving, animated). The
+	# sim lives as a sibling "FluidSim" node under main_scene; resolved lazily.
+	_notify_fluid_block_mined(vpos)
 	var block_centre := Vector3(vpos.x + 0.5, vpos.y + 0.5, vpos.z + 0.5)
 	_spawn_break_dust(block_centre)
 	# Mined items don't pop straight into the bag — a shrinking icon floats up for ~2 s first
@@ -1152,6 +1157,20 @@ func _try_break() -> void:
 	# Mining stone/sandstone has a depth-gated chance of yielding an ore on top of the block.
 	if vid in _ORE_BEARING_VOXELS:
 		_spawn_mined_pickup(_roll_ore_bonus(vpos.y), block_centre)
+
+
+## Cached FluidSim sibling (resolved lazily from main_scene). May stay null in
+## test/headless contexts where no FluidSim exists; the notify call no-ops then.
+var _fluid_sim: Node = null
+
+## Notify the FluidSim that the terrain voxel at `vpos` was mined so any bordering
+## water flows into the opened space (WATER overhaul behaviour 2). Resolves the sim
+## lazily (sibling "FluidSim" under main_scene); silently no-ops when absent.
+func _notify_fluid_block_mined(vpos: Vector3i) -> void:
+	if _fluid_sim == null or not is_instance_valid(_fluid_sim):
+		_fluid_sim = get_node_or_null("../FluidSim")
+	if _fluid_sim != null and _fluid_sim.has_method("notify_block_mined"):
+		_fluid_sim.notify_block_mined(vpos)
 
 
 ## Award one of a mined item to the local builder's inventory (no-op for "" / unknown defs).
