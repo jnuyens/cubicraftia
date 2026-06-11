@@ -224,7 +224,7 @@ func set_slot_item(slot_index: int, item_id: String, count: int) -> void:
 	var icon: TextureRect = panel.get_node_or_null("Icon") as TextureRect
 	if icon != null:
 		var icon_tex: Texture2D = _resolve_item_icon(item_id)
-		icon.texture = icon_tex
+		icon.texture = _center_cropped(icon_tex) if icon_tex != null else null
 
 	# Update or create the count label for non-brick items.
 	var count_label: Label = panel.get_node_or_null("CountLabel") as Label
@@ -267,10 +267,48 @@ func _update_slot_icon(slot: int) -> void:
 		return
 	var ip: String = _slot_icon_path(slot)
 	if ip != "" and ResourceLoader.exists(ip, "Texture2D"):
-		icon.texture = load(ip) as Texture2D
+		icon.texture = _center_cropped(load(ip) as Texture2D)
 		return
 	var empty: String = "res://assets/textures/icons/hotbar_slot_empty.png"
+	# Empty-slot art is a full-bleed frame, NOT a tool sprite — show it un-cropped.
 	icon.texture = (load(empty) as Texture2D) if ResourceLoader.exists(empty, "Texture2D") else null
+
+
+## Fraction of each edge to crop off a tool/brick icon before display.
+## The art sheet was sliced with bleed: several icon PNGs (e.g. pickaxe_bronze.png,
+## shovel_iron.png) carry a partial neighbouring tool in the ~12-30 px band from each
+## 256 px edge. With STRETCH_KEEP_ASPECT_CENTERED on a square icon in a square slot the
+## sprite fills the slot edge-to-edge, so that bleed renders as a thin sliver on the slot
+## border (pickaxe showed it on the LEFT, shovel on BOTH sides). texture_repeat=DISABLED +
+## clip_contents did not help because the sliver is real image content, not a wrap/filter
+## artefact. Cropping the outer 15 % on every side drops the bleed entirely; the actual
+## tools occupy only the central ~[60..200]/256 columns, so nothing meaningful is lost.
+const _ICON_CROP_FRAC: float = 0.15
+## Cache of center-cropped AtlasTextures keyed by source Texture2D so we build each region once.
+var _icon_crop_cache: Dictionary = {}
+
+## Return a center-cropped view of a tool/brick icon that excludes the edge-bleed slivers
+## baked into the source art sheet. Wraps the source in an AtlasTexture whose region is the
+## central (1 - 2*_ICON_CROP_FRAC) box. Returns the texture unchanged when it is null or has
+## no size (headless/CI). Cached per source so repeated slot updates don't re-allocate.
+func _center_cropped(tex: Texture2D) -> Texture2D:
+	if tex == null:
+		return null
+	if _icon_crop_cache.has(tex):
+		return _icon_crop_cache[tex]
+	var w: float = float(tex.get_width())
+	var h: float = float(tex.get_height())
+	if w <= 0.0 or h <= 0.0:
+		return tex
+	var inset_x: float = w * _ICON_CROP_FRAC
+	var inset_y: float = h * _ICON_CROP_FRAC
+	var atlas := AtlasTexture.new()
+	atlas.atlas = tex
+	atlas.region = Rect2(inset_x, inset_y, w - 2.0 * inset_x, h - 2.0 * inset_y)
+	# filter_clip keeps the crop edges crisp (no neighbour sampling outside the region).
+	atlas.filter_clip = true
+	_icon_crop_cache[tex] = atlas
+	return atlas
 
 
 ## Resolve the icon_path for a slot: tool definition first (src/tools/<id>.tres), then
