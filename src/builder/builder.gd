@@ -2032,10 +2032,16 @@ func _finalize_avatar(av: Node3D) -> void:
 			1.0 / maxf(ws.x, 1e-6), 1.0 / maxf(ws.y, 1e-6), 1.0 / maxf(ws.z, 1e-6))
 		_hand_root.position = _HAND_GRIP_OFFSET
 		_hand_root.rotation_degrees = _HAND_GRIP_ROT
-		# v1.1 QA #5: on the textured avatars the held tool's RightHand-bone-local grip is not yet
-		# tuned, so the default wood pickaxe reads as a stray block behind the builder. Hide the
-		# held item until tool-in-hand is implemented + tuned properly (#16), rather than show a
-		# mis-placed block on the back.
+	# v1.1 QA #5 / "brown block on the back": on the textured avatars the held tool's grip is not yet
+	# tuned, so the default wood pickaxe reads as a stray brown block on the upper back/shoulder. Hide
+	# the held item until tool-in-hand is implemented + tuned (#16). This hide MUST run regardless of
+	# whether the avatar exposes a RightHand bone (_hand_attach): when the skin lacks that bone the
+	# HandItem falls back to a FIXED upper-back offset on _avatar_mesh_root (see the box-fallback branch
+	# in _setup_avatar_mesh_nodes), and the previous `if is_instance_valid(_hand_attach)` guard skipped
+	# the hide entirely on those skins — that is exactly the brown block QA reported. _finalize_avatar
+	# runs deferred (after apply_avatar_config has re-shown the pickaxe via hand_accessory="pickaxe"),
+	# so this is the authoritative last word on hand visibility.
+	if is_instance_valid(_hand_root):
 		_hand_root.visible = false
 
 
@@ -2420,6 +2426,14 @@ func apply_avatar_config(cfg: Dictionary) -> void:
 		var node: Node = _hand_nodes[key]
 		if node != null:
 			node.visible = (key == hand_acc)
+	# Held tool stays hidden until the in-hand grip is tuned (#16). DEFAULT_AVATAR_CFG sets
+	# hand_accessory="pickaxe", and the loop above re-shows that pickaxe MeshInstance3D — on the
+	# textured avatars (and on the box-mesh fallback, which _finalize_avatar never touches because
+	# it only runs for a loaded avatar GLB) that pickaxe renders as a stray brown block on the upper
+	# back/shoulder. Force the whole HandItem hidden here so the builder reads clean (head, hair,
+	# body, legs) on EVERY code path, not just the bone-attached one.
+	if is_instance_valid(_hand_root):
+		_hand_root.visible = false
 
 	# ── Body accessory visibility ────────────────────────────────────────────
 	var body_acc: String = str(cfg.get("body_accessory", "none"))
