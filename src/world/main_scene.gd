@@ -2046,10 +2046,14 @@ func _stream_structures(delta: float) -> void:
 		elif stt == ResourceLoader.THREAD_LOAD_FAILED or stt == ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
 			_ss_loading.erase(path)
 
-	# Spawn any "want" chunks whose scene is now ready.
+	# Spawn any "want" chunks whose scene is ready AND whose terrain has loaded under them, so a
+	# structure never appears floating before the ground streams in (v1.1 QA #8).
+	var _svt: Object = _structure_voxel_tool()
 	for key: Vector2i in _ss.keys():
 		var e: Dictionary = _ss[key]
 		if e.get("state", "") == "want" and _ss_scene.has(e["path"]):
+			if not _terrain_ready_at(_svt, e["pos"]):
+				continue  # ground under this structure not loaded yet — retry next pass
 			e["node"] = spawn_structure(e["id"], e["pos"], _ss_scene[e["path"]])
 			e["state"] = "spawned"
 			_ss_refs[e["path"]] = int(_ss_refs.get(e["path"], 0)) + 1
@@ -2135,6 +2139,23 @@ func _eval_structure_chunk(key: Vector2i, cx: int, cz: int, ccx: float, ccz: flo
 		"state": "want", "id": id, "pos": Vector3(raw.x, sy, raw.z),
 		"path": "res://assets/meshes/structures/" + id + ".glb", "node": null,
 	}
+
+
+## The VoxelTerrain's VoxelTool (duck-typed; null when the voxel module/terrain is absent, e.g.
+## headless tests). Used to gate structure spawning on terrain readiness.
+func _structure_voxel_tool() -> Object:
+	var vterrain: Node = get_node_or_null("VoxelTerrain")
+	if vterrain == null or not vterrain.has_method("get_voxel_tool"):
+		return null
+	return vterrain.get_voxel_tool()
+
+
+## True if the terrain voxels around `pos` are loaded (so a structure placed there won't float over
+## not-yet-streamed ground). Defaults to true when no VoxelTool is available (no spawn regression).
+func _terrain_ready_at(vt: Object, pos: Vector3) -> bool:
+	if vt == null or not vt.has_method("is_area_editable"):
+		return true
+	return vt.is_area_editable(AABB(pos - Vector3(2.0, 4.0, 2.0), Vector3(4.0, 8.0, 4.0)))
 
 
 ## Get the current world session ID.
