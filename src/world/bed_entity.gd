@@ -48,6 +48,14 @@ extends StaticBody3D
 ## Walk-up interact range in metres (UI-SPEC L76 — matches ChestEntity.INTERACT_RANGE_M).
 const INTERACT_RANGE_M: float = 2.0
 
+## BrickDefinition resource for the bed item. Loaded directly (not via BrickRegistry) so the
+## bed can self-register: builder_bed.tres ships in src/bricks/ but is MISSING from
+## src/bricks/manifest.json, so BrickRegistry never loads it at boot. That gap silently broke
+## bed pickup — on_break gated the inventory ADD on BrickRegistry.get_definition("builder_bed"),
+## which returned null, so the bed never entered the inventory and could never be re-placed.
+## _ensure_bed_registered() repairs this at runtime; see _ready / on_break.
+const _BED_DEF_PATH: String = "res://src/bricks/builder_bed.tres"
+
 # ─── Node references ──────────────────────────────────────────────────────────
 
 @onready var _mesh: MeshInstance3D = $Mesh
@@ -65,6 +73,12 @@ var _builder_in_range: bool = false
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	# Ensure builder_bed is known to BrickRegistry (it is absent from manifest.json — see
+	# _BED_DEF_PATH). Doing this on every bed _ready guarantees the def exists before the
+	# player can pick this bed up (on_break) OR re-place it (Builder._try_place resolves the
+	# active brick via BrickRegistry.get_definition, which would otherwise return null).
+	_ensure_bed_registered()
+
 	# Register into Spawning's chunk-keyed bed-bubble index (D-10).
 	# The 8 m sphere is immediately active for spawn-suppression + ghost-repel.
 	Spawning.register_bed(global_position)
@@ -181,13 +195,38 @@ func refresh_prompt() -> void:
 ##
 ## @param builder_id  Stable builder UUID the bed item is awarded to.
 func on_break(builder_id: String = "") -> void:
-	# Award the bed back to the inventory. Use the same ADD-event shape as mined items.
-	if BrickRegistry.get_definition("builder_bed") != null:
-		Inventory.apply_event({
-			"kind": "ADD",
-			"builder_id": builder_id,
-			"def_id": "builder_bed",
-			"count": 1,
-		})
+	# Make sure the bed def is registered (manifest gap — see _BED_DEF_PATH) before awarding,
+	# so the item resolves an icon/name in the inventory UI and is re-placeable. The award then
+	# fires unconditionally: the inventory stores def_id as a plain string, so the bed lands in
+	# a slot and the slide-in/hotbar redraw on Inventory.inventory_changed. The previous
+	# `if BrickRegistry.get_definition("builder_bed") != null` guard swallowed the ADD whenever
+	# the def was unregistered — which, given the manifest gap, was always — so the picked-up
+	# bed never appeared in the inventory.
+	_ensure_bed_registered()
+	Inventory.apply_event({
+		"kind": "ADD",
+		"builder_id": builder_id,
+		"def_id": "builder_bed",
+		"count": 1,
+	})
 	# _exit_tree() unregisters the bed-bubble (Pitfall 5); queue_free triggers it.
 	queue_free()
+
+
+## Register the builder_bed BrickDefinition into BrickRegistry if it is not already present.
+## builder_bed.tres is absent from src/bricks/manifest.json, so BrickRegistry._load_base_pack
+## never picks it up. We load the .tres directly and insert it via BrickRegistry.register_pack
+## (the only public mutator). Idempotent: a second call is a no-op once the def is present.
+func _ensure_bed_registered() -> void:
+	if BrickRegistry == null:
+		return
+	if BrickRegistry.get_definition("builder_bed") != null:
+		return
+	if not ResourceLoader.exists(_BED_DEF_PATH):
+		return
+	var def: Resource = load(_BED_DEF_PATH)
+	if def == null:
+		return
+	# register_pack skips entries already present and accepts any BrickDefinition; one call
+	# adds the bed so get_definition("builder_bed") resolves for both pickup and re-placement.
+	BrickRegistry.register_pack([def])
