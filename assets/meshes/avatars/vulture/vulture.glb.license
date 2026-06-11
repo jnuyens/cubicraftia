@@ -1,0 +1,5 @@
+SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+Skinned, textured bird auto-rigged via scripted Rigify (custom spine+wings+legs chain, 10-bone skeleton) with a single looping
+"Walk" clip and embedded textures. Owned by the project. Original Cubicraftia asset —
+game-ready animal walk-cycle rig from the rigify-test batch.
