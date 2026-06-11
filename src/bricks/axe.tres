@@ -1,0 +1,28 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; axe.tres — tool item (BrickDefinition, registered via BrickRegistry.register_pack).
+; Art: assets/meshes/tools/axe.glb model + 2D icon. Inventory/held item.
+
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "axe"
+display_name_key = "bricks.axe.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 1
+studs_top = []
+studs_bottom = []
+stud_profile = "concave_top"
+material_id = "metal"
+mesh = null
+icon_path = "res://assets/textures/icons/axe_wood.png"
+category = 8
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 15
+iap_pack_origin = "crafting_items"
+footprint_cells = [Vector3i(0, 0, 0)]

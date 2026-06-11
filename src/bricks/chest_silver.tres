@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; chest_silver.tres — BrickDefinition for the silver chest (2×2 footprint, 4 plates tall).
+; Tier: silver — requires key_silver to unlock. Slot count: 54 (DOCS §4.4).
+; Material tint: light grey #A6A6A6 (CONTEXT D-03 + UI-SPEC L149-151).
+; Mesh: null placeholder until Phase 3 polish ships distinct silver-chest silhouette .glb per D-03.
+; TODO Phase 3 polish: replace mesh with distinct silver-chest silhouette .glb per D-03.
+; Silhouette spec: double-lid box, slightly taller than bronze (03-CONTEXT.md D-03).
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "chest_silver"
+display_name_key = "chests.silver.name"
+dimensions = Vector3i(2, 1, 2)
+height_plates = 4
+studs_top = []
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}, {"x": 0.0, "y": 0.0, "z": 1.0, "gender": "female"}, {"x": 1.0, "y": 0.0, "z": 0.0, "gender": "female"}, {"x": 1.0, "y": 0.0, "z": 1.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "metal"
+mesh = null
+category = 5
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 12
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(1, 0, 0), Vector3i(1, 0, 1)]

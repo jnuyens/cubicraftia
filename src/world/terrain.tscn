@@ -1,0 +1,129 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; terrain.tscn — VoxelTerrain scene for the six-biome procedural world (Plan 02-06).
+;
+; Extended from Plan 04 (single-grass-biome) to the full six-biome VoxelBlockyLibrary.
+; Updated in Plan 02-08: generator swapped from terrain_generator.gd (VoxelGeneratorScript)
+; to multipass_generator.gd (VoxelGeneratorMultipassCB) — the only change is the generator
+; sub_resource. The multipass generator replicates all terrain_generator.gd pass-0 logic
+; and adds pass-1 mineshaft carving (MULTIPASS-NOTE.md decision: multipass-available).
+;
+; Terrain parameters (DOCS.md §2, CONTEXT.md D-05):
+;   - Chunk size: 16³ voxels (default for godot_voxel; 1 voxel = 1 m per DOCS.md §2)
+;   - Render distance: 5 chunks × 16 voxels = 80 voxels radius (D-05, Tier-3 mobile target)
+;   - Voxel IDs (VoxelBlockyLibrary indices — must match multipass_generator.gd constants):
+;       0  = air              (VoxelBlockyModelEmpty)
+;       1  = grass            (#6BB845 — GRASSLAND_FOREST surface; Phase 1 locked colour)
+;       2  = sand             (#C9A86A — DESERT surface / OCEAN seabed; from desert brief)
+;       3  = snow             (#BFEAF5 — SNOW surface; from snow brief)
+;       4  = stone            (#707A82 — deep underground, all biomes)
+;       5  = sandstone        (#C9A86A — DESERT sub-surface; from desert brief palette)
+;       6  = ice              (#BFEAF5 — SNOW shallow sub-surface)
+;       7  = water            (#2A7BBC at 0.6α — OCEAN water column; non-collidable)
+;       8  = jungle_grass     (#5CE86A — JUNGLE surface; from jungle brief ambient tint)
+;       9  = savannah_grass   (#FFB84D — SAVANNAH surface; from savannah brief ambient tint)
+;      10  = wood_log         (#7A4A23 — tree column voxel; BrickPalette brown=15 token)
+;      11  = dirt             (#6B4A2F — sub-surface for GRASSLAND_FOREST/JUNGLE/SAVANNAH)
+;   - Collision: terrain layer 1, mask 0 (water model has no collision)
+;   - Generator: multipass_generator.gd (VoxelGeneratorMultipassCB — Plan 02-08)
+;               Pass 0: height-map terrain (same algorithm as terrain_generator.gd)
+;               Pass 1: mineshaft corridor carving (extent=2, depth gate Y < -8)
+;
+; Lighting channel: terrain renders in visual channel only (light_cull_mask = 1 for sun/moon).
+; The VoxelTerrain collision_layer = 1 (builders stand on it).
+
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://src/world/multipass_generator.gd" id="1_tgen"]
+
+; ─── Terrain generator instance (extends VoxelGeneratorMultipassCB) ──────────
+; Plan 02-08: swapped from VoxelGeneratorScript (terrain_generator.gd) to
+; VoxelGeneratorMultipassCB (multipass_generator.gd). Same world_seed; two passes.
+[sub_resource type="VoxelGeneratorMultipassCB" id="1_genobj"]
+script = ExtResource("1_tgen")
+world_seed = 1234
+
+; ─── Air model (VoxelBlockyModelEmpty — ID 0 = empty/air) ────────────────────
+[sub_resource type="VoxelBlockyModelEmpty" id="3_air"]
+
+; ─── ID 1: Grass — GRASSLAND_FOREST surface (#6BB845, Phase 1 locked colour) ─
+[sub_resource type="VoxelBlockyModelCube" id="2_grass"]
+color = Color(0.420, 0.722, 0.271, 1)
+
+; ─── ID 2: Sand — DESERT surface / OCEAN seabed (#C9A86A from desert brief) ──
+[sub_resource type="VoxelBlockyModelCube" id="4_sand"]
+color = Color(0.788, 0.659, 0.416, 1)
+
+; ─── ID 3: Snow — SNOW surface (#BFEAF5 ice-white from snow brief) ────────────
+[sub_resource type="VoxelBlockyModelCube" id="5_snow"]
+color = Color(0.749, 0.918, 0.961, 1)
+
+; ─── ID 4: Stone — deep underground, all biomes (#707A82) ─────────────────────
+[sub_resource type="VoxelBlockyModelCube" id="6_stone"]
+color = Color(0.439, 0.478, 0.510, 1)
+
+; ─── ID 5: Sandstone — DESERT sub-surface (#C9A86A darker, #B8945A) ──────────
+[sub_resource type="VoxelBlockyModelCube" id="7_sandstone"]
+color = Color(0.722, 0.580, 0.353, 1)
+
+; ─── ID 6: Ice — SNOW shallow sub-surface (#BFEAF5 same tint as snow surface) ─
+[sub_resource type="VoxelBlockyModelCube" id="8_ice"]
+color = Color(0.749, 0.918, 0.961, 1)
+
+; ─── ID 7: Water — OCEAN water column (#2A7BBC at 0.25α; non-collidable) ──────
+; transparency_mode = 1 = TRANSPARENT; collision disabled (no collidable geometry)
+; QA: 0.6α read too opaque — dropped to 0.25 so water is clearly see-through.
+[sub_resource type="VoxelBlockyModelCube" id="9_water"]
+color = Color(0.165, 0.471, 0.737, 0.25)
+transparency_index = 1
+culls_neighbors = false
+collision_enabled_0 = false
+collision_mask = 0
+
+; ─── ID 8: Jungle grass — JUNGLE surface (#5CE86A from jungle brief) ──────────
+[sub_resource type="VoxelBlockyModelCube" id="10_jungle_grass"]
+color = Color(0.361, 0.910, 0.416, 1)
+
+; ─── ID 9: Savannah grass — SAVANNAH surface (#FFB84D from savannah brief) ────
+[sub_resource type="VoxelBlockyModelCube" id="11_savannah_grass"]
+color = Color(1.000, 0.722, 0.302, 1)
+
+; ─── ID 10: Wood log — tree-column voxel (#7A4A23 = BrickPalette brown=15) ────
+[sub_resource type="VoxelBlockyModelCube" id="12_wood_log"]
+color = Color(0.478, 0.290, 0.137, 1)
+
+; ─── ID 11: Dirt — sub-surface GRASSLAND_FOREST/JUNGLE/SAVANNAH (#6B4A2F) ────
+; Also referenced by assets/bricks/voxel_blocks/dirt.tres (the brick form).
+[sub_resource type="VoxelBlockyModelCube" id="13_dirt"]
+color = Color(0.420, 0.290, 0.184, 1)
+
+; ─── ID 12: Leaves — tree canopy voxel (#3E8024 dark forest green) ───────────
+; transparency_mode = 1 = TRANSPARENT so interior faces cull correctly.
+; culls_neighbors = false so leaf faces adjacent to air always render (sparse canopy).
+[sub_resource type="VoxelBlockyModelCube" id="14_leaves"]
+color = Color(0.243, 0.502, 0.141, 1)
+transparency_index = 1
+culls_neighbors = false
+
+; ─── VoxelBlockyLibrary: 13 models (air + 12 terrain blocks) ─────────────────
+; Index order MUST match multipass_generator.gd constants (AIR_ID=0, GRASS_ID=1, …, LEAVES_ID=12).
+[sub_resource type="VoxelBlockyLibrary" id="4_library"]
+models = [SubResource("3_air"), SubResource("2_grass"), SubResource("4_sand"), SubResource("5_snow"), SubResource("6_stone"), SubResource("7_sandstone"), SubResource("8_ice"), SubResource("9_water"), SubResource("10_jungle_grass"), SubResource("11_savannah_grass"), SubResource("12_wood_log"), SubResource("13_dirt"), SubResource("14_leaves")]
+
+; ─── VoxelMesherBlocky wired with the library ────────────────────────────────
+[sub_resource type="VoxelMesherBlocky" id="5_mesher"]
+library = SubResource("4_library")
+
+; ─── Root VoxelTerrain ───────────────────────────────────────────────────────
+[node name="Terrain" type="VoxelTerrain"]
+mesher = SubResource("5_mesher")
+generator = SubResource("1_genobj")
+collision_layer = 1
+collision_mask = 0
+generate_collisions = true
+
+; NOTE: VoxelViewer is NOT added here — it lives in main_scene.tscn as a child
+; of Builder so it follows the player's position (see CONTEXT.md D-05).
+; The terrain has no standalone viewer; without a VoxelViewer in the scene the
+; terrain simply won't stream (used only when instantiated from main_scene).

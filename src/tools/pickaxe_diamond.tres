@@ -1,0 +1,22 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; pickaxe_diamond.tres — ToolDefinition for the diamond pickaxe (tier 3).
+; Best tier; breaks all ore types with maximum efficiency.
+; max_durability = 500.
+
+[gd_resource type="Resource" script_class="ToolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/tools/tool_definition.gd" id="1_tooldef"]
+
+[resource]
+script = ExtResource("1_tooldef")
+tool_id = "pickaxe_diamond"
+display_name_key = "tools.pickaxe_diamond.name"
+icon_path = "res://assets/textures/icons/pickaxe_diamond.png"
+category = 0
+tier = 3
+max_durability = 500
+dynamite_radius_m = 5.0
+lantern_light_radius_m = 8.0
+mesh = null

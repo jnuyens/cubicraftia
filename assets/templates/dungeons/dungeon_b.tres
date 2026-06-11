@@ -1,0 +1,67 @@
+[gd_resource type="Resource" script_class="BrickTemplate" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; dungeon_b.tres — Deep dungeon variant B.
+; L-shaped chamber with side alcove, copper and iron ore veins, torches on pillar.
+; Palette: stone/cobblestone natural, copper_ore/iron_ore natural.
+; Contains bronze chest in alcove corner.
+; DOCS.md §2 — dungeon structure; CONTEXT.md D-08 (rare, deep underground).
+; allowed_biomes = [] means any biome — placement gated by depth in structure_placer.
+
+[ext_resource type="Script" path="res://src/bricks/brick_template.gd" id="1_btmpl"]
+
+[resource]
+script = ExtResource("1_btmpl")
+bricks = [
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(1, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(2, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(3, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(4, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(5, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 1, 5)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(1, 1, 5)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(2, 1, 5)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(3, 1, 5)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 1, 2)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 1, 2)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 5)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 8)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(6, 1, 5)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(6, 1, 8)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(5, 1, 5)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(5, 1, 8)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 2, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 2, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 2, 5)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(3, 2, 5)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 2, 5)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(6, 2, 8)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 3, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 3, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 4, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 4, 0)},
+	{"def_id": "iron_ore",   "colour_index": -1, "cell": Vector3i(0, 2, 2)},
+	{"def_id": "iron_ore",   "colour_index": -1, "cell": Vector3i(6, 2, 4)},
+	{"def_id": "copper_ore", "colour_index": -1, "cell": Vector3i(2, 2, 0)},
+	{"def_id": "copper_ore", "colour_index": -1, "cell": Vector3i(5, 2, 8)},
+	{"def_id": "diamond_ore","colour_index": -1, "cell": Vector3i(3, 3, 2)},
+	{"def_id": "round_2x2_brick","colour_index": 2, "cell": Vector3i(3, 1, 2)},
+	{"def_id": "round_2x2_brick","colour_index": 2, "cell": Vector3i(3, 2, 2)},
+	{"def_id": "round_2x2_brick","colour_index": 2, "cell": Vector3i(3, 3, 2)},
+	{"def_id": "torch",      "colour_index": 5,  "cell": Vector3i(3, 4, 2)},
+	{"def_id": "torch",      "colour_index": 5,  "cell": Vector3i(0, 3, 3)},
+	{"def_id": "torch",      "colour_index": 5,  "cell": Vector3i(5, 3, 6)},
+	{"def_id": "brick_1x2", "colour_index": 3,  "cell": Vector3i(1, 0, 1)},
+	{"def_id": "brick_1x2", "colour_index": 3,  "cell": Vector3i(5, 0, 4)}
+]
+terrain_overrides = []
+loot_chests = [
+	{"chest_type": "bronze", "cell": Vector3i(5, 1, 7)}
+]
+npc_spawns = []
+bbox = AABB(0, 0, 0, 7, 5, 9)
+allowed_biomes = Array[int]([])

@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_flint_and_steel.tres — generated to wire the art-crafting card for flint_and_steel.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_flint_and_steel"
+display_name_key = "recipes.flint_and_steel.name"
+inputs = [{"def_id": "iron_ore", "count": 1, "slot": 0}, {"def_id": "coal", "count": 1, "slot": 3}]
+output_def_id = "flint_and_steel"
+output_count = 1
+shaped = true
+grid_size = 2

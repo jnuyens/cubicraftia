@@ -1,0 +1,54 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; toast.tscn — Reusable toast notification widget.
+;
+; Per UI-SPEC.md §Toast Notification Pattern:
+;   Pill shape, PanelContainer with StyleBoxFlat corner radius 16.
+;   Background: #1B2C56 at 0.92α.
+;   Left border 4px: #F5C30D (info) or #D63828 (error).
+;   Body: 16px regular #F1F0EA.
+;   4-second auto-dismiss, 250ms fade-in/out (Tween, ease-out cubic).
+;   Tappable to dismiss early.
+;   Max one toast on screen — newer replaces older with crossfade.
+;
+; Connects to Toasts.toast_requested signal on _ready.
+; Toasts autoload calls Toasts.show(key, severity) to trigger.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/toast.gd" id="1_toast"]
+
+; ─── Panel StyleBox (default info style) ───────────────────────────────────
+[sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
+bg_color = Color(0.106, 0.173, 0.337, 0.92)
+border_width_left = 4
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+border_color = Color(0.961, 0.765, 0.051, 1.0)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_left = 16
+corner_radius_bottom_right = 16
+content_margin_left = 24.0
+content_margin_top = 16.0
+content_margin_right = 24.0
+content_margin_bottom = 16.0
+
+[node name="Toast" type="PanelContainer"]
+visible = false
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 0
+script = ExtResource("1_toast")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_panel")
+
+[node name="Label" type="Label" parent="Panel"]
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+theme_override_font_sizes/font_size = 16

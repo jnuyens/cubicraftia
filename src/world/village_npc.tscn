@@ -1,0 +1,40 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; village_npc.tscn — Peaceful wandering builder NPC (D-09 atmosphere-only inhabitant).
+;
+; Structure mirrors the Phase 1 builder figure (CharacterBody3D + CapsuleShape3D collider)
+; but intentionally uses a separate class (VillageNpc, NOT extending Builder) so Phase 3's
+; hostile-mob AI architecture remains free to differ per CONTEXT.md Integration Points.
+;
+; Phase 2 body: coloured capsule mesh (cube body + cube head placeholder) with per-instance
+; modulate colour set via VillageNpc.set_skin_variant(). Full figure mesh is a future art pass.
+;
+; DOCS.md §2 — village inhabitants (D-09); CONTEXT.md D-09 boundary note.
+
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/world/village_npc.gd" id="1_npc"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.4
+height = 1.8
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.35
+height = 1.6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.788, 0.659, 0.416, 1)
+
+[node name="VillageNpc" type="CharacterBody3D"]
+script = ExtResource("1_npc")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")

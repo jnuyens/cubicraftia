@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_helmet_diamond.tres — generated to wire the art-crafting card for helmet_diamond.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_helmet_diamond"
+display_name_key = "recipes.helmet_diamond.name"
+inputs = [{"def_id": "diamond_ore", "count": 1, "slot": 0}, {"def_id": "diamond_ore", "count": 1, "slot": 1}, {"def_id": "diamond_ore", "count": 1, "slot": 2}, {"def_id": "diamond_ore", "count": 1, "slot": 3}, {"def_id": "diamond_ore", "count": 1, "slot": 5}]
+output_def_id = "helmet_diamond"
+output_count = 1
+shaped = true
+grid_size = 3

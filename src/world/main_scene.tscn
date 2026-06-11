@@ -1,0 +1,287 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; main_scene.tscn — Phase 2 root scene (Plan 02-06: day/night + biome sky wiring).
+;                   Updated Plan 02-08: Terrain (terrain.tscn) now uses
+;                   multipass_generator.gd (VoxelGeneratorMultipassCB) with
+;                   pass-0 base terrain + pass-1 mineshaft carving at Y < -8.
+;                   Updated Plan 02-14: Rain VFX — GPUParticles3D child of Camera3D
+;                   named "RainParticles"; RainVignette ColorRect on a CanvasLayer.
+;
+; Extends Plan 04/05 scene with:
+;   - Sun DirectionalLight3D: light_cull_mask=1 (CHANNEL_VISUAL_MASK per Pitfall 9)
+;   - Moon DirectionalLight3D: opposite Sun, dim cool light, light_cull_mask=1
+;   - WorldEnvironment: sky material = ShaderMaterial with sky_procedural.gdshader
+;     bound; day_progress uniform updated per-frame by main_scene.gd from WorldClock
+;   - Lighting channel partition (Pitfall 9 mitigation):
+;       Channel 1 (CHANNEL_VISUAL_MASK): sun, moon, placed lanterns — affects spawn suppression
+;       Channel 2 (CHANNEL_BUILDER_ONLY): handheld lantern only — does NOT suppress spawns
+;   - RainParticles: GPUParticles3D child of Builder/Camera3D; toggled by Weather.state_changed
+;   - RainVignette: ColorRect on UI CanvasLayer; #1B2C56 at 0.08α; toggled with rain
+;
+; Wires:
+;   - Terrain (terrain.tscn): VoxelTerrain with 12-model VoxelBlockyLibrary (Plan 02-06)
+;   - Builder (builder.tscn): CharacterBody3D at Vector3(0, 32, 0)
+;   - VoxelViewer (child of Builder): view_distance=80
+;   - StudGrid (Plan 05): sparse stud-grid for placed bricks
+;   - BrickRenderer (Plan 05): MultiMeshInstance3D for GPU-batched brick rendering
+
+[gd_scene load_steps=24 format=3]
+
+[ext_resource type="PackedScene" path="res://src/world/terrain.tscn" id="1_terrain"]
+[ext_resource type="PackedScene" path="res://src/builder/builder.tscn" id="2_builder"]
+[ext_resource type="Script" path="res://src/world/stud_grid.gd" id="3_studgrid"]
+[ext_resource type="Resource" path="res://src/bricks/brick_1x1.tres" id="4_brick1x1"]
+[ext_resource type="PackedScene" path="res://src/ui/mobile_overlay.tscn" id="5_overlay"]
+[ext_resource type="PackedScene" path="res://src/ui/toast.tscn" id="6_toast"]
+[ext_resource type="PackedScene" path="res://src/ui/first_launch_disclaimer.tscn" id="7_disclaimer"]
+[ext_resource type="Script" path="res://src/world/main_scene.gd" id="8_main_scene"]
+[ext_resource type="Shader" path="res://assets/shaders/sky_procedural.gdshader" id="9_skyshader"]
+[ext_resource type="Script" path="res://src/ui/ghost_preview.gd" id="10_ghost_preview"]
+[ext_resource type="PackedScene" path="res://src/ui/crosshair.tscn" id="11_crosshair"]
+[ext_resource type="PackedScene" path="res://src/ui/hp_bar.tscn" id="12_hp_bar"]
+[ext_resource type="PackedScene" path="res://src/ui/death_screen.tscn" id="13_death_screen"]
+[ext_resource type="PackedScene" path="res://src/ui/inventory_slide_in_sidebar.tscn" id="14_inventory_slide_in"]
+
+; ─── Sky shader material (procedural sky bound to sky_procedural.gdshader) ────
+; day_progress = 0.5 initial (mid-day). main_scene.gd updates per-frame.
+[sub_resource type="ShaderMaterial" id="1_sky_mat"]
+shader = ExtResource("9_skyshader")
+shader_parameter/day_progress = 0.5
+shader_parameter/dawn_tint = Color(1.0, 0.7, 0.5, 1.0)
+shader_parameter/day_tint = Color(0.36, 0.66, 0.98, 1.0)
+shader_parameter/dusk_tint = Color(0.950, 0.451, 0.298, 1.0)
+shader_parameter/night_tint = Color(0.051, 0.051, 0.180, 1.0)
+
+; ─── Sky resource with the procedural shader material ────────────────────────
+[sub_resource type="Sky" id="2_sky"]
+sky_material = SubResource("1_sky_mat")
+
+; ─── Environment using the sky ─────────────────────────────────────────────────
+[sub_resource type="Environment" id="3_env"]
+background_mode = 2
+sky = SubResource("2_sky")
+sky_custom_fov = 0.0
+sky_rotation = Vector3(0, 0, 0)
+ambient_light_source = 2
+ambient_light_color = Color(0.82, 0.85, 0.9, 1)
+ambient_light_energy = 0.55
+fog_enabled = false
+volumetric_fog_enabled = false
+glow_enabled = false
+ssao_enabled = false
+ssil_enabled = false
+sdfgi_enabled = false
+adjustment_enabled = true
+adjustment_brightness = 1.03
+adjustment_contrast = 1.06
+adjustment_saturation = 1.18
+
+; ─── MultiMesh for placed bricks (Phase 1: one type, grey plastic) ────────────
+[sub_resource type="MultiMesh" id="4_multimesh"]
+transform_format = 1
+mesh = null
+instance_count = 0
+
+; ─── Rain particle material (white-blue water streak) ────────────────────────
+; A simple StandardMaterial3D for rain streaks in Phase 2 (art-pass deferred).
+[sub_resource type="StandardMaterial3D" id="5_rain_mat"]
+transparency = 1
+albedo_color = Color(0.85, 0.90, 1.0, 0.6)
+shading_mode = 0
+billboard_mode = 0
+
+; ─── Rain particle mesh (thin elongated quad = streak appearance) ─────────────
+[sub_resource type="QuadMesh" id="6_rain_mesh"]
+size = Vector2(0.05, 0.4)
+material = SubResource("5_rain_mat")
+
+; ─── Rain process material: spawn in a wide box above the camera and fall ──────
+; Without a process material the streaks are frozen in place and ride the camera.
+; A downward gravity + a wide emission box makes the rain actually fall through
+; view. emission_box_extents matches the old static box the comment referenced.
+[sub_resource type="ParticleProcessMaterial" id="7_rain_process"]
+emission_shape = 3
+emission_box_extents = Vector3(20.0, 1.0, 20.0)
+direction = Vector3(0.0, -1.0, 0.0)
+spread = 0.0
+gravity = Vector3(0.0, -28.0, 0.0)
+initial_velocity_min = 6.0
+initial_velocity_max = 9.0
+
+; ─── Root node ───────────────────────────────────────────────────────────────
+[node name="Main" type="Node3D"]
+script = ExtResource("8_main_scene")
+
+; ─── WorldEnvironment (sky shader + ambient) ─────────────────────────────────
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("3_env")
+
+; ─── Sun (Directional light — CHANNEL_VISUAL_MASK = 1) ───────────────────────
+; light_cull_mask = 1 → Channel 1 (visual channel: affects spawn suppression).
+; Shadows OFF per DOCS.md §7.2 Tier-3 mobile: no shadow rendering.
+; Rotation is updated per-frame by main_scene.gd from WorldClock.current_day_progress().
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.35, 0.354, 0, 0.710, 0.703, -0.5, -0.607, 0.613, 0, 0, 0)
+shadow_enabled = false
+light_energy = 1.2
+light_cull_mask = 1
+
+; ─── Moon (counter-rotating dim cool light — CHANNEL_VISUAL_MASK = 1) ─────────
+; light_cull_mask = 1 → same visual channel as Sun (a placed lantern-style light).
+; Moon is in the visual channel because nighttime "placed" lighting matters for spawns.
+; dim cool blue-grey colour (#7B8AAB), energy 0.25 — a dim moonlit night.
+; initial transform is Sun rotated PI on X axis (points opposite Sun at scene load).
+[node name="Moon" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, 0.35, -0.354, 0, 0.710, -0.703, 0.5, -0.607, -0.613, 0, 0, 0)
+shadow_enabled = false
+light_color = Color(0.482, 0.541, 0.671, 1)
+light_energy = 0.25
+light_cull_mask = 1
+
+; ─── Terrain (instances terrain.tscn with 12-model VoxelBlockyLibrary) ────────
+[node name="Terrain" parent="." instance=ExtResource("1_terrain")]
+
+; ─── Builder (instances builder.tscn, spawned high to fall onto terrain) ──────
+; Y=32 is above the tallest possible terrain height (sea_level=12 + amplitude=8 = 20)
+; so the builder will always fall onto terrain after generation.
+[node name="Builder" parent="." instance=ExtResource("2_builder")]
+position = Vector3(0, 32, 0)
+
+; ─── VoxelViewer: drives chunk streaming from the builder's position ──────────
+; Placed as child of Builder so it follows the player position automatically.
+; view_distance=80 = 5 chunks × 16 m (D-05 Tier-3 mobile target).
+[node name="VoxelViewer" type="VoxelViewer" parent="Builder"]
+view_distance = 80
+requires_visuals = true
+requires_collisions = true
+
+; ─── RainParticles (Plan 02-14): GPUParticles3D child of the FPV Camera3D ────
+; Parented to Builder/Camera3D so rain streaks follow the player view in FPV mode.
+; For CHASE camera, main_scene.gd re-parents to ChaseCamera if needed; Phase 2
+; keeps it on Camera3D (FPV) and it is still visible via CanvasLayer vignette.
+; emitting=false at scene load — toggled by _on_weather_state_changed in main_scene.gd.
+; amount=500 for Tier-1/Tier-2; adaptive-quality "low" preset sets amount=100.
+; emission_box_extents covers a wide screen-space area above the camera.
+; T-14-03 mitigation: Tier-3 adaptive-quality preset reduces amount to 100.
+[node name="RainParticles" type="GPUParticles3D" parent="Builder/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, -5)
+emitting = false
+amount = 500
+lifetime = 2.0
+explosiveness = 0.0
+randomness = 0.2
+visibility_aabb = AABB(-30, -10, -30, 60, 40, 60)
+draw_pass_1 = SubResource("6_rain_mesh")
+process_material = SubResource("7_rain_process")
+
+; ─── StudGrid (Plan 05): sparse hash map for placed bricks ───────────────────
+; Sibling of Builder so builder.gd can reach it via "../StudGrid".
+; Emits placed/removed signals that BrickRenderer subscribes to via builder.gd.
+[node name="StudGrid" type="Node" parent="."]
+script = ExtResource("3_studgrid")
+
+; ─── BrickRenderer (Plan 05): GPU-batched MultiMeshInstance3D for placed bricks
+; MultiMesh starts empty (instance_count=0); builder.gd grows it on place signals.
+; Phase 1: one MultiMesh per brick type. Phase 2 will add per-type/colour instances.
+[node name="BrickRenderer" type="MultiMeshInstance3D" parent="."]
+multimesh = SubResource("4_multimesh")
+
+; ─── GhostPreview (Plan 02-09): transparent placement-feedback MeshInstance3D ───
+; Follows predicted brick placement every _process frame. White 0.35α = valid;
+; red 0.35α = invalid. Supports set_mode("full"|"outline_only") for Plan 14 Tier-3.
+; Sibling of BrickRenderer in the 3D scene (not a UI Control — lives in world space).
+[node name="GhostPreview" type="MeshInstance3D" parent="."]
+script = ExtResource("10_ghost_preview")
+
+; ─── UI CanvasLayer (Plan 06) ─────────────────────────────────────────────────
+; Contains MobileOverlay (hides on desktop), Toast (Toasts autoload drives it),
+; Crosshair (centre-of-screen reticle), and FirstLaunchDisclaimer.
+[node name="UI" type="CanvasLayer" parent="."]
+layer = 10
+
+; Mobile control overlay (self-hides on desktop via OS.has_feature check in _ready)
+[node name="MobileOverlay" parent="UI" instance=ExtResource("5_overlay")]
+
+; Toast widget — invisible initially; Toasts autoload signal drives it.
+[node name="Toast" parent="UI" instance=ExtResource("6_toast")]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -220.0
+offset_right = 200.0
+offset_bottom = -160.0
+
+; Crosshair (Plan 02-09): 12×12px + cross at screen centre, #F1F0EA with navy drop-shadow.
+; Hidden on mobile when palette bottom sheet expands (mobile_overlay.gd manages visibility).
+[node name="Crosshair" parent="UI" instance=ExtResource("11_crosshair")]
+
+; ─── RainVignette (Plan 02-14): subtle full-screen overlay when raining ───────
+; Colour = #1B2C56 at 0.08α per UI-SPEC.md "Surface (rain overlay)".
+; mouse_filter = IGNORE (T-14-04 mitigation) so UI beneath receives input unimpeded.
+; visible=false at scene load — toggled together with RainParticles.emitting.
+[node name="RainVignette" type="ColorRect" parent="UI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.106, 0.173, 0.337, 0.08)
+mouse_filter = 2
+visible = false
+
+; First-launch disclaimer (shows on first run, gated by user://settings.cfg).
+[node name="FirstLaunchDisclaimer" parent="UI" instance=ExtResource("7_disclaimer")]
+
+; ─── Plan 03-04: HpBar (10-heart HP bar, survival mode only) ─────────────────
+; Anchored top-left, 16px from edge + safe-area inset per UI-SPEC L72.
+; hp_bar.gd hides itself automatically in sandbox mode (Features.is_survival_mode).
+[node name="HpBar" parent="UI" instance=ExtResource("12_hp_bar")]
+layout_mode = 0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 16.0
+offset_top = 16.0
+
+; ─── Plan 03-04: DeathScreen (3-second fade-to-black overlay on death) ────────
+; Full-rect anchored; mouse_filter=STOP (blocks interaction during death).
+; Hidden at scene load; start_fade() called by Builder._on_death.
+[node name="DeathScreen" parent="UI" instance=ExtResource("13_death_screen")]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+; ─── Plan 03-05: InventorySlideIn (right-side sidebar, desktop variant) ──────
+; Hidden at scene load. Opens via ui_inventory_toggle action from Builder, the
+; mobile_overlay's inventory button, or walk-up interact at a chest/workbench.
+; The scene connects to Builder.inventory_toggle_requested in its _ready hook.
+[node name="InventorySlideIn" parent="UI" instance=ExtResource("14_inventory_slide_in")]
+
+; ─── Plan 03-04: DamageVignette (red flash ColorRect on take_damage) ──────────
+; Full-rect; colour = #D63828 at alpha=0 (visible only during tween in Builder.take_damage).
+; mouse_filter=IGNORE so it does not block input even at peak alpha (T-03-04-DEATH-01).
+; Added to group "damage_vignette" so Builder.take_damage can find it via group lookup.
+[node name="DamageVignette" type="ColorRect" parent="UI" node_groups=["damage_vignette"]]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.839, 0.220, 0.157, 0.0)
+mouse_filter = 2

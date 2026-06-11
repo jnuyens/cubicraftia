@@ -1,0 +1,20 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_dynamite.tres — Shapeless dynamite: 3 sand + 1 copper ore → 1 dynamite.
+; Using sand + ore as a combustible analogue (no gunpowder in v1 manifest).
+; D-07: recipe ratios at Claude's discretion. Ref: 03-07a-SUMMARY.md.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_dynamite"
+display_name_key = "recipes.dynamite.name"
+inputs = [{"def_id": "sand", "count": 3, "slot": -1}, {"def_id": "copper_ore", "count": 1, "slot": -1}]
+output_def_id = "dynamite"
+output_count = 1
+shaped = false
+grid_size = 3

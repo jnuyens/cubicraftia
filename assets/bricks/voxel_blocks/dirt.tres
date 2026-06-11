@@ -1,0 +1,22 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; dirt.tres — VoxelBlockyModelCube for the dirt terrain block.
+;
+; Used as DIRT_ID = 11 in terrain_generator.gd (sub-surface for GRASSLAND_FOREST,
+; JUNGLE, and SAVANNAH biomes — first ~3 layers below the surface).
+;
+; Albedo colour: #6B4A2F — an earthy dark brown, distinct from wood_log (#7A4A23)
+; but in the same earth-tone family. Sourced from the grassland_forest biome brief
+; §5 "Terrain palette: dirt (sub-surface)".
+;
+; Collision: solid (collision_mask = 1). Water is the only non-collidable block.
+;
+; References:
+;   terrain_generator.gd — DIRT_ID = 11 constant
+;   src/world/terrain.tscn — VoxelBlockyLibrary index 11
+
+[gd_resource type="VoxelBlockyModelCube" format=3]
+
+[resource]
+color = Color(0.420, 0.290, 0.184, 1)

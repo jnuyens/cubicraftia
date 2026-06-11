@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; key_bronze.tres — ItemDefinition for the bronze chest key.
+; Found in: creature kills in dim caves + lower-tier chest loot (03-CONTEXT.md D-04).
+; Consumed on first-use UNLOCK of a bronze chest (Pitfall 6 — validated by Inventory autoload).
+; TODO Phase 3 polish: replace icon_path with actual key_bronze.png asset.
+
+[ext_resource type="Script" path="res://src/items/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+item_id = "key_bronze"
+display_name_key = "items.key_bronze.name"
+icon_path = "res://assets/textures/icons/key_bronze.png"
+category = "key"
+max_stack = 64
+tier = "bronze"
+heal_amount = 0
+consumed_on_use = true

@@ -1,0 +1,22 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; eula_acknowledge_modal.tscn — EULA re-acknowledge gate modal.
+;
+; Architecture: CanvasLayer layer 20 (blocks all interaction below).
+; All UI is built procedurally in eula_acknowledge_modal.gd _build_ui().
+;
+; Usage: load and instantiate this scene, add to the root of the SceneTree,
+; then call .show(). The modal blocks interaction until the user chooses
+; "Review Terms" (→ agrees to EULA) or "Sign out".
+;
+; Boot hook: main_scene.gd checks FriendsClient.check_eula_acknowledgement()
+; after sign-in. If false, this scene is instantiated and shown.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/eula_acknowledge_modal.gd" id="1_eula_modal"]
+
+[node name="EulaAcknowledgeModal" type="CanvasLayer"]
+layer = 20
+script = ExtResource("1_eula_modal")

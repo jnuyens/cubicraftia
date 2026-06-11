@@ -1,0 +1,109 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; brick_palette_bottomsheet.tscn — Mobile bottom-sheet brick palette layout.
+;
+; Per UI-SPEC.md §"Mobile Bottom Sheet" (Brick Palette Layout Specification):
+;   - anchor_top=0.5, anchor_bottom=1.0 (covers ~50% of viewport height when expanded)
+;   - StyleBoxFlat: #1B2C56 at 0.92α, corner_radius 16 on top-left + top-right
+;   - VBoxContainer with:
+;       Control "DragHandle" (16px visible, 48dp hit area, mouse_filter=STOP)
+;       HBoxContainer "Header" (EquippedPreview 72×72 + Search LineEdit)
+;       HBoxContainer "CategoryChips" (scrollable)
+;       ScrollContainer → GridContainer "PaletteGrid" (5 cols, tile 56×56)
+;
+; BrickPaletteUI.gd attached with layout="bottomsheet".
+; Gesture handling (_on_drag_handle_input) is wired in script _ready().
+; The bottom sheet starts collapsed (position.y at collapsed_y, only drag-handle visible).
+;
+; Crosshair integration: open()/close() call MobileOverlay._set_palette_open(bool).
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/brick_palette.gd" id="1_palette"]
+
+; ─── Root PanelContainer ──────────────────────────────────────────────────────
+; Bottom-wide anchor: sits at bottom of screen, 50% height when expanded
+[node name="BrickPaletteBottomsheet" type="PanelContainer"]
+anchor_left = 0.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+script = ExtResource("1_palette")
+layout = "bottomsheet"
+
+; ─── VBoxContainer (main column) ─────────────────────────────────────────────
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+add_theme_constant_override("separation") = 8
+
+; ─── Drag Handle ──────────────────────────────────────────────────────────────
+; Visible: 16px. Hit area extended to 48dp via custom_minimum_size + STOP mouse_filter
+; per UI-SPEC.md §Spacing "Drag handle hit area (mobile bottom sheet): 48dp"
+[node name="DragHandle" type="Control" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 48)
+mouse_filter = 0
+
+; Visual drag handle bar (centred, 40px wide × 4px tall, grey)
+[node name="HandleBar" type="ColorRect" parent="VBox/DragHandle"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -2.0
+offset_right = 20.0
+offset_bottom = 2.0
+color = Color(0.945, 0.941, 0.918, 0.4)
+
+; ─── Header row (EquippedPreview + Search) ────────────────────────────────────
+[node name="Header" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+add_theme_constant_override("separation") = 8
+
+; Equipped brick preview (72×72 per UI-SPEC.md mobile bottom sheet spec)
+[node name="EquippedPreview" type="SubViewportContainer" parent="VBox/Header"]
+layout_mode = 2
+custom_minimum_size = Vector2(72, 72)
+stretch = true
+
+; Search field (flex-fills remaining width)
+[node name="Search" type="LineEdit" parent="VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 40)
+placeholder_text = "Search bricks…"
+
+; ─── Category chips row ───────────────────────────────────────────────────────
+[node name="CategoryChips" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 36)
+add_theme_constant_override("separation") = 8
+
+; ─── Colour swatches (hidden by default — revealed by tapping Colour chip) ────
+[node name="ColourSwatches" type="GridContainer" parent="VBox"]
+layout_mode = 2
+columns = 10
+visible = false
+add_theme_constant_override("h_separation") = 4
+add_theme_constant_override("v_separation") = 4
+
+; ─── Scrollable palette grid (5 cols, tiles 56×56) ───────────────────────────
+[node name="PaletteScroll" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PaletteGrid" type="GridContainer" parent="VBox/PaletteScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 5
+add_theme_constant_override("h_separation") = 8
+add_theme_constant_override("v_separation") = 8

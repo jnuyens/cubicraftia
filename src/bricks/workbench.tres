@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; workbench.tres — BrickDefinition for the workbench brick (2×2, 3 plates tall).
+; Mesh: null placeholder until art pass (brick-mesh-null-phase2 STATE.md decision).
+; This brick is the output of recipe_workbench (Plan 03-07a) and is placed in the world
+; as a WorkbenchEntity (Plan 03-07b) that opens the 3×3 crafting panel.
+; Non-colour-swappable: workbench has a fixed wooden colour (D-03).
+;
+; TODO Phase 3 polish: replace mesh with distinct workbench .glb showing a saw + planks on top.
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "workbench"
+display_name_key = "ui.workbench.title"
+dimensions = Vector3i(2, 1, 2)
+height_plates = 3
+studs_top = [{"x": 0.0, "y": 1.0, "z": 0.0, "gender": "male"}, {"x": 0.0, "y": 1.0, "z": 1.0, "gender": "male"}, {"x": 1.0, "y": 1.0, "z": 0.0, "gender": "male"}, {"x": 1.0, "y": 1.0, "z": 1.0, "gender": "male"}]
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}, {"x": 0.0, "y": 0.0, "z": 1.0, "gender": "female"}, {"x": 1.0, "y": 0.0, "z": 0.0, "gender": "female"}, {"x": 1.0, "y": 0.0, "z": 1.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "wood"
+mesh = null
+category = 5
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 7
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(1, 0, 0), Vector3i(1, 0, 1)]
+icon_path = "res://assets/textures/icons/workbench.png"

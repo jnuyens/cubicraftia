@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; slime_cube.tres — BrickDefinition for the slime cube mob-drop brick.
+; natural_colour_token=8 (green #5DBB46 per BrickPalette index 8).
+; colour_swappable=false: slime's distinctive green + wobble shader (D-02) must not be overridden.
+; Mesh: assets/meshes/slime_cube.glb (null until Plan 02-09).
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "slime_cube"
+display_name_key = "bricks.slime_cube.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 3
+studs_top = []
+studs_bottom = []
+stud_profile = "concave_top"
+material_id = "slime"
+mesh = null
+category = 9
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 8
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0)]

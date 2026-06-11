@@ -1,0 +1,20 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_torch.tres — Coal on top + stick below → 4 torches (shaped, 2×2 grid).
+; Slot 0 = copper_ore (ember/coal substitute); slot 2 = stick.
+; D-07: recipe ratios at Claude's discretion. Ref: 03-07a-SUMMARY.md.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_torch"
+display_name_key = "recipes.torch.name"
+inputs = [{"def_id": "copper_ore", "count": 1, "slot": 0}, {"def_id": "stick", "count": 1, "slot": 2}]
+output_def_id = "torch"
+output_count = 4
+shaped = true
+grid_size = 2

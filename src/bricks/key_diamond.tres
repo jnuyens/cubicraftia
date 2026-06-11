@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; key_diamond.tres — ItemDefinition for the diamond chest key.
+; Found in: dungeon final-room (boss room) chests only — rarest key in v1 (03-CONTEXT.md D-04).
+; Consumed on first-use UNLOCK of a diamond chest (Pitfall 6 — validated by Inventory autoload).
+; TODO Phase 3 polish: replace icon_path with actual key_diamond.png asset.
+
+[ext_resource type="Script" path="res://src/items/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+item_id = "key_diamond"
+display_name_key = "items.key_diamond.name"
+icon_path = "res://assets/textures/icons/key_diamond.png"
+category = "key"
+max_stack = 64
+tier = "diamond"
+heal_amount = 0
+consumed_on_use = true

@@ -1,0 +1,394 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; cubicraftia.tres - Project-wide Theme resource per UI-SPEC.md Design System.
+;
+; Typography ladder (UI-SPEC §Typography):
+;   Body:    16px regular (400)  - Label font_size default
+;   Label:   14px semibold (600) - Button, section labels
+;   Heading: 20px semibold (600) - Panel titles, dialog titles
+;   Display: 28px semibold (600) - Reserved for Phase 6 title screen
+;
+; Color roles (UI-SPEC §Color):
+;   Dominant (60%): #1B2C56 navy (0.85 alpha for HUD panels)
+;   Secondary (30%): #F1F0EA brick white
+;   Accent (10%): #F5C30D brick yellow - selected hotbar slot ring, active Auto chip
+;   Destructive: #D63828 brick red - Reset button, error toast border
+;
+; NOTE: Font references are loaded at runtime by scripts after Godot imports them.
+; The Theme sets font sizes via per-control overrides; the actual FontFile is set
+; dynamically by src/autoload/features.gd _ready (or by the editor after import).
+; This avoids headless-mode import failures.
+
+[gd_resource type="Theme" format=3]
+
+; ─── StyleBoxes ──────────────────────────────────────────────────────────────
+
+; Button normal: navy 0.85 alpha, rounded 8, brick-white 1px border
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_normal"]
+bg_color = Color(0.106, 0.173, 0.337, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.945, 0.941, 0.918, 1.0)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+; Button hover: slightly lighter navy
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_hover"]
+bg_color = Color(0.15, 0.22, 0.40, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.945, 0.941, 0.918, 1.0)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+; Button pressed: accent yellow background
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_pressed"]
+bg_color = Color(0.961, 0.765, 0.051, 1.0)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+; Button disabled: 50% opacity navy
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_disabled"]
+bg_color = Color(0.106, 0.173, 0.337, 0.5)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.945, 0.941, 0.918, 0.4)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+; Focus outline: 2px yellow
+[sub_resource type="StyleBoxFlat" id="StyleBox_focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.961, 0.765, 0.051, 1.0)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+
+; PanelContainer: navy 0.92 alpha, rounded 16
+[sub_resource type="StyleBoxFlat" id="StyleBox_panel"]
+bg_color = Color(0.106, 0.173, 0.337, 0.92)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_left = 16
+corner_radius_bottom_right = 16
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+
+; ─── Phase 3: InventorySlot state StyleBoxes (Plan 03-05) ────────────────────
+; These are ADDITIVE — they do NOT mutate any Phase 1+2 entries.
+; Applied programmatically in inventory_slot.gd (not via theme override lookup)
+; so they do not affect PaletteTile or Hotbar visuals.
+
+; InventorySlot empty state: no fill, 1px brick-white stroke at 50% alpha.
+[sub_resource type="StyleBoxFlat" id="StyleBox_inv_slot_empty"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.945, 0.941, 0.914, 0.5)
+
+; InventorySlot filled state: navy 50% alpha fill, 1px brick-white stroke.
+[sub_resource type="StyleBoxFlat" id="StyleBox_inv_slot_filled"]
+bg_color = Color(0.106, 0.173, 0.337, 0.5)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.945, 0.941, 0.914, 0.6)
+
+; InventorySlot hover state: navy 85% alpha fill, 2px accent-yellow border.
+[sub_resource type="StyleBoxFlat" id="StyleBox_inv_slot_hover"]
+bg_color = Color(0.106, 0.173, 0.337, 0.85)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96, 0.76, 0.05, 1.0)
+
+; InventorySlot drop-target state: accent yellow 20% alpha fill, 2px accent-yellow border.
+[sub_resource type="StyleBoxFlat" id="StyleBox_inv_slot_drop_target"]
+bg_color = Color(0.96, 0.76, 0.05, 0.2)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.96, 0.76, 0.05, 1.0)
+
+; ─── Phase 4: Multiplayer UI StyleBoxes (Plan 04-03) ─────────────────────────
+; These are ADDITIVE — they do NOT mutate any Phase 1+2+3 entries.
+; Applied programmatically in Phase 4 UI components (SessionPanel, RelayBadge, ChatPanel).
+;
+; Semantic color reference (used directly as Color("#XXXXXX") literals in GDScript —
+; not theme lookups, because Theme does not have a named Color sub_resource type):
+;   online_green = #3DB560  (Color(0.239, 0.710, 0.376, 1.0))
+;   relay_amber  = #E8890C  (Color(0.910, 0.537, 0.047, 1.0))
+;   destructive  = #D63828  (Color(0.839, 0.220, 0.157, 1.0))
+
+; Secondary button: border-only, brick-white border on transparent background.
+; Used for "Cancel", "Leave session", and other secondary actions.
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_secondary"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.945, 0.941, 0.918, 0.80)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+; Destructive button: brick-red fill, used for "Kick", "Ban", "Reset" actions.
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_destructive"]
+bg_color = Color(0.839, 0.220, 0.157, 1.0)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+; Relay badge: amber fill for "RELAY" connection indicator pill.
+; Smaller content margin for compact inline badge usage.
+[sub_resource type="StyleBoxFlat" id="StyleBox_relay_badge"]
+bg_color = Color(0.910, 0.537, 0.047, 1.0)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+content_margin_left = 4.0
+content_margin_top = 2.0
+content_margin_right = 4.0
+content_margin_bottom = 2.0
+
+; Chat history panel: navy 80% alpha with rounded top-right corner only.
+; Matches UI-SPEC §ChatPanel "left-anchored slide-in" shape.
+[sub_resource type="StyleBoxFlat" id="StyleBox_chat_history_panel"]
+bg_color = Color(0.106, 0.173, 0.337, 0.80)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 0
+corner_radius_top_right = 16
+corner_radius_bottom_left = 0
+corner_radius_bottom_right = 0
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+
+; ─── Phase 5: Safety, Moderation & Store Readiness StyleBoxes (Plan 05-01) ──
+; These are ADDITIVE — they do NOT mutate any Phase 1+2+3+4 entries.
+; Applied programmatically in Phase 5 UI components (LegalViewer, RestrictedBanner, ContextMenu).
+; Spec reference: 05-UI-SPEC.md "Component Extensions to cubicraftia.tres".
+
+; Plain-language summary box in EULA/Privacy viewer:
+;   transparent background, 2px accent-yellow left border, 8px left+vertical padding.
+[sub_resource type="StyleBoxFlat" id="StyleBox_legal_summary"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+border_color = Color(0.961, 0.765, 0.051, 1.0)
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+
+; Restricted-account top banner: warning amber fill, no border, no rounding, zero margin.
+;   Text is centred via HBoxContainer inside; banner is flush with screen edges.
+[sub_resource type="StyleBoxFlat" id="StyleBox_warning_banner"]
+bg_color = Color(0.910, 0.537, 0.047, 1.0)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 0
+corner_radius_top_right = 0
+corner_radius_bottom_left = 0
+corner_radius_bottom_right = 0
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+
+; Context menu panel (friend row, chat, nameplate): dominant navy 0.96 alpha,
+;   rounded 8px, tighter content margin than the standard panel.
+[sub_resource type="StyleBoxFlat" id="StyleBox_context_menu_panel"]
+bg_color = Color(0.106, 0.173, 0.337, 0.96)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+
+; ─── Phase 6: Title screen StyleBoxes (Plan 06-03) ───────────────────────────
+; These are ADDITIVE — they do NOT mutate any Phase 1+2+3+4+5 entries.
+; Applied programmatically in title_scene.gd _build_ui() for the Continue button.
+; Spec reference: 06-UI-SPEC.md Surface 1 "Component Extensions to cubicraftia.tres".
+
+; Continue button (primary CTA): accent yellow fill #F5C30D, navy text, rounded 8.
+; Used exclusively for "Continue as {username}" on the title screen.
+[sub_resource type="StyleBoxFlat" id="StyleBox_button_continue"]
+bg_color = Color(0.961, 0.765, 0.051, 1.0)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+; ─── Phase 6: World Select StyleBoxes (Plan 06-05) ──────────────────────────
+; These are ADDITIVE — they do NOT mutate any Phase 1+2+3+4+5 entries.
+; Applied programmatically in world_select_screen.gd and new_world_modal (Surface 3 + 4).
+; Spec reference: 06-UI-SPEC.md "Component Extensions to cubicraftia.tres" StyleBox_world_card etc.
+
+; World card PanelContainer: navy 85% alpha, 1px subtle brick-white rim, 12px corners.
+; Hover state applied programmatically via mouse_entered/mouse_exited tween.
+[sub_resource type="StyleBoxFlat" id="StyleBox_world_card"]
+bg_color = Color(0.106, 0.173, 0.337, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.945, 0.941, 0.918, 0.15)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+content_margin_left = 16.0
+content_margin_top = 12.0
+content_margin_right = 16.0
+content_margin_bottom = 12.0
+
+; Creative mode badge: online green #3DB560 fill, no border, 12px corners, compact margin.
+; Text: 14px semibold, navy #1B2C56 (set via add_theme_color_override in GDScript).
+[sub_resource type="StyleBoxFlat" id="StyleBox_mode_badge_creative"]
+bg_color = Color(0.239, 0.710, 0.376, 1.0)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+
+; Survival mode badge: relay amber #E8890C fill, no border, 12px corners, compact margin.
+; Text: 14px semibold, navy #1B2C56 (set via add_theme_color_override in GDScript).
+[sub_resource type="StyleBoxFlat" id="StyleBox_mode_badge_survival"]
+bg_color = Color(0.910, 0.537, 0.047, 1.0)
+border_width_left = 0
+border_width_top = 0
+border_width_right = 0
+border_width_bottom = 0
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_left = 12
+corner_radius_bottom_right = 12
+content_margin_left = 6.0
+content_margin_top = 3.0
+content_margin_right = 6.0
+content_margin_bottom = 3.0
+
+; ─── Theme resource ──────────────────────────────────────────────────────────
+
+[resource]
+
+; Default font size (body 16px regular)
+default_font_size = 16
+
+; Label
+Label/font_sizes/font_size = 16
+Label/colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+; Button: navy background, brick-white text, rounded corners
+Button/font_sizes/font_size = 14
+Button/colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+Button/colors/font_pressed_color = Color(0.106, 0.173, 0.337, 1.0)
+Button/colors/font_hover_color = Color(1.0, 1.0, 1.0, 1.0)
+Button/colors/font_disabled_color = Color(0.945, 0.941, 0.918, 0.5)
+Button/styles/normal = SubResource("StyleBox_button_normal")
+Button/styles/hover = SubResource("StyleBox_button_hover")
+Button/styles/pressed = SubResource("StyleBox_button_pressed")
+Button/styles/disabled = SubResource("StyleBox_button_disabled")
+Button/styles/focus = SubResource("StyleBox_focus")
+
+; PanelContainer: navy 0.92 alpha, rounded 16
+PanelContainer/styles/panel = SubResource("StyleBox_panel")

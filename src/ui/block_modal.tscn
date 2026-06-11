@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://block_modal"]
+
+[ext_resource type="Script" path="res://src/ui/block_modal.gd" id="1_block_modal"]
+
+[node name="BlockModal" type="CanvasLayer"]
+layer = 20
+script = ExtResource("1_block_modal")

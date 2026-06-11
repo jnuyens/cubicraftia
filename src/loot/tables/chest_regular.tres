@@ -1,0 +1,68 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; chest_regular.tres — LootTable for regular chest contents.
+; Basic items: wood, food, torches. No keys.
+; min_rolls=2, max_rolls=5 → 2-5 item rolls per open.
+; Anchors: 03-CONTEXT.md D-04, 03-08a-PLAN.md Task 2.
+
+[gd_resource type="Resource" script_class="LootTable" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://src/loot/loot_table.gd" id="1_loottable"]
+[ext_resource type="Script" path="res://src/loot/loot_entry.gd" id="2_lootentry"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_lootentry")
+def_id = "wood_plank"
+weight = 30.0
+min_count = 1
+max_count = 4
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("2_lootentry")
+def_id = "wood_log"
+weight = 20.0
+min_count = 1
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("2_lootentry")
+def_id = "food_cooked_generic"
+weight = 15.0
+min_count = 1
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("2_lootentry")
+def_id = "stick"
+weight = 25.0
+min_count = 1
+max_count = 4
+
+[sub_resource type="Resource" id="Resource_5"]
+script = ExtResource("2_lootentry")
+def_id = "torch"
+weight = 10.0
+min_count = 1
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_6"]
+script = ExtResource("2_lootentry")
+def_id = "wheat"
+weight = 18.0
+min_count = 1
+max_count = 3
+
+[sub_resource type="Resource" id="Resource_7"]
+script = ExtResource("2_lootentry")
+def_id = "sugar_cane"
+weight = 14.0
+min_count = 1
+max_count = 2
+
+[resource]
+script = ExtResource("1_loottable")
+table_id = "chest_regular"
+min_rolls = 2
+max_rolls = 5
+entries = [SubResource("Resource_1"), SubResource("Resource_2"), SubResource("Resource_3"), SubResource("Resource_4"), SubResource("Resource_5"), SubResource("Resource_6"), SubResource("Resource_7")]

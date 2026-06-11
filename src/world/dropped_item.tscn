@@ -1,0 +1,43 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; dropped_item.tscn — DroppedItem entity scene.
+;
+; Root: RigidBody3D (DroppedItem script) with:
+;   - CollisionShape3D: SphereShape3D radius 0.2 (small hitbox for a dropped brick)
+;   - MeshInstance3D:   placeholder BoxMesh; runtime: replaced with brick's mesh
+;   - OmniLight3D:      warm white glow #FFFAE6 (DOCS §4.3), light_cull_mask=1
+;                       (CHANNEL_VISUAL_MASK — dropped items glow visibly per spec)
+;
+; gravity_scale = 1.5 for a slightly more arcade-feel drop arc.
+;
+; References:
+;   DOCS.md §4.3 — dropped item glow visual
+;   02-UI-SPEC.md §"Dynamite VFX sequence" step 5-6 — items pop outward then settle and glow
+;   02-11-PLAN.md Task 1 — OmniLight3D light_cull_mask = 1
+
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/world/dropped_item.gd" id="1_droppeditem"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1"]
+radius = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.5, 0.5, 0.5)
+
+[node name="DroppedItem" type="RigidBody3D"]
+script = ExtResource("1_droppeditem")
+gravity_scale = 1.5
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_1")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+light_color = Color(1.0, 0.98, 0.902, 1.0)
+light_energy = 0.3
+omni_range = 1.5
+light_cull_mask = 1

@@ -1,0 +1,45 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; creature_drops_wolf.tres — thematic loot for the wolf mob.
+;
+
+[gd_resource type="Resource" script_class="LootTable" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/loot/loot_table.gd" id="1_loottable"]
+[ext_resource type="Script" path="res://src/loot/loot_entry.gd" id="2_lootentry"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_lootentry")
+def_id = "leather"
+weight = 30.0
+min_count = 1
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("2_lootentry")
+def_id = "bone"
+weight = 30.0
+min_count = 1
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("2_lootentry")
+def_id = "string"
+weight = 18.0
+min_count = 1
+max_count = 1
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("2_lootentry")
+def_id = "food_cooked_generic"
+weight = 22.0
+min_count = 1
+max_count = 1
+
+[resource]
+script = ExtResource("1_loottable")
+table_id = "creature_drops_wolf"
+min_rolls = 1
+max_rolls = 2
+entries = [SubResource("Resource_1"), SubResource("Resource_2"), SubResource("Resource_3"), SubResource("Resource_4")]

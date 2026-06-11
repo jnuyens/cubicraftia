@@ -1,0 +1,80 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; brick_palette_sidebar.tscn — Desktop sidebar brick palette layout.
+;
+; Per UI-SPEC.md §"Desktop Sidebar" (Brick Palette Layout Specification):
+;   - Width: 320px fixed, anchors_preset = RIGHT_WIDE
+;   - StyleBoxFlat: #1B2C56 at 0.92α, corner_radius 16 on top-left + bottom-left
+;   - VBoxContainer with:
+;       LineEdit (Search)
+;       HBoxContainer (CategoryChips — scrollable)
+;       GridContainer (ColourSwatches — 9 cols × 2 rows = 18 swatches)
+;       SubViewportContainer (EquippedPreview — 200×200px)
+;       ScrollContainer → GridContainer (PaletteGrid — 4 cols, tile 64×64)
+;
+; BrickPaletteUI.gd is attached with layout="sidebar".
+; Category chips and palette tiles are instantiated programmatically by the script.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/brick_palette.gd" id="1_palette"]
+
+; ─── Root PanelContainer ──────────────────────────────────────────────────────
+[node name="BrickPaletteSidebar" type="PanelContainer"]
+; Right-wide anchor: fills the right side of the parent
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+custom_minimum_size = Vector2(320, 0)
+script = ExtResource("1_palette")
+layout = "sidebar"
+
+; ─── VBoxContainer (main column) ─────────────────────────────────────────────
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+add_theme_constant_override("separation") = 8
+
+; ─── Search field ─────────────────────────────────────────────────────────────
+[node name="Search" type="LineEdit" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+placeholder_text = "Search bricks…"
+
+; ─── Category chips row ───────────────────────────────────────────────────────
+[node name="CategoryChips" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+add_theme_constant_override("separation") = 8
+
+; ─── Colour swatches grid (9 cols × 2 rows = 18 + all-colours = 19 swatches) ─
+[node name="ColourSwatches" type="GridContainer" parent="VBox"]
+layout_mode = 2
+columns = 9
+add_theme_constant_override("h_separation") = 4
+add_theme_constant_override("v_separation") = 4
+
+; ─── Equipped-brick large preview (200×200) ───────────────────────────────────
+[node name="EquippedPreview" type="SubViewportContainer" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 200)
+stretch = true
+
+; ─── Scrollable palette grid (4 cols, tiles 64×64) ───────────────────────────
+[node name="PaletteScroll" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PaletteGrid" type="GridContainer" parent="VBox/PaletteScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 4
+add_theme_constant_override("h_separation") = 8
+add_theme_constant_override("v_separation") = 8

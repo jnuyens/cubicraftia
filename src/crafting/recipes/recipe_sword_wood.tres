@@ -1,0 +1,20 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_sword_wood.tres — Sword shape: 2 planks stacked, 1 stick as handle (shaped, 3×3 grid).
+; Slot 1 = wooden plank (top-centre); slot 4 = wooden plank; slot 7 = stick (handle).
+; D-07: recipe ratios at Claude's discretion. Ref: 03-07a-SUMMARY.md.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_sword_wood"
+display_name_key = "recipes.sword_wood.name"
+inputs = [{"def_id": "wood_plank", "count": 1, "slot": 1}, {"def_id": "wood_plank", "count": 1, "slot": 4}, {"def_id": "stick", "count": 1, "slot": 7}]
+output_def_id = "sword"
+output_count = 1
+shaped = true
+grid_size = 3

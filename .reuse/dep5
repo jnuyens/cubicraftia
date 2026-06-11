@@ -1,0 +1,71 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Cubicraftia
+Upstream-Contact: Cubicraftia contributors
+Source: https://github.com/cubicraftia/cubicraftia
+
+# Default: all source files are GPL-3.0-or-later unless overridden below
+Files: *
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# GDScript source files
+Files: src/**/*.gd scripts/**/*.sh scripts/**/*.py scripts/**/*.sh
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# Godot scene and resource files
+Files: src/**/*.tscn src/**/*.tres assets/**/*.tres
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# Project configuration
+Files: project.godot export_presets.cfg
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# Documentation
+Files: docs/**/*.md *.md
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# Locale / gettext files
+Files: locale/*.po locale/*.pot
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# Kotlin / Java platform plugin sources
+Files: src/platform/**/*.kt src/platform/**/*.java
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# Rough-art PNG icons (first-party)
+Files: assets/textures/**/*.png assets/meshes/**/*.glb assets/meshes/**/*.gltf
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# Noto Sans fonts — OFL-1.1
+Files: assets/fonts/NotoSans*.ttf assets/fonts/NotoSans*.otf
+Copyright: 2012 Google Inc.
+License: OFL-1.1
+
+# The verbatim GPL licence file itself is not itself copyrightable
+Files: LICENSE
+Copyright: 2007 Free Software Foundation, Inc.
+License: GPL-3.0-or-later
+
+# NOTICE file
+Files: NOTICE
+Copyright: 2026 Cubicraftia contributors
+License: GPL-3.0-or-later
+
+# Zylann/godot_voxel pre-built GDExtension (MIT licence)
+# Source: https://github.com/Zylann/godot_voxel (release v1.6x)
+Files: addons/zylann.voxel/*
+Copyright: 2016-2026 Marc Gilleron and godot_voxel contributors
+License: MIT
+
+# 2shady4u/godot-sqlite pre-built GDExtension (MIT licence)
+# Source: https://github.com/2shady4u/godot-sqlite (release v4.7, binaries installed by scripts/install-deps.sh)
+Files: addons/godot-sqlite/*
+Copyright: 2019-2026 Piet Bronders & Jeroen De Geeter and godot-sqlite contributors
+License: MIT

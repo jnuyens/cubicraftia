@@ -1,0 +1,20 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_lantern.tres — Iron ore frame + copper ore centre → 1 placeable lantern (shaped, 3×3).
+; Frame: iron_ore at slots 0,1,2,3,5 (top + left-centre + right-centre); centre: copper_ore slot 4.
+; D-07: recipe ratios at Claude's discretion. Ref: 03-07a-SUMMARY.md.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_lantern"
+display_name_key = "recipes.lantern.name"
+inputs = [{"def_id": "iron_ore", "count": 1, "slot": 0}, {"def_id": "iron_ore", "count": 1, "slot": 1}, {"def_id": "iron_ore", "count": 1, "slot": 2}, {"def_id": "iron_ore", "count": 1, "slot": 3}, {"def_id": "copper_ore", "count": 1, "slot": 4}, {"def_id": "iron_ore", "count": 1, "slot": 5}]
+output_def_id = "lantern"
+output_count = 1
+shaped = true
+grid_size = 3

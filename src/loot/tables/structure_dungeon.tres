@@ -1,0 +1,37 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; structure_dungeon.tres — Structure table for dungeon mid-room chest TIER selection.
+; Per D-04: dungeons are a source of gold keys AND diamond keys.
+; Mid-room chests: 70% gold + 30% diamond.
+; Final-room chests: FORCED diamond tier via the is_final flag in Plan 03-08b's
+; structure_placer integration — that override happens at structure_placer time,
+; not in this table.
+; min_rolls=1, max_rolls=1 → exactly one chest per slot.
+; Anchors: 03-CONTEXT.md D-04.
+
+[gd_resource type="Resource" script_class="LootTable" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/loot/loot_table.gd" id="1_loottable"]
+[ext_resource type="Script" path="res://src/loot/loot_entry.gd" id="2_lootentry"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_lootentry")
+def_id = "chest_gold"
+weight = 70.0
+min_count = 1
+max_count = 1
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("2_lootentry")
+def_id = "chest_diamond"
+weight = 30.0
+min_count = 1
+max_count = 1
+
+[resource]
+script = ExtResource("1_loottable")
+table_id = "structure_dungeon"
+min_rolls = 1
+max_rolls = 1
+entries = [SubResource("Resource_1"), SubResource("Resource_2")]

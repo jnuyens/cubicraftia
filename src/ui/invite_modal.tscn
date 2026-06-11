@@ -1,0 +1,118 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; invite_modal.tscn — Invite link generation modal (Surface 4).
+;
+; Root: Control (full-screen overlay)
+;   - Overlay: ColorRect (navy 60% alpha, full rect)
+;   - ModalPanel: PanelContainer (400px wide, centred)
+;     - VBox: VBoxContainer (24px padding)
+;       - HeadingLabel
+;       - GeneratingLabel
+;       - LinkField (read-only LineEdit)
+;       - TtlLabel
+;       - ErrorLabel
+;       - ButtonRow: HBoxContainer
+;           - CopyButton
+;           - ShareButton
+;       - CloseButton
+;
+; All text set by invite_modal.gd at runtime — zero hardcoded English strings.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/invite_modal.gd" id="1_script"]
+
+[node name="InviteModal" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.106, 0.173, 0.337, 0.6)
+
+[node name="ModalPanel" type="PanelContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -160.0
+offset_right = 200.0
+offset_bottom = 160.0
+grow_horizontal = 2
+grow_vertical = 2
+custom_minimum_size = Vector2(400, 0)
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/ModalPanel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="HeadingLabel" type="Label" parent="Overlay/ModalPanel/VBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+[node name="GeneratingLabel" type="Label" parent="Overlay/ModalPanel/VBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.7)
+
+[node name="LinkField" type="LineEdit" parent="Overlay/ModalPanel/VBox"]
+layout_mode = 2
+editable = false
+visible = false
+theme_override_font_sizes/font_size = 13
+
+[node name="TtlLabel" type="Label" parent="Overlay/ModalPanel/VBox"]
+layout_mode = 2
+text = ""
+visible = false
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.7)
+
+[node name="ErrorLabel" type="Label" parent="Overlay/ModalPanel/VBox"]
+layout_mode = 2
+text = ""
+visible = false
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.839, 0.220, 0.157, 1.0)
+
+[node name="ButtonRow" type="HBoxContainer" parent="Overlay/ModalPanel/VBox"]
+layout_mode = 2
+visible = false
+theme_override_constants/separation = 8
+
+[node name="CopyButton" type="Button" parent="Overlay/ModalPanel/VBox/ButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="ShareButton" type="Button" parent="Overlay/ModalPanel/VBox/ButtonRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="CloseButton" type="Button" parent="Overlay/ModalPanel/VBox"]
+layout_mode = 2
+size_flags_horizontal = 8
+text = ""

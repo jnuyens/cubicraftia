@@ -1,0 +1,134 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; inventory_slide_in_sidebar.tscn — Desktop right-edge inventory slide-in.
+;
+; Per 03-UI-SPEC.md §"Inventory + Chest + Workbench Slide-In Layout Specification" L286-453:
+;   - Width: 360px fixed, anchored right edge.
+;   - StyleBoxFlat: #1B2C56 0.92α, corner_radius 16 on top-left + bottom-left.
+;   - Layout: VBoxContainer with:
+;       Label "Title" (Inventory, 20px Heading)
+;       HBoxContainer "TabHeader" (TabInventory + TabRecipes buttons)
+;       HBoxContainer "MainContent" (InventoryGrid + CraftingCluster)
+;         GridContainer "InventoryGrid" (8 columns; slots built programmatically)
+;         VBoxContainer "CraftingCluster" (CraftingGrid 2×2 + arrow + output)
+;       Control "RecipesPane" (stub; Plan 03-07b wires full recipe-book)
+;
+; InventorySlideIn.gd is attached with layout="sidebar".
+; Slots (48 inventory + 4 crafting) are instantiated programmatically in _build_grid().
+; Group: "inventory_slide_in" (for chest/workbench sub-controllers to locate).
+;
+; Chrome is a verbatim port from brick_palette_sidebar.tscn per UI-SPEC L332 + L410.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/inventory_slide_in.gd" id="1_slide"]
+
+; ─── Root Control ─────────────────────────────────────────────────────────────
+; Anchored right edge, 360px wide.
+[node name="InventorySlideInSidebar" type="Control"]
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -360.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+custom_minimum_size = Vector2(360, 0)
+script = ExtResource("1_slide")
+layout = "sidebar"
+
+; ─── Body (PanelContainer) ────────────────────────────────────────────────────
+; StyleBoxFlat chrome applied by _setup_panel_style() in script.
+[node name="Body" type="PanelContainer" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+; ─── Main VBoxContainer ───────────────────────────────────────────────────────
+[node name="VBox" type="VBoxContainer" parent="Body"]
+layout_mode = 2
+anchor_right = 1.0
+anchor_bottom = 1.0
+add_theme_constant_override("separation") = 8
+
+; ─── Panel title ──────────────────────────────────────────────────────────────
+[node name="Title" type="Label" parent="Body/VBox"]
+layout_mode = 2
+text = "ui.inventory.title"
+add_theme_font_size_override("font_size") = 20
+
+; ─── Tab header ───────────────────────────────────────────────────────────────
+[node name="TabHeader" type="HBoxContainer" parent="Body/VBox"]
+layout_mode = 2
+add_theme_constant_override("separation") = 8
+
+[node name="TabInventory" type="Button" parent="Body/VBox/TabHeader"]
+layout_mode = 2
+text = "ui.inventory.tab.inventory"
+custom_minimum_size = Vector2(80, 40)
+
+[node name="TabRecipes" type="Button" parent="Body/VBox/TabHeader"]
+layout_mode = 2
+text = "ui.inventory.tab.recipes"
+custom_minimum_size = Vector2(80, 40)
+
+; ─── Main content (inventory grid stacked above crafting cluster) ────────────
+; UAT feedback: the original HBoxContainer pushed the crafting cluster off the
+; right edge of the 360px sidebar because the 8×64=512px inventory grid
+; overflowed and the HBox left no room. Stacking vertically keeps both
+; visible inside the panel.
+[node name="MainContent" type="VBoxContainer" parent="Body/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+add_theme_constant_override("separation") = 16
+
+; 6×8 inventory grid (48 slots built programmatically by _build_grid)
+[node name="InventoryGrid" type="GridContainer" parent="Body/VBox/MainContent"]
+layout_mode = 2
+size_flags_horizontal = 4
+columns = 6
+add_theme_constant_override("h_separation") = 8
+add_theme_constant_override("v_separation") = 8
+
+; 2×2 crafting cluster + arrow + output (now below the grid in the VBox)
+[node name="CraftingCluster" type="VBoxContainer" parent="Body/VBox/MainContent"]
+layout_mode = 2
+size_flags_horizontal = 4
+add_theme_constant_override("separation") = 8
+
+[node name="CraftingLabel" type="Label" parent="Body/VBox/MainContent/CraftingCluster"]
+layout_mode = 2
+text = "ui.crafting.inline.heading"
+add_theme_font_size_override("font_size") = 14
+
+[node name="CraftingGrid" type="GridContainer" parent="Body/VBox/MainContent/CraftingCluster"]
+layout_mode = 2
+columns = 2
+add_theme_constant_override("h_separation") = 8
+add_theme_constant_override("v_separation") = 8
+
+[node name="CraftingArrow" type="Label" parent="Body/VBox/MainContent/CraftingCluster"]
+layout_mode = 2
+text = "→"
+horizontal_alignment = 1
+
+[node name="CraftingOutput" type="Panel" parent="Body/VBox/MainContent/CraftingCluster"]
+layout_mode = 2
+custom_minimum_size = Vector2(56, 56)
+
+; ─── Recipes pane (stub — Plan 03-07b wires the recipe book) ─────────────────
+[node name="RecipesPane" type="Control" parent="Body/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+visible = false
+
+[node name="RecipesEmptyLabel" type="Label" parent="Body/VBox/RecipesPane"]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+text = "ui.recipes.empty.title"
+horizontal_alignment = 1

@@ -1,0 +1,16 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; hotbar.tscn — 8-slot hotbar HUD scene.
+;
+; Per UI-SPEC.md §Mobile Control Overlay:
+;   8 slots × 64×64px (or 56×56 on phones <600px wide) with 8px gap.
+;   Selected slot has 2px #F5C30D accent ring.
+;   Slots built procedurally by hotbar.gd in _ready().
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/hotbar.gd" id="1_hotbar"]
+
+[node name="Hotbar" type="HBoxContainer"]
+script = ExtResource("1_hotbar")

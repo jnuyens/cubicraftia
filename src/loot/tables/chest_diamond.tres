@@ -1,0 +1,71 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; chest_diamond.tres — LootTable for diamond chest contents.
+; The best v1 loot: diamond ore, Tom Yum, strawberries, diamond key.
+; Diamond chests appear only in dungeon final rooms (per D-04).
+; The diamond key drop is guaranteed in the final-room chest via
+; this table having key_diamond at high weight.
+; min_rolls=4, max_rolls=7 → 4-7 item rolls per open.
+; Anchors: 03-CONTEXT.md D-04, D-13, D-16.
+
+[gd_resource type="Resource" script_class="LootTable" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://src/loot/loot_table.gd" id="1_loottable"]
+[ext_resource type="Script" path="res://src/loot/loot_entry.gd" id="2_lootentry"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_lootentry")
+def_id = "diamond_ore"
+weight = 30.0
+min_count = 1
+max_count = 3
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("2_lootentry")
+def_id = "iron_ore"
+weight = 10.0
+min_count = 3
+max_count = 6
+
+[sub_resource type="Resource" id="Resource_3"]
+script = ExtResource("2_lootentry")
+def_id = "food_tom_yum"
+weight = 15.0
+min_count = 1
+max_count = 3
+
+[sub_resource type="Resource" id="Resource_4"]
+script = ExtResource("2_lootentry")
+def_id = "strawberry"
+weight = 10.0
+min_count = 1
+max_count = 2
+
+[sub_resource type="Resource" id="Resource_5"]
+script = ExtResource("2_lootentry")
+def_id = "dynamite"
+weight = 10.0
+min_count = 1
+max_count = 3
+
+[sub_resource type="Resource" id="Resource_6"]
+script = ExtResource("2_lootentry")
+def_id = "chest_silver"
+weight = 4.0
+min_count = 1
+max_count = 1
+
+[sub_resource type="Resource" id="Resource_7"]
+script = ExtResource("2_lootentry")
+def_id = "key_diamond"
+weight = 21.0
+min_count = 1
+max_count = 1
+
+[resource]
+script = ExtResource("1_loottable")
+table_id = "chest_diamond"
+min_rolls = 4
+max_rolls = 7
+entries = [SubResource("Resource_1"), SubResource("Resource_2"), SubResource("Resource_3"), SubResource("Resource_4"), SubResource("Resource_5"), SubResource("Resource_6"), SubResource("Resource_7")]

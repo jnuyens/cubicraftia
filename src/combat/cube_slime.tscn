@@ -1,0 +1,63 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; cube_slime.tscn — CubeSlime: 3-tier slime hostile that splits on defeat.
+;
+; Visual placeholder: green BoxMesh tinted #5DBB46 per UI-SPEC L151.
+; Body scale is overridden at _ready() per tier: LARGE=2×, MEDIUM=1.4×, SMALL=0.8×.
+; TODO Phase 3 polish: replace Body BoxMesh with slime creature .glb per art pass.
+;
+; D-09 tell nodes:
+;   AnimationPlayer — "die" animation (~0.4 s scale-pulse + particle burst trigger).
+;   SplatParticles  — GPUParticles3D green death burst (#5DBB46).
+;
+; Slime wobble material: reuse src/bricks/slime_cube.tres StandardMaterial3D
+; (Phase 2 D-02 slime wobble shader per 03-CONTEXT.md D-09 + STATE.md colour-swappable-split).
+;
+; References: cube_slime.gd, 03-CONTEXT.md D-09, 03-PATTERNS.md L471-507.
+
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/combat/cube_slime.gd" id="1_script"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.5
+height = 1.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+size = Vector3(1, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.365, 0.733, 0.275, 1)
+roughness = 0.8
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_splat"]
+emission_shape = 1
+emission_sphere_radius = 0.3
+direction = Vector3(0, 1, 0)
+spread = 180.0
+initial_velocity_min = 1.0
+initial_velocity_max = 3.0
+color = Color(0.365, 0.733, 0.275, 1)
+gravity = Vector3(0, -9.8, 0)
+
+[node name="CubeSlime" type="CharacterBody3D"]
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="SplatParticles" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 20
+lifetime = 0.6
+one_shot = true
+process_material = SubResource("ParticleProcessMaterial_splat")

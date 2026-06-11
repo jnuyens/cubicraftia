@@ -1,0 +1,66 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; death_pile.tscn — Single composite death-pile entity (D-11).
+;
+; Root: StaticBody3D with death_pile.gd script. No physics tumble (03-PATTERNS.md L889).
+;
+; Children:
+;   PickupArea — Area3D (walk-through pickup sphere, radius 1.0 m)
+;     CollisionShape3D — SphereShape3D
+;   Glow — OmniLight3D (#F5C30D 0.6 energy 2 m range, configured in set_contents)
+;   CompositeMesh — MultiMeshInstance3D (up to 16 brick instances; BoxMesh placeholder)
+;
+; Collision layers:
+;   PickupArea: collision_layer=0, collision_mask=2 (builder layer per Phase 2 conventions)
+
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/world/death_pile.gd" id="1_death_pile"]
+
+; ─── PickupArea collision shape (sphere radius 1.0 m = INTERACT_RANGE_M) ─────
+[sub_resource type="SphereShape3D" id="1_pickup_sphere"]
+radius = 1.0
+
+; ─── Placeholder StaticBody3D collision shape (capsule for the pile boundary) ─
+[sub_resource type="BoxShape3D" id="2_pile_box"]
+size = Vector3(1.0, 1.5, 1.0)
+
+; ─── MultiMesh resource (up to 16 brick instances, Transform3D format) ────────
+[sub_resource type="BoxMesh" id="3_brick_placeholder"]
+size = Vector3(0.8, 0.4, 0.8)
+
+[sub_resource type="MultiMesh" id="4_composite_multimesh"]
+transform_format = 1
+mesh = SubResource("3_brick_placeholder")
+instance_count = 0
+
+; ─── Root: StaticBody3D ──────────────────────────────────────────────────────
+[node name="DeathPile" type="StaticBody3D"]
+script = ExtResource("1_death_pile")
+
+; Static collision for the pile body.
+[node name="PileBody" type="CollisionShape3D" parent="."]
+shape = SubResource("2_pile_box")
+position = Vector3(0, 0.75, 0)
+
+; ─── PickupArea (walk-through; collision_mask=2 = builder layer) ─────────────
+[node name="PickupArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PickupArea"]
+shape = SubResource("1_pickup_sphere")
+position = Vector3(0, 0.75, 0)
+
+; ─── Glow (OmniLight3D — properties set programmatically in set_contents) ─────
+[node name="Glow" type="OmniLight3D" parent="."]
+position = Vector3(0, 0.75, 0)
+light_color = Color(0.961, 0.765, 0.051, 1.0)
+light_energy = 0.6
+light_cull_mask = 1
+omni_range = 2.0
+
+; ─── CompositeMesh (MultiMeshInstance3D — one draw call for all bricks) ───────
+[node name="CompositeMesh" type="MultiMeshInstance3D" parent="."]
+multimesh = SubResource("4_composite_multimesh")

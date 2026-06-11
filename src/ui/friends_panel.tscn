@@ -1,0 +1,25 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; friends_panel.tscn — Friends list slide-in panel (Surface 2 + embedded Surface 3).
+;
+; Root: Control (anchors full rect), added to group "friends_panel" in _ready().
+; Layout default: "sidebar" (360px desktop sidebar, rounded left corners).
+; Chrome: verbatim from inventory_slide_in.gd (TWEEN_DURATION_S=0.22).
+;
+; Sessions browser (Surface 3) is embedded: friend rows show a "Join" button
+; when current_session_id is set. Tapping Join emits join_session_requested(session_id).
+;
+; Mobile trigger: "Friends" TouchScreenButton in mobile_overlay.tscn calls open().
+; Desktop trigger: pause menu Friends button (Phase 4 Players tab) calls open().
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/friends_panel.gd" id="1_friends"]
+
+[node name="FriendsPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_friends")

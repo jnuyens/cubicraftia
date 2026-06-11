@@ -1,0 +1,20 @@
+{
+  "stud_anchors": [
+    {
+      "position": [
+        0.0,
+        0.175,
+        -0.0625
+      ],
+      "facing": "Y_UP"
+    },
+    {
+      "position": [
+        0.0,
+        0.175,
+        0.0625
+      ],
+      "facing": "Y_UP"
+    }
+  ]
+}

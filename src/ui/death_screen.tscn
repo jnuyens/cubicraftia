@@ -1,0 +1,71 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; death_screen.tscn — Full-screen death overlay scene.
+;
+; Root: ColorRect (death_screen.gd) anchored full-rect.
+; Children:
+;   Headline — Label; 28px Display semibold; centred at 40% screen height per UI-SPEC L226-228.
+;   Subtitle — Label; 16px Body regular; below Headline.
+;   Countdown — Label; 16px Body regular; below Subtitle.
+;
+; All label text is set at runtime via tr() calls in death_screen.gd.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/death_screen.gd" id="1_death_screen"]
+
+[node name="DeathScreen" type="ColorRect"]
+script = ExtResource("1_death_screen")
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.106, 0.173, 0.337, 0.0)
+mouse_filter = 0
+
+; ─── Headline — "You died" (28px Display semibold, centred at ~40% from top) ──
+[node name="Headline" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.0
+anchor_top = 0.4
+anchor_right = 1.0
+anchor_bottom = 0.4
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_type_variation = &"DisplaySemibold"
+
+; ─── Subtitle — "Respawning at your bed…" or "Respawning at world spawn…" ─────
+[node name="Subtitle" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.0
+anchor_top = 0.4
+anchor_right = 1.0
+anchor_bottom = 0.4
+offset_top = 48.0
+offset_bottom = 72.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1
+
+; ─── Countdown — "Respawning in {n}s" ────────────────────────────────────────
+[node name="Countdown" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.0
+anchor_top = 0.4
+anchor_right = 1.0
+anchor_bottom = 0.4
+offset_top = 80.0
+offset_bottom = 104.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_alignment = 1
+vertical_alignment = 1

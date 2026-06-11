@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_glass_block.tres — generated to wire the art-crafting card for glass_block.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_glass_block"
+display_name_key = "recipes.glass_block.name"
+inputs = [{"def_id": "sand", "count": 1, "slot": 0}, {"def_id": "sand", "count": 1, "slot": 1}, {"def_id": "sand", "count": 1, "slot": 2}, {"def_id": "sand", "count": 1, "slot": 3}]
+output_def_id = "glass"
+output_count = 1
+shaped = true
+grid_size = 2

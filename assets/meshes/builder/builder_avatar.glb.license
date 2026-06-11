@@ -1,0 +1,5 @@
+SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+Textured, rigged + animated builder avatar generated with Meshy (image-to-3D) from a
+Cubicraftia minifigure reference, cleaned via headless Blender (stray mesh removed).
+Skeleton: 24 bones; animations include Walking/Running. Original Cubicraftia asset.

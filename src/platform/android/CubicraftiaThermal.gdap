@@ -1,0 +1,27 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; CubicraftiaThermal.gdap — Godot Android Plugin v2 manifest.
+;
+; Registers the CubicraftiaThermal plugin with Godot's Android plugin system.
+; The .aar must be built from src/platform/android/ and placed at
+; android/plugins/CubicraftiaThermal.aar relative to the project root.
+;
+; GDScript access:
+;   if Engine.has_singleton("CubicraftiaThermal"):
+;       var thermal := Engine.get_singleton("CubicraftiaThermal")
+;       var headroom: float = thermal.getThermalHeadroom(0)
+;
+; See docs/MOTOROLA_BENCHMARK.md §Android Plugin Build for build instructions.
+
+[config]
+
+name="CubicraftiaThermal"
+binary_type="local"
+binary="CubicraftiaThermal.aar"
+
+[dependencies]
+
+local=[]
+remote=[]
+custom_maven_repos=[]

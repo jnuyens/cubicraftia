@@ -1,0 +1,26 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; workbench_panel.tscn — WorkbenchPanel sub-controller scene.
+;
+; Root Control node with workbench_panel.gd script attached.
+; All child nodes are built programmatically in _build_layout() to avoid
+; a large static scene hierarchy for the slot grid.
+;
+; Structure (built at runtime in _build_layout()):
+;   WorkbenchPanel (Control) — root, script attached
+;   └─ VBox (VBoxContainer) — full-rect
+;      ├─ WorkbenchGrid (GridContainer) — 3×3 crafting inputs
+;      ├─ CraftRow (HBoxContainer) — CraftArrow (Label "→") + OutputSlot (InventorySlot)
+;      ├─ Separator (HSeparator)
+;      └─ BuilderGrid (GridContainer) — 6×8 builder inventory
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/workbench_panel.gd" id="1_workbench_panel"]
+
+[node name="WorkbenchPanel" type="Control"]
+script = ExtResource("1_workbench_panel")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0

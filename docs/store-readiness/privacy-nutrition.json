@@ -1,0 +1,127 @@
+{
+  "_comment": "Apple App Store Privacy Nutrition Label — Cubicraftia v1.0",
+  "_reference": "https://developer.apple.com/app-store/app-privacy-details/",
+  "_last_updated": "2026-05-29",
+  "_note": "Data categories must exactly match what is enumerated in docs/PRIVACY.md. Review before each App Store submission if PRIVACY.md is updated.",
+
+  "data_used_to_track": [],
+
+  "data_linked_to_user": [
+    {
+      "category": "Contact Info",
+      "data_types": [
+        {
+          "type": "emailAddress",
+          "description": "Email address collected at account creation. Used for authentication, parental consent emails (under-13 accounts), and account recovery. Not shared with third parties.",
+          "purposes": ["appFunctionality"],
+          "required": true,
+          "linked_to_user": true,
+          "used_for_tracking": false
+        }
+      ]
+    },
+    {
+      "category": "Identifiers",
+      "data_types": [
+        {
+          "type": "userID",
+          "description": "Supabase-assigned UUID created at account registration. Used to identify the player in multiplayer sessions, the friends graph, and moderation records. Not exposed to other players directly (display name is username, not UUID).",
+          "purposes": ["appFunctionality"],
+          "required": true,
+          "linked_to_user": true,
+          "used_for_tracking": false
+        },
+        {
+          "type": "username",
+          "description": "Player-chosen display name (3–20 alphanumeric characters). Visible to friends within shared sessions and on nameplates. Validated against a profanity filter at creation and on change. Changes limited to once per 30 days.",
+          "purposes": ["appFunctionality"],
+          "required": true,
+          "linked_to_user": true,
+          "used_for_tracking": false
+        }
+      ]
+    },
+    {
+      "category": "User Content",
+      "data_types": [
+        {
+          "type": "gameplayContent",
+          "description": "World saves (voxel terrain edits and placed bricks), inventory contents, and world metadata (world name, mode, creation date). Stored locally on the host player's device in a SQLite file. No server-side world storage in v1. Friends joining a session receive a live stream of game state; no world data is stored on the signaling server.",
+          "purposes": ["appFunctionality"],
+          "required": true,
+          "linked_to_user": true,
+          "used_for_tracking": false
+        },
+        {
+          "type": "otherUserContent",
+          "description": "Chat messages sent during a session (text only, no voice). Filtered by a profanity filter before relay. Not stored on the server; only transiently relayed by the host. Report evidence (up to 5 chat context messages) may be stored in the moderation reports table when a player files a report.",
+          "purposes": ["appFunctionality"],
+          "required": false,
+          "linked_to_user": true,
+          "used_for_tracking": false
+        }
+      ]
+    },
+    {
+      "category": "Other Data",
+      "data_types": [
+        {
+          "type": "socialGraph",
+          "description": "Friends list (mutual friendships accepted via invite) and blocks list (one-directional, mutual enforcement). Stored in Supabase Postgres with Row-Level Security. Not shared with third parties or used for any purpose other than session access control and friends-list display.",
+          "purposes": ["appFunctionality"],
+          "required": false,
+          "linked_to_user": true,
+          "used_for_tracking": false
+        }
+      ]
+    }
+  ],
+
+  "data_not_linked_to_user": [
+    {
+      "category": "Diagnostics",
+      "data_types": [
+        {
+          "type": "crashData",
+          "description": "Anonymous crash reports including device type, OS version, frame rate at crash, and GDScript stack trace. Collected only when the user opts in via Settings → Crash Reporting. Not linked to account or user ID. Transmitted to the operator's error-logging endpoint over TLS.",
+          "purposes": ["analytics", "appFunctionality"],
+          "required": false,
+          "opt_in": true,
+          "linked_to_user": false,
+          "used_for_tracking": false
+        }
+      ]
+    }
+  ],
+
+  "not_collected": [
+    "dateOfBirth",
+    "advertisingData",
+    "advertisingID",
+    "location",
+    "voiceOrSoundRecordings",
+    "videoContent",
+    "photos",
+    "financialInfo",
+    "healthAndFitness",
+    "browsing",
+    "searchHistory",
+    "sensitiveInfo",
+    "deviceID"
+  ],
+
+  "parental_consent_data": {
+    "_note": "Collected only for accounts where is_under_13 = true. Not a standard Apple nutrition label category but documented here for internal reference and PRIVACY.md consistency.",
+    "parent_email": "Collected to send the consent link email. Not used for any other purpose. Deleted when the under-13 account is deleted. Not shared with third parties.",
+    "consent_record": "Timestamp of parental consent. Stored in Supabase parental_consents table. Accessible to the child account (to show 'Waiting for approval' UI) but not modifiable by the child. Deleted with the account.",
+    "raw_dob": "NOT stored. Only the derived boolean is_under_13 is stored in GoTrue user metadata."
+  },
+
+  "tracking_summary": {
+    "cross_app_tracking": false,
+    "advertising_ids": false,
+    "third_party_advertising_networks": false,
+    "data_sold_to_third_parties": false,
+    "analytics_sdks": false
+  }
+}

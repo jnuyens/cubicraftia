@@ -1,0 +1,29 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; inventory_slot.tscn — Per-slot Panel for inventory grid + crafting cluster.
+;
+; Structure:
+;   Panel (root) — InventorySlot script attached.
+;     (Icon, CountLabel, SelectedRing built programmatically in _ready)
+;
+; custom_minimum_size = 64×64 by default (desktop). Mobile scenes set 56×56 via
+; InventorySlideIn._build_grid() / _build_crafting() slot.custom_minimum_size override.
+;
+; Drag-drop uses Godot 4.6 Control built-ins — no hand-rolled mouse tracking.
+; Group: "inventory_slot" (for batch queries by InventorySlideIn + Hotbar).
+;
+; References:
+;   inventory_slot.gd
+;   03-UI-SPEC.md §"Inventory cell" sizing + selected ring
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/inventory_slot.gd" id="1_slot"]
+
+; ─── Root Panel ───────────────────────────────────────────────────────────────
+; Icon, CountLabel, and SelectedRing are built programmatically in _ready()
+; to allow 48 slots to be instantiated without a deep scene hierarchy.
+[node name="InventorySlot" type="Panel"]
+custom_minimum_size = Vector2(64, 64)
+script = ExtResource("1_slot")

@@ -1,0 +1,60 @@
+[gd_resource type="Resource" script_class="BrickTemplate" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; jungle_temple_c.tres — Jungle temple variant C.
+; Ruined tower: broken walls with iron_ore veins, overgrowing flowers, fallen stone.
+; Palette: cobblestone + stone natural, iron_ore natural, dark-green (9) + green (8) flora.
+; Contains two bronze chests (scattered in ruins).
+; DOCS.md §2 — jungle temple structure; CONTEXT.md D-07, D-08.
+
+[ext_resource type="Script" path="res://src/bricks/brick_template.gd" id="1_btmpl"]
+
+[resource]
+script = ExtResource("1_btmpl")
+bricks = [
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 2, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 3, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 4, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 5, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 6, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 1, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 2, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 3, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 4, 0)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 1, 6)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 2, 6)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(0, 3, 6)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 1, 6)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(6, 2, 6)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(2, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(2, 1, 6)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 6)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 2)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 4)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(6, 1, 2)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(6, 1, 4)},
+	{"def_id": "iron_ore",   "colour_index": -1, "cell": Vector3i(1, 2, 0)},
+	{"def_id": "iron_ore",   "colour_index": -1, "cell": Vector3i(3, 3, 0)},
+	{"def_id": "iron_ore",   "colour_index": -1, "cell": Vector3i(5, 2, 6)},
+	{"def_id": "diamond_ore","colour_index": -1, "cell": Vector3i(3, 4, 3)},
+	{"def_id": "flower",     "colour_index": 9,  "cell": Vector3i(1, 1, 1)},
+	{"def_id": "flower",     "colour_index": 8,  "cell": Vector3i(5, 1, 1)},
+	{"def_id": "flower",     "colour_index": 9,  "cell": Vector3i(1, 1, 5)},
+	{"def_id": "flower",     "colour_index": 7,  "cell": Vector3i(5, 1, 5)},
+	{"def_id": "flower",     "colour_index": 8,  "cell": Vector3i(0, 7, 0)},
+	{"def_id": "flower",     "colour_index": 9,  "cell": Vector3i(6, 5, 0)},
+	{"def_id": "torch",      "colour_index": 5,  "cell": Vector3i(3, 2, 3)},
+	{"def_id": "ladder",     "colour_index": 15, "cell": Vector3i(3, 1, 0)}
+]
+terrain_overrides = []
+loot_chests = [
+	{"chest_type": "bronze", "cell": Vector3i(3, 1, 3)},
+	{"chest_type": "bronze", "cell": Vector3i(1, 1, 5)}
+]
+npc_spawns = []
+bbox = AABB(0, 0, 0, 7, 8, 7)
+allowed_biomes = Array[int]([3])

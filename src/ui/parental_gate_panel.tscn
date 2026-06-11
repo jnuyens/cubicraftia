@@ -1,0 +1,32 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; parental_gate_panel.tscn — Parental Consent Panel (Surface D) + Restricted-Account
+; Banner (Surface F), as specified in 05-07-PLAN.md and 05-UI-SPEC.md.
+;
+; Root: CanvasLayer (layer=20) — above all panels; blocks all interaction below.
+; Child: Control (full rect) — all UI is built programmatically in parental_gate_panel.gd.
+;
+; Usage:
+;   1. Instantiate this scene, add to the scene tree.
+;   2. Call .visible = true when under_13_signup_required fires from SignInPanel.
+;   3. Call .install_banner(hud_canvas_layer) once to attach the Surface F banner
+;      to the HUD CanvasLayer (layer 5).
+;   4. Connect panel_closed signal to handle the "Skip for now" / "Done" outcome.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/parental_gate_panel.gd" id="1_pgp"]
+
+; ─── Root: CanvasLayer layer=20 ──────────────────────────────────────────────
+[node name="ParentalGatePanel" type="CanvasLayer"]
+layer = 20
+visible = false
+
+; Full-rect Control that hosts the programmatic UI tree.
+[node name="Panel" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_pgp")

@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; round_1x1_brick.tres — BrickDefinition for the 1×1 round brick.
+; Mesh: assets/meshes/round_1x1_brick.glb (null until Plan 02-09).
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "round_1x1_brick"
+display_name_key = "bricks.round_1x1_brick.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 3
+studs_top = [{"x": 0.0, "y": 1.0, "z": 0.0, "gender": "male"}]
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "plastic_solid"
+mesh = null
+category = 4
+palette_colour_index = -1
+colour_swappable = true
+natural_colour_token = -1
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0)]

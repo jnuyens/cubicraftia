@@ -1,0 +1,20 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_pickaxe_wood.tres — Classic pickaxe shape (shaped, 3×3 grid).
+; Top row: 3 wooden planks (slots 0,1,2); centre col: 2 sticks (slots 4,7).
+; D-07: recipe ratios at Claude's discretion. Ref: 03-07a-SUMMARY.md.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_pickaxe_wood"
+display_name_key = "recipes.pickaxe_wood.name"
+inputs = [{"def_id": "wood_plank", "count": 1, "slot": 0}, {"def_id": "wood_plank", "count": 1, "slot": 1}, {"def_id": "wood_plank", "count": 1, "slot": 2}, {"def_id": "stick", "count": 1, "slot": 4}, {"def_id": "stick", "count": 1, "slot": 7}]
+output_def_id = "pickaxe"
+output_count = 1
+shaped = true
+grid_size = 3

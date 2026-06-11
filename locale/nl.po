@@ -1,0 +1,1562 @@
+# SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Cubicraftia — Dutch (Nederlands) translation
+# Phase 6: Complete NL string set — all Phase 1-6 msgids
+# Terminology: brick = "brick" (merknaam), nop = stud, bouwer = builder
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Cubicraftia 0.1.0\n"
+"PO-Revision-Date: 2026-05-30\n"
+"Last-Translator: Cubicraftia contributors\n"
+"Language-Team: Dutch\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# ─── Mobile control overlay ──────────────────────────────────────────────────
+
+msgid "ui.builder.place"
+msgstr "Plaatsen"
+
+msgid "ui.builder.break"
+msgstr "Afbreken"
+
+msgid "ui.builder.jump"
+msgstr "Springen"
+
+# ─── Hotbar ──────────────────────────────────────────────────────────────────
+
+msgid "ui.hotbar.slot_empty"
+msgstr "Vak {n} — leeg"
+
+msgid "ui.hotbar.slot_filled"
+msgstr "Vak {n} — {brick_name}"
+
+# ─── Graphics presets ─────────────────────────────────────────────────────────
+
+msgid "ui.settings.graphics.apply"
+msgstr "Preset toepassen"
+
+msgid "ui.settings.graphics.preset.auto"
+msgstr "Auto"
+
+msgid "ui.settings.graphics.preset.low"
+msgstr "Laag"
+
+msgid "ui.settings.graphics.preset.medium"
+msgstr "Middel"
+
+msgid "ui.settings.graphics.preset.high"
+msgstr "Hoog"
+
+msgid "ui.settings.graphics.reset"
+msgstr "Grafische instellingen herstellen"
+
+msgid "ui.settings.graphics.reset.confirm"
+msgstr "Grafische instellingen terugzetten naar de auto-preset? Eigen weergaveafstand en schaduwopties worden gewist."
+
+msgid "ui.settings.graphics.reset.do"
+msgstr "Herstellen"
+
+# ─── IAP stub ─────────────────────────────────────────────────────────────────
+
+msgid "ui.settings.iap.title"
+msgstr "Brick-pakketten"
+
+msgid "ui.settings.iap.coming_later"
+msgstr "Brick-pakketten komen in een latere versie."
+
+# ─── About screen ─────────────────────────────────────────────────────────────
+
+msgid "ui.about.title"
+msgstr "Over Cubicraftia"
+
+msgid "ui.about.disclaimer"
+msgstr "Cubicraftia is niet gelieerd aan, goedgekeurd door of gesponsord door de LEGO Groep of Mojang Studios. Alle brickvormen, namen en spelterminologie in Cubicraftia zijn origineel (zie §10 van de ontwerpdocumentatie). Het merk LEGO is eigendom van de LEGO Groep."
+
+msgid "ui.about.version"
+msgstr "Versie {version}"
+
+msgid "ui.about.license"
+msgstr "Gelicentieerd onder GPL-3.0-or-later"
+
+# ─── First-launch disclaimer ──────────────────────────────────────────────────
+
+msgid "ui.first_launch.disclaimer"
+msgstr "Cubicraftia is niet gelieerd aan, goedgekeurd door of gesponsord door de LEGO Groep of Mojang Studios. Alle brickvormen, namen en spelterminologie in Cubicraftia zijn origineel (zie §10 van de ontwerpdocumentatie). Het merk LEGO is eigendom van de LEGO Groep."
+
+msgid "ui.first_launch.acknowledge"
+msgstr "Begrepen"
+
+# ─── Toast notifications ─────────────────────────────────────────────────────
+
+msgid "ui.toast.graphics_adjusted"
+msgstr "Grafische instellingen aangepast voor prestaties."
+
+msgid "ui.settings.graphics_adjusted"
+msgstr "Grafische instellingen aangepast voor prestaties."
+
+msgid "ui.toast.feature_in_later_release"
+msgstr "Deze functie komt in een latere versie."
+
+# ─── Device tier warnings ─────────────────────────────────────────────────────
+
+msgid "ui.device.unsupported"
+msgstr "Dit apparaat voldoet niet aan de minimumvereisten van Cubicraftia. Het spel kan traag zijn of crashen. Je kunt toch doorgaan of een ander apparaat gebruiken."
+
+msgid "ui.device.continue_anyway"
+msgstr "Toch doorgaan"
+
+msgid "ui.device.quit"
+msgstr "Stoppen"
+
+# ─── Common controls ──────────────────────────────────────────────────────────
+
+msgid "ui.common.cancel"
+msgstr "Annuleren"
+
+msgid "ui.common.done"
+msgstr "Klaar"
+
+msgid "ui.common.back"
+msgstr "Terug"
+
+# ─── Brick names ──────────────────────────────────────────────────────────────
+
+msgid "bricks.brick_1x1.name"
+msgstr "1×1 brick"
+
+msgid "bricks.brick_1x2.name"
+msgstr "1×2 brick"
+
+msgid "bricks.brick_1x3.name"
+msgstr "1×3 brick"
+
+msgid "bricks.brick_1x4.name"
+msgstr "1×4 brick"
+
+msgid "bricks.brick_2x2.name"
+msgstr "2×2 brick"
+
+msgid "bricks.brick_2x3.name"
+msgstr "2×3 brick"
+
+msgid "bricks.brick_2x4.name"
+msgstr "2×4 brick"
+
+msgid "bricks.plate_1x1.name"
+msgstr "1×1 plaat"
+
+msgid "bricks.plate_1x2.name"
+msgstr "1×2 plaat"
+
+msgid "bricks.plate_1x4.name"
+msgstr "1×4 plaat"
+
+msgid "bricks.plate_2x2.name"
+msgstr "2×2 plaat"
+
+msgid "bricks.plate_2x4.name"
+msgstr "2×4 plaat"
+
+msgid "bricks.slope_1x1x1.name"
+msgstr "1×1×1 schuinvlak"
+
+msgid "bricks.slope_1x2x1.name"
+msgstr "1×2×1 schuinvlak"
+
+msgid "bricks.slope_1x2x2.name"
+msgstr "1×2×2 schuinvlak"
+
+msgid "bricks.slope_2x2_corner.name"
+msgstr "2×2 hoekschuinvlak"
+
+msgid "bricks.tile_1x1.name"
+msgstr "1×1 tegel"
+
+msgid "bricks.tile_1x2.name"
+msgstr "1×2 tegel"
+
+msgid "bricks.tile_2x2.name"
+msgstr "2×2 tegel"
+
+msgid "bricks.round_1x1_brick.name"
+msgstr "1×1 ronde brick"
+
+msgid "bricks.round_2x2_brick.name"
+msgstr "2×2 ronde brick"
+
+msgid "bricks.round_1x1_plate.name"
+msgstr "1×1 ronde plaat"
+
+msgid "bricks.cylinder_1x1.name"
+msgstr "1×1 cilinder"
+
+msgid "bricks.wheel.name"
+msgstr "Wiel"
+
+msgid "bricks.door_1x4.name"
+msgstr "Deur"
+
+msgid "bricks.window_1x2.name"
+msgstr "Raam"
+
+msgid "bricks.trapdoor_2x2.name"
+msgstr "Luik"
+
+msgid "bricks.workbench.name"
+msgstr "Werkbank"
+
+msgid "bricks.chest_regular.name"
+msgstr "Gewone kist"
+
+msgid "bricks.flower.name"
+msgstr "Bloem"
+
+msgid "bricks.lantern.name"
+msgstr "Lantaarn"
+
+msgid "bricks.torch.name"
+msgstr "Fakkel"
+
+msgid "bricks.ladder.name"
+msgstr "Ladder"
+
+msgid "bricks.sign.name"
+msgstr "Bord"
+
+msgid "bricks.wood_log.name"
+msgstr "Boomstam"
+
+msgid "bricks.wood_plank.name"
+msgstr "Houten plank"
+
+msgid "bricks.stone.name"
+msgstr "Steen"
+
+msgid "bricks.cobblestone.name"
+msgstr "Kassei"
+
+msgid "bricks.copper_ore.name"
+msgstr "Kopererts"
+
+msgid "bricks.iron_ore.name"
+msgstr "IJzererts"
+
+msgid "bricks.diamond_ore.name"
+msgstr "Diamanterts"
+
+msgid "bricks.sand.name"
+msgstr "Zand"
+
+msgid "bricks.glass.name"
+msgstr "Glas"
+
+msgid "bricks.pickaxe.name"
+msgstr "Houweel"
+
+msgid "bricks.shovel.name"
+msgstr "Schop"
+
+msgid "bricks.sword.name"
+msgstr "Zwaard"
+
+msgid "bricks.dynamite.name"
+msgstr "Dynamiet"
+
+msgid "bricks.lantern_handheld.name"
+msgstr "Draagbare lantaarn"
+
+msgid "bricks.bone.name"
+msgstr "Bot"
+
+msgid "bricks.slime_cube.name"
+msgstr "Slijmkubus"
+
+# ─── Brick category chips ─────────────────────────────────────────────────────
+
+msgid "ui.palette.category.all"
+msgstr "Alles"
+
+msgid "ui.palette.category.rectangular"
+msgstr "Rechthoekig"
+
+msgid "ui.palette.category.plates"
+msgstr "Platen"
+
+msgid "ui.palette.category.slopes"
+msgstr "Schuinvlakken"
+
+msgid "ui.palette.category.tiles"
+msgstr "Tegels"
+
+msgid "ui.palette.category.round"
+msgstr "Rond"
+
+msgid "ui.palette.category.functional"
+msgstr "Functioneel"
+
+msgid "ui.palette.category.decorative"
+msgstr "Decoratief"
+
+msgid "ui.palette.category.materials"
+msgstr "Materialen"
+
+msgid "ui.palette.category.accessories"
+msgstr "Accessoires"
+
+msgid "ui.palette.category.mob_drops"
+msgstr "Vijanddrops"
+
+# ─── Day / Night & Weather ────────────────────────────────────────────────────
+
+msgid "ui.world.deep_dark_warning"
+msgstr "Iets roert zich in het duister."
+
+msgid "ui.weather.rain_dance_summoned"
+msgstr "De lucht luistert. Het begint te regenen."
+
+msgid "ui.weather.sky_wont_listen_again_today"
+msgstr "De lucht luistert vandaag niet meer."
+
+# ─── Structure discovered toasts (Plan 02-07) ────────────────────────────────
+
+msgid "ui.world.found_village"
+msgstr "Je hebt een dorp gevonden."
+
+msgid "ui.world.found_temple"
+msgstr "Je hebt een tempel gevonden."
+
+msgid "ui.world.found_shipwreck"
+msgstr "Je hebt een scheepswrak gevonden."
+
+msgid "ui.world.found_dungeon"
+msgstr "Je hebt een kerker gevonden."
+
+msgid "ui.world.found_mineshaft"
+msgstr "Je hebt een mijnschacht gevonden."
+
+# ─── Camera mode (Plan 08.5) ─────────────────────────────────────────────────
+
+msgid "ui.camera.mode_fpv"
+msgstr "Eerste-persoonsperspectief"
+
+msgid "ui.camera.mode_chase"
+msgstr "Derde-persoonsperspectief"
+
+msgid "ui.camera.toggle_hint"
+msgstr "Druk op V om van perspectief te wisselen"
+
+# ─── Builder placement feedback (Plan 02-09) ──────────────────────────────────
+
+msgid "ui.builder.cant_place_there"
+msgstr "Daar kan je niet plaatsen."
+
+msgid "ui.builder.no_tool"
+msgstr "Selecteer een brick of gereedschap uit de hotbar."
+
+# ─── Tool names (Plan 02-10) ─────────────────────────────────────────────────
+
+msgid "tools.pickaxe_wood.name"
+msgstr "Houten houweel"
+
+msgid "tools.pickaxe_stone.name"
+msgstr "Stenen houweel"
+
+msgid "tools.pickaxe_iron.name"
+msgstr "IJzeren houweel"
+
+msgid "tools.pickaxe_diamond.name"
+msgstr "Diamanten houweel"
+
+msgid "tools.shovel.name"
+msgstr "Schop"
+
+msgid "tools.dynamite.name"
+msgstr "Dynamiet"
+
+msgid "tools.lantern_handheld.name"
+msgstr "Lantaarn"
+
+# ─── Tool durability HUD (Plan 02-10, survival mode only) ────────────────────
+
+msgid "ui.tool.worn_out"
+msgstr "{tool_name} is kapot."
+
+msgid "ui.tool.durability_sr"
+msgstr "Duurzaamheid: {pct}%"
+
+msgid "ui.tool.dynamite_fuse_lit"
+msgstr "Lont aangestoken — stap achteruit!"
+
+# ─── Mode badge (Plan 02-10) ─────────────────────────────────────────────────
+
+msgid "ui.hud.mode.survival"
+msgstr "Overleving"
+
+msgid "ui.hud.mode.sandbox"
+msgstr "Creatief"
+
+# ─── Brick palette UI (Plan 02-12) ───────────────────────────────────────────
+
+msgid "ui.palette.equip"
+msgstr "Uitrusten"
+
+msgid "ui.palette.open"
+msgstr "Brickpalet openen"
+
+msgid "ui.palette.search_placeholder"
+msgstr "Bricks zoeken…"
+
+msgid "ui.palette.search_empty_heading"
+msgstr "Geen bricks gevonden"
+
+msgid "ui.palette.search_empty_body"
+msgstr "Probeer een andere naam of categorie."
+
+msgid "ui.palette.colour.all"
+msgstr "Alle kleuren"
+
+msgid "ui.palette.tile.sr_label"
+msgstr "{brick_name}, {colour_name}"
+
+msgid "ui.palette.close"
+msgstr "Sluiten"
+
+# ─── Dropped items (Plan 02-11) ──────────────────────────────────────────────
+
+msgid "ui.world.items_dropped_nearby"
+msgstr "{count} voorwerpen in de buurt."
+
+# ─── Inventory + Hotbar (Phase 3 — Plan 03-05) ───────────────────────────────
+
+msgid "ui.inventory.open"
+msgstr "Inventaris openen"
+
+msgid "ui.inventory.close"
+msgstr "Inventaris sluiten"
+
+msgid "ui.inventory.title"
+msgstr "Inventaris"
+
+msgid "ui.inventory.tab.inventory"
+msgstr "Inventaris"
+
+msgid "ui.inventory.tab.recipes"
+msgstr "Recepten"
+
+msgid "ui.inventory.cell.empty"
+msgstr "Vak {row},{col} — leeg"
+
+msgid "ui.inventory.cell.filled"
+msgstr "Vak {row},{col} — {item_name}, {count}"
+
+msgid "ui.inventory.full"
+msgstr "Inventaris vol."
+
+msgid "ui.inventory.picked_up"
+msgstr "+{count} {item_name}"
+
+msgid "ui.crafting.inline.heading"
+msgstr "Ambachtstafel (2 bij 2)"
+
+msgid "ui.item.eat"
+msgstr "Eten"
+
+msgid "ui.crafting.workbench.heading"
+msgstr "Ambachtstafel (3 bij 3)"
+
+# ─── HP / Damage / Death / Sleep (Phase 3 — Plan 03-04 consumes) ────────────
+
+msgid "ui.hp.bar_sr"
+msgstr "Gezondheid: {hp} van 10"
+
+msgid "ui.death.headline"
+msgstr "Je bent gestorven"
+
+msgid "ui.death.subtitle"
+msgstr "Opnieuw spawnen bij je bed…"
+
+msgid "ui.death.subtitle_spawn"
+msgstr "Opnieuw spawnen bij het beginpunt…"
+
+msgid "ui.death.countdown"
+msgstr "Opnieuw spawnen over {n}s"
+
+msgid "ui.death_pile.sr"
+msgstr "Jouw gevallen voorwerpen — loop erdoorheen om ze op te pakken"
+
+msgid "ui.sleep.cancelled_unsafe"
+msgstr "Je kunt niet slapen — het is te gevaarlijk."
+
+msgid "ui.bed.too_early_prompt"
+msgstr "Slapen is voor 's nachts"
+
+msgid "ui.hp.gained_tick"
+msgstr "+{n} HP"
+
+# ─── Workbench + Walk-up prompts (Plan 03-07b + 03-06 consume) ───────────────
+
+msgid "ui.workbench.title"
+msgstr "Werkbank"
+
+msgid "ui.workbench.open_prompt"
+msgstr "Houd SHIFT ingedrukt om de werkbank te gebruiken"
+
+msgid "ui.chest.open_prompt"
+msgstr "Houd SHIFT ingedrukt om de kist te openen"
+
+msgid "ui.chest.locked_prompt"
+msgstr "Op slot — heeft {key_name} nodig"
+
+msgid "ui.chest.title_suffix"
+msgstr "Kist"
+
+msgid "ui.chest.your_inventory"
+msgstr "Jouw inventaris"
+
+msgid "ui.chest.tier.regular"
+msgstr "Gewoon"
+
+msgid "ui.chest.tier.bronze"
+msgstr "Brons"
+
+msgid "ui.chest.tier.silver"
+msgstr "Zilver"
+
+msgid "ui.chest.tier.gold"
+msgstr "Goud"
+
+msgid "ui.chest.tier.diamond"
+msgstr "Diamant"
+
+msgid "ui.bed.sleep_prompt"
+msgstr "Houd SHIFT ingedrukt om te slapen"
+
+msgid "ui.strawberry.pickup_prompt"
+msgstr "Aardbei pakken"
+
+# ─── Chests + Keys (Plan 03-06 consumes) ─────────────────────────────────────
+
+msgid "chests.regular.name"
+msgstr "Kist"
+
+msgid "chests.bronze.name"
+msgstr "Bronzen kist"
+
+msgid "chests.silver.name"
+msgstr "Zilveren kist"
+
+msgid "chests.gold.name"
+msgstr "Gouden kist"
+
+msgid "chests.diamond.name"
+msgstr "Diamanten kist"
+
+msgid "chests.double_regular.name"
+msgstr "Grote kist"
+
+msgid "items.key_bronze.name"
+msgstr "Bronzen sleutel"
+
+msgid "items.key_silver.name"
+msgstr "Zilveren sleutel"
+
+msgid "items.key_gold.name"
+msgstr "Gouden sleutel"
+
+msgid "items.key_diamond.name"
+msgstr "Diamanten sleutel"
+
+# ─── Recipes (Plan 03-07a + 03-07b consume) ──────────────────────────────────
+
+msgid "recipes.wooden_plank.name"
+msgstr "Houten plank"
+
+msgid "recipes.stick.name"
+msgstr "Stok"
+
+msgid "recipes.pickaxe_wood.name"
+msgstr "Houten houweel"
+
+msgid "recipes.shovel_wood.name"
+msgstr "Houten schop"
+
+msgid "recipes.sword_wood.name"
+msgstr "Houten zwaard"
+
+msgid "recipes.dynamite.name"
+msgstr "Dynamiet"
+
+msgid "recipes.lantern.name"
+msgstr "Lantaarn"
+
+msgid "recipes.torch.name"
+msgstr "Fakkel"
+
+msgid "recipes.ladder.name"
+msgstr "Ladder"
+
+msgid "recipes.chest.name"
+msgstr "Kist"
+
+msgid "recipes.workbench.name"
+msgstr "Werkbank"
+
+msgid "ui.recipes.empty.title"
+msgstr "Nog geen recepten"
+
+msgid "ui.recipes.empty.body"
+msgstr "Verzamel ingrediënten of maak iets bij een werkbank om je receptenboek te starten."
+
+msgid "ui.recipes.fill_grid"
+msgstr "Automatisch vullen"
+
+# ─── Food + Strawberries (Plan 03-09 consumes) ───────────────────────────────
+
+msgid "items.food_cooked_generic.name"
+msgstr "Gekookt eten"
+
+msgid "items.food_tom_yum.name"
+msgstr "Tom Yum pittige zeevruchtensoep"
+
+msgid "items.food_roasted_fish.name"
+msgstr "Geroosterde vis"
+
+msgid "items.food_bread.name"
+msgstr "Brood"
+
+msgid "items.food_pie.name"
+msgstr "Taart"
+
+msgid "items.strawberry.name"
+msgstr "Aardbei"
+
+# ─── Creatures (Plan 03-10 consumes — screen-reader only per UI-SPEC L250) ───
+
+msgid "creatures.laser_penguin.name"
+msgstr "Laserpinguïn"
+
+msgid "creatures.ghost.name"
+msgstr "Geest"
+
+msgid "creatures.vampire.name"
+msgstr "Vampier"
+
+msgid "creatures.bat_vampire.name"
+msgstr "Vampiervleermuis"
+
+msgid "creatures.bat.name"
+msgstr "Vleermuis"
+
+msgid "creatures.cube_slime_large.name"
+msgstr "Kubus-slijm"
+
+msgid "creatures.cube_slime_medium.name"
+msgstr "Kubus-slijm"
+
+msgid "creatures.cube_slime_small.name"
+msgstr "Kubus-slijm"
+
+# ─── Phase 4: Multiplayer & host failover (Plan 04-01) ───────────────────────
+
+# ─── Sign-in flow (Surface 1) ────────────────────────────────────────────────
+
+msgid "ui.signin.title"
+msgstr "Inloggen bij Cubicraftia"
+
+msgid "ui.signin.tab.signin"
+msgstr "Inloggen"
+
+msgid "ui.signin.tab.create"
+msgstr "Account aanmaken"
+
+msgid "ui.signin.email_placeholder"
+msgstr "E-mailadres"
+
+msgid "ui.signin.password_placeholder"
+msgstr "Wachtwoord"
+
+msgid "ui.signin.submit_signin"
+msgstr "Inloggen"
+
+msgid "ui.signin.submit_create"
+msgstr "Account aanmaken"
+
+msgid "ui.signin.age_checkbox"
+msgstr ""
+
+msgid "ui.signin.apple"
+msgstr "Inloggen met Apple"
+
+msgid "ui.signin.google"
+msgstr "Inloggen met Google"
+
+msgid "ui.signin.verification_notice"
+msgstr "Er is een verificatielink verzonden. Je kunt nu spelen — sommige functies worden pas beschikbaar na verificatie."
+
+msgid "ui.signin.error_invalid_credentials"
+msgstr "Onjuist e-mailadres of wachtwoord."
+
+msgid "ui.signin.error_email_taken"
+msgstr "Er bestaat al een account met dat e-mailadres."
+
+msgid "ui.signin.error_network"
+msgstr "Kan de server niet bereiken. Controleer je internetverbinding."
+
+msgid "ui.signin.error_profanity_username"
+msgstr "Die gebruikersnaam is niet toegestaan. Kies een andere naam."
+
+# ─── Friends list panel (Surface 2) ──────────────────────────────────────────
+
+msgid "ui.friends.title"
+msgstr "Vrienden"
+
+msgid "ui.friends.search_placeholder"
+msgstr "Zoek op gebruikersnaam…"
+
+msgid "ui.friends.search_empty"
+msgstr "Geen bouwer gevonden."
+
+msgid "ui.friends.section_pending"
+msgstr "Verzoeken"
+
+msgid "ui.friends.section_list"
+msgstr "Vrienden"
+
+msgid "ui.friends.status_online"
+msgstr "Online"
+
+msgid "ui.friends.status_in_world"
+msgstr "Online · in {world_name}"
+
+msgid "ui.friends.status_offline"
+msgstr "Offline"
+
+msgid "ui.friends.join"
+msgstr "Deelnemen"
+
+msgid "ui.friends.accept"
+msgstr "Accepteren"
+
+msgid "ui.friends.decline"
+msgstr "Weigeren"
+
+msgid "ui.friends.empty_heading"
+msgstr "Nog geen vrienden"
+
+msgid "ui.friends.empty_body"
+msgstr "Deel een uitnodigingslink via het pauzemenu om vrienden toe te voegen."
+
+msgid "ui.friends.unfriend"
+msgstr "Vriend verwijderen"
+
+msgid "ui.friends.block"
+msgstr "Blokkeren"
+
+msgid "ui.friends.block_confirm"
+msgstr "{username} blokkeren? Ze kunnen je niet meer vinden."
+
+msgid "ui.friends.block_confirm_action"
+msgstr "Blokkeren"
+
+msgid "ui.friends.limit_reached"
+msgstr "Vriendenlijst is vol (max. 50)"
+
+# ─── Sessions browser (Surface 3) ────────────────────────────────────────────
+
+msgid "ui.session.open_status"
+msgstr "Open · {world_name}"
+
+msgid "ui.session.join_loading"
+msgstr "Deelnemen…"
+
+msgid "ui.session.join_failed"
+msgstr "Kon niet deelnemen — {reason}. Probeer opnieuw."
+
+# ─── Invite link generation (Surface 4) ──────────────────────────────────────
+
+msgid "ui.invite.title"
+msgstr "Een vriend uitnodigen"
+
+msgid "ui.invite.link_label"
+msgstr "Uitnodigingslink"
+
+msgid "ui.invite.ttl_countdown"
+msgstr "Verloopt over {hh_mm_ss}"
+
+msgid "ui.invite.copy"
+msgstr "Link kopiëren"
+
+msgid "ui.invite.copied"
+msgstr "Gekopieerd!"
+
+msgid "ui.invite.share"
+msgstr "Delen"
+
+msgid "ui.invite.close"
+msgstr "Sluiten"
+
+msgid "ui.invite.generating"
+msgstr "Link aanmaken…"
+
+msgid "ui.invite.error_network"
+msgstr "Kon geen link aanmaken. Controleer je internetverbinding."
+
+msgid "ui.invite.error_not_signed_in"
+msgstr "Log in om vrienden uit te nodigen."
+
+msgid "ui.invite.error_not_verified"
+msgstr "Verifieer je e-mailadres om uitnodigingen te sturen."
+
+# ─── Join-from-invite flow (Surface 5) ───────────────────────────────────────
+
+msgid "ui.join.heading"
+msgstr "Deelnemen aan de wereld van {username}…"
+
+msgid "ui.join.status_connecting"
+msgstr "Verbinding maken…"
+
+msgid "ui.join.status_loading"
+msgstr "Wereld laden…"
+
+msgid "ui.join.new_friends_toast"
+msgstr "Jij en {username} zijn nu vrienden."
+
+msgid "ui.join.error_session_full"
+msgstr "De sessie is vol."
+
+msgid "ui.join.error_expired"
+msgstr "De uitnodiging is verlopen."
+
+msgid "ui.join.error_connection"
+msgstr "Verbinding mislukt — controleer je internetverbinding."
+
+msgid "ui.join.back"
+msgstr "Terug"
+
+msgid "ui.join.error_unverified_session_age"
+msgstr "Deze sessie is te oud om aan deel te nemen met een niet-geverifieerd account. Verifieer eerst je e-mailadres."
+
+# ─── Pause menu — Players tab (Surface 6) ────────────────────────────────────
+
+msgid "ui.players.tab_label"
+msgstr "Spelers"
+
+msgid "ui.players.invite_action"
+msgstr "Een vriend uitnodigen"
+
+msgid "ui.players.host_label"
+msgstr "(Host)"
+
+msgid "ui.players.kick"
+msgstr "Verwijderen"
+
+msgid "ui.players.kick_confirm"
+msgstr "{username} verwijderen? Ze kunnen via een uitnodiging terugkomen."
+
+msgid "ui.players.kick_confirm_action"
+msgstr "Bevestigen"
+
+msgid "ui.players.kick_cancel"
+msgstr "Annuleren"
+
+msgid "ui.players.freeze"
+msgstr "Bevriezen"
+
+msgid "ui.players.unfreeze"
+msgstr "Ontdooien"
+
+msgid "ui.players.rollback_warning"
+msgstr "De wereld herstellen naar ~30 minuten geleden. Dit heeft gevolgen voor iedereen."
+
+msgid "ui.players.rollback_action"
+msgstr "Wereld terugdraaien"
+
+msgid "ui.players.rollback_confirm_title"
+msgstr "Wereld terugdraaien?"
+
+msgid "ui.players.rollback_confirm_body"
+msgstr "Dit herstelt iedereen naar de laatste automatische momentopname, ongeveer 30 minuten geleden. Alle bouw sindsdien gaat verloren."
+
+msgid "ui.players.rollback_confirm_action"
+msgstr "Terugdraaien"
+
+msgid "ui.players.rollback_cancel"
+msgstr "Annuleren"
+
+msgid "ui.players.laggy_label"
+msgstr "Laggy"
+
+msgid "ui.players.settings_tab_label"
+msgstr "Instellingen"
+
+# ─── Chat overlay (Surface 7) ─────────────────────────────────────────────────
+
+msgid "ui.chat.input_placeholder"
+msgstr "Bericht…"
+
+msgid "ui.chat.send"
+msgstr "Versturen"
+
+msgid "ui.chat.open"
+msgstr "Chat"
+
+msgid "ui.chat.close"
+msgstr "Chat sluiten"
+
+msgid "ui.chat.rate_limit_wait"
+msgstr "Rustig aan — je kunt over {n}s een nieuw bericht sturen."
+
+msgid "ui.chat.mute_player"
+msgstr "{username} dempen"
+
+msgid "ui.chat.unmute_player"
+msgstr "{username} dempen opheffen"
+
+msgid "ui.chat.report_message"
+msgstr "Bericht melden"
+
+msgid "ui.chat.filtered_message"
+msgstr "[gefilterd]"
+
+# ─── Handover screen (Surface 9) ─────────────────────────────────────────────
+
+msgid "ui.handover.heading"
+msgstr "Host wisselen — wereld blijft behouden…"
+
+msgid "ui.handover.subtitle"
+msgstr "Even wachten."
+
+msgid "ui.handover.subtitle_slow"
+msgstr "Dit duurt langer dan verwacht…"
+
+# ─── Network status HUD (Surface 10) ─────────────────────────────────────────
+
+msgid "ui.netstatus.relay_badge"
+msgstr "Relay"
+
+# ─── Settings — nameplates (Surface 8) ───────────────────────────────────────
+
+msgid "ui.settings.show_nameplates"
+msgstr "Spelernamen weergeven"
+
+# ─── Phase 5: Safety, Moderation & Store Readiness ───────────────────────────
+
+# Surface A — Block confirmation modal
+msgid "ui.block.title"
+msgstr "{username} blokkeren?"
+
+msgid "ui.block.body"
+msgstr "Ze zien jou en je wereld niet meer. Jij ziet hen niet meer."
+
+msgid "ui.block.confirm_action"
+msgstr "{username} blokkeren"
+
+msgid "ui.block.cancel"
+msgstr "Annuleren"
+
+msgid "ui.block.toast_blocked"
+msgstr "Je hebt {username} geblokkeerd."
+
+# Surface B — Report flow (2-step modal)
+msgid "ui.report.title_player"
+msgstr "{username} melden"
+
+msgid "ui.report.title_message"
+msgstr "Dit bericht melden"
+
+msgid "ui.report.subtitle_category"
+msgstr "Wat is het probleem?"
+
+msgid "ui.report.category_harassment"
+msgstr "Pesterij of bedreigingen"
+
+msgid "ui.report.category_spam"
+msgstr "Spam of neppe inhoud"
+
+msgid "ui.report.category_cheating"
+msgstr "Valsspelen"
+
+msgid "ui.report.category_csam"
+msgstr "Kinderveiligheidsprobleem"
+
+msgid "ui.report.category_other"
+msgstr "Iets anders"
+
+msgid "ui.report.reason_placeholder"
+msgstr "Details toevoegen (optioneel)"
+
+msgid "ui.report.char_counter"
+msgstr "{n}/500"
+
+msgid "ui.report.context_label"
+msgstr "Gemeld bericht en context:"
+
+msgid "ui.report.next"
+msgstr "Volgende"
+
+msgid "ui.report.back"
+msgstr "Terug"
+
+msgid "ui.report.submit"
+msgstr "Melding indienen"
+
+msgid "ui.report.cancel"
+msgstr "Annuleren"
+
+msgid "ui.report.toast_submitted"
+msgstr "Melding ingediend. Ons team bekijkt het."
+
+# Surface C — Age gate (date-of-birth picker at sign-up)
+msgid "ui.signin.dob_label"
+msgstr "Geboortedatum"
+
+msgid "ui.signin.dob_day_placeholder"
+msgstr "Dag"
+
+msgid "ui.signin.dob_month_placeholder"
+msgstr "Maand"
+
+msgid "ui.signin.dob_year_placeholder"
+msgstr "Jaar"
+
+msgid "ui.signin.dob_month_jan"
+msgstr "Januari"
+
+msgid "ui.signin.dob_month_feb"
+msgstr "Februari"
+
+msgid "ui.signin.dob_month_mar"
+msgstr "Maart"
+
+msgid "ui.signin.dob_month_apr"
+msgstr "April"
+
+msgid "ui.signin.dob_month_may"
+msgstr "Mei"
+
+msgid "ui.signin.dob_month_jun"
+msgstr "Juni"
+
+msgid "ui.signin.dob_month_jul"
+msgstr "Juli"
+
+msgid "ui.signin.dob_month_aug"
+msgstr "Augustus"
+
+msgid "ui.signin.dob_month_sep"
+msgstr "September"
+
+msgid "ui.signin.dob_month_oct"
+msgstr "Oktober"
+
+msgid "ui.signin.dob_month_nov"
+msgstr "November"
+
+msgid "ui.signin.dob_month_dec"
+msgstr "December"
+
+msgid "ui.signin.error_dob_incomplete"
+msgstr "Vul je geboortedatum in."
+
+msgid "ui.signin.error_dob_invalid"
+msgstr "Vul een geldige datum in."
+
+# Surface D — Parental consent panel
+msgid "ui.consent.title"
+msgstr "Vraag een ouder om te bevestigen"
+
+msgid "ui.consent.body"
+msgstr "Je hebt toestemming nodig van een ouder of voogd om met vrienden te spelen. Voer hun e-mailadres in en we sturen hen een bevestigingslink."
+
+msgid "ui.consent.parent_email_placeholder"
+msgstr "E-mailadres van ouder of voogd"
+
+msgid "ui.consent.send_link"
+msgstr "Link versturen"
+
+msgid "ui.consent.sending"
+msgstr "Versturen…"
+
+msgid "ui.consent.why_label"
+msgstr "Waarom zie ik dit?"
+
+msgid "ui.consent.why_explanation"
+msgstr "Cubicraftia vraagt spelers jonger dan 13 jaar om toestemming van een ouder voordat ze aan sessies mee kunnen doen of met vrienden kunnen chatten. Het e-mailadres van je ouder wordt alleen gebruikt om deze bevestiging te sturen — het wordt niet opgeslagen na de bevestiging."
+
+msgid "ui.consent.skip"
+msgstr "Voorlopig overslaan"
+
+msgid "ui.consent.success_heading"
+msgstr "Link verzonden!"
+
+msgid "ui.consent.success_body"
+msgstr "We hebben een bevestigingslink gestuurd naar {parent_email}. Vraag je ouder om hun e-mail te bekijken en op de link te tikken."
+
+msgid "ui.consent.done"
+msgstr "Klaar"
+
+msgid "ui.consent.resend"
+msgstr "Opnieuw versturen"
+
+msgid "ui.consent.resent_toast"
+msgstr "Opnieuw verzonden."
+
+msgid "ui.consent.error_invalid_email"
+msgstr "Voer een geldig e-mailadres in."
+
+msgid "ui.consent.error_network"
+msgstr "Kon de e-mail niet versturen. Controleer je verbinding en probeer het opnieuw."
+
+# Surface E — EULA + Privacy viewer
+msgid "ui.legal.terms_link"
+msgstr "Gebruiksvoorwaarden"
+
+msgid "ui.legal.privacy_link"
+msgstr "Privacybeleid"
+
+msgid "ui.legal.viewer_close"
+msgstr "Sluiten"
+
+msgid "ui.legal.footer_version"
+msgstr "Versie: {hash}"
+
+msgid "ui.legal.agree_button"
+msgstr "Ik ga akkoord"
+
+msgid "ui.legal.english_only_notice"
+msgstr "De volgende juridische tekst is alleen beschikbaar in het Engels. Dit is de bindende versie."
+
+msgid "ui.legal.reack_title"
+msgstr "We hebben onze Gebruiksvoorwaarden bijgewerkt"
+
+msgid "ui.legal.reack_body"
+msgstr "Bekijk en accepteer de nieuwe voorwaarden om door te gaan."
+
+msgid "ui.legal.reack_review"
+msgstr "Voorwaarden bekijken"
+
+msgid "ui.legal.reack_signout"
+msgstr "Uitloggen"
+
+# Surface F — Restricted-account banner
+msgid "ui.restricted.banner_label"
+msgstr "Wacht op bevestiging van ouder —"
+
+msgid "ui.restricted.resend_link"
+msgstr "E-mail opnieuw sturen"
+
+msgid "ui.restricted.join_blocked_title"
+msgstr "Toestemming van ouder nodig"
+
+msgid "ui.restricted.join_blocked_body"
+msgstr "Je account heeft toestemming van een ouder nodig voordat je aan sessies kunt deelnemen. Vraag je ouder om hun e-mail te bekijken."
+
+msgid "ui.restricted.join_blocked_resend"
+msgstr "E-mail opnieuw sturen"
+
+msgid "ui.restricted.join_blocked_cancel"
+msgstr "Annuleren"
+
+# Surface G — Username gating error states
+msgid "ui.username.error_format"
+msgstr "Gebruikersnaam moet 3–20 tekens zijn. Alleen letters, cijfers en underscores."
+
+msgid "ui.username.error_taken"
+msgstr "Die gebruikersnaam is al in gebruik. Probeer een andere."
+
+msgid "ui.username.error_profanity"
+msgstr "Kies een andere gebruikersnaam."
+
+msgid "ui.username.error_reserved"
+msgstr "Die gebruikersnaam is gereserveerd."
+
+msgid "ui.username.error_cooldown"
+msgstr "Je kunt je gebruikersnaam pas over {n} dagen weer wijzigen."
+
+msgid "ui.username.cooldown_label"
+msgstr "Gebruikersnaam wijzigen beschikbaar over {n} dagen."
+
+msgid "ui.username.inline_valid"
+msgstr ""
+
+# Surface H — Friends panel additions (report item)
+msgid "ui.friends.report"
+msgstr "Melden"
+
+# Surface I — Chat overlay additions (report context menu)
+msgid "ui.chat.report_context_menu_item"
+msgstr "Dit bericht melden"
+
+# Surface J — In-world nameplate additions
+msgid "ui.nameplate.report_action"
+msgstr "{username} melden"
+
+msgid "ui.nameplate.block_action"
+msgstr "{username} blokkeren"
+
+# Surface L — Settings menu: legal section + account section
+msgid "ui.settings.legal_section_title"
+msgstr "Juridisch"
+
+msgid "ui.settings.terms_button"
+msgstr "Gebruiksvoorwaarden"
+
+msgid "ui.settings.privacy_button"
+msgstr "Privacybeleid"
+
+msgid "ui.settings.account_section_title"
+msgstr "Account"
+
+msgid "ui.settings.account_username_label"
+msgstr "Gebruikersnaam: {current}"
+
+msgid "ui.settings.account_change_username"
+msgstr "Gebruikersnaam wijzigen"
+
+msgid "ui.settings.account_change_save"
+msgstr "Opslaan"
+
+msgid "ui.settings.account_change_cancel"
+msgstr "Annuleren"
+
+msgid "ui.settings.account_delete_button"
+msgstr "Account verwijderen"
+
+msgid "ui.settings.account_delete_title"
+msgstr "Je account verwijderen?"
+
+msgid "ui.settings.account_delete_body"
+msgstr "Je account wordt na 7 dagen definitief verwijderd. Je kunt dit annuleren door in die tijd opnieuw in te loggen."
+
+msgid "ui.settings.account_delete_confirm"
+msgstr "Account verwijderen"
+
+msgid "ui.settings.account_delete_cancel"
+msgstr "Annuleren"
+
+msgid "ui.settings.account_delete_pending"
+msgstr "Verwijdering account in behandeling — wordt geannuleerd op {date}."
+
+msgid "ui.settings.account_delete_cancel_action"
+msgstr "Verwijdering annuleren"
+
+# ─── Phase 6: Title screen (Surface 1) ────────────────────────────────────────
+
+msgid "ui.title.tagline"
+msgstr "Bouwen. Overleven. Spelen met vrienden."
+
+msgid "ui.title.continue_as"
+msgstr "Doorgaan als {username}"
+
+msgid "ui.title.continue"
+msgstr "Verdergaan"
+
+msgid "ui.title.sign_in"
+msgstr "Inloggen"
+
+msgid "ui.title.create_account"
+msgstr "Account aanmaken"
+
+msgid "ui.title.continue_offline"
+msgstr "Offline doorgaan"
+
+msgid "ui.title.settings"
+msgstr "Instellingen"
+
+# ─── Phase 6: Avatar creator (Surface 2) ─────────────────────────────────────
+
+msgid "ui.avatar.title"
+msgstr "Kies je bouwer"
+
+msgid "ui.avatar.section_skin"
+msgstr "Huid"
+
+msgid "ui.avatar.section_head"
+msgstr "Hoofd"
+
+msgid "ui.avatar.section_body"
+msgstr "Lichaam"
+
+msgid "ui.avatar.section_legs"
+msgstr "Benen"
+
+msgid "ui.avatar.section_hand"
+msgstr "Hand"
+
+msgid "ui.avatar.presets_label"
+msgstr "Snel starten"
+
+msgid "ui.avatar.preset_1"
+msgstr "De Verkenner"
+
+msgid "ui.avatar.preset_2"
+msgstr "De Bouwer"
+
+msgid "ui.avatar.preset_3"
+msgstr "De Ontdekkingsreiziger"
+
+msgid "ui.avatar.preset_4"
+msgstr "De Ambachtspersoon"
+
+msgid "ui.avatar.preset_5"
+msgstr "De Avonturier"
+
+msgid "ui.avatar.preset_6"
+msgstr "De Zwerver"
+
+msgid "ui.avatar.preset_7"
+msgstr "De Maker"
+
+msgid "ui.avatar.preset_8"
+msgstr "De Overlevende"
+
+msgid "ui.avatar.randomise"
+msgstr "Willekeurig"
+
+msgid "ui.avatar.shape_square"
+msgstr "Vierkant"
+
+msgid "ui.avatar.shape_round"
+msgstr "Rond"
+
+msgid "ui.avatar.shape_tall"
+msgstr "Groot"
+
+msgid "ui.avatar.expr_neutral"
+msgstr "Neutraal"
+
+msgid "ui.avatar.expr_happy"
+msgstr "Blij"
+
+msgid "ui.avatar.expr_cool"
+msgstr "Cool"
+
+msgid "ui.avatar.expr_surprised"
+msgstr "Verrast"
+
+msgid "ui.avatar.expr_sleepy"
+msgstr "Slaperig"
+
+msgid "ui.avatar.accessory_none"
+msgstr "Geen"
+
+msgid "ui.avatar.accessory_backpack"
+msgstr "Rugzak"
+
+msgid "ui.avatar.accessory_cape"
+msgstr "Cape"
+
+msgid "ui.avatar.shoes_none"
+msgstr "Geen"
+
+msgid "ui.avatar.shoes_boots"
+msgstr "Laarzen"
+
+msgid "ui.avatar.shoes_sneakers"
+msgstr "Sneakers"
+
+msgid "ui.avatar.hand_none"
+msgstr "Geen"
+
+msgid "ui.avatar.hand_pickaxe"
+msgstr "Houweel"
+
+msgid "ui.avatar.hand_lantern"
+msgstr "Lantaarn"
+
+msgid "ui.avatar.hand_flower"
+msgstr "Bloem"
+
+msgid "ui.avatar.hand_blank"
+msgstr "Leeg"
+
+msgid "ui.avatar.done"
+msgstr "Klaar"
+
+msgid "ui.avatar.back"
+msgstr "Terug"
+
+# ─── Phase 6: World select / home screen (Surface 3) ─────────────────────────
+
+msgid "ui.world_select.title"
+msgstr "Jouw werelden"
+
+msgid "ui.world_select.friends"
+msgstr "Vrienden"
+
+msgid "ui.world_select.settings_tooltip"
+msgstr "Instellingen"
+
+msgid "ui.world_select.new_world"
+msgstr "Nieuwe wereld"
+
+msgid "ui.world_select.worlds_cap_error"
+msgstr "Verwijder een wereld om een nieuwe aan te maken"
+
+msgid "ui.world_select.play"
+msgstr "Spelen"
+
+msgid "ui.world_select.mode_creative"
+msgstr "Creatief"
+
+msgid "ui.world_select.mode_survival"
+msgstr "Overleving"
+
+msgid "ui.world_select.last_played_today"
+msgstr "Vandaag"
+
+msgid "ui.world_select.last_played_yesterday"
+msgstr "Gisteren"
+
+msgid "ui.world_select.last_played_n_days_ago"
+msgstr "{n} dagen geleden"
+
+msgid "ui.world_select.ctx_rename"
+msgstr "Hernoemen"
+
+msgid "ui.world_select.ctx_duplicate"
+msgstr "Dupliceren"
+
+msgid "ui.world_select.ctx_export"
+msgstr "Exporteren"
+
+msgid "ui.world_select.ctx_delete"
+msgstr "Verwijderen"
+
+msgid "ui.world_select.delete_title"
+msgstr "Wereld verwijderen?"
+
+msgid "ui.world_select.delete_body"
+msgstr "Deze wereld kan niet worden hersteld."
+
+msgid "ui.world_select.delete_confirm"
+msgstr "Verwijderen"
+
+msgid "ui.world_select.delete_cancel"
+msgstr "Annuleren"
+
+msgid "ui.world_select.empty_heading"
+msgstr "Nog geen werelden"
+
+msgid "ui.world_select.empty_body"
+msgstr "Maak je eerste wereld aan om te beginnen."
+
+# ─── Phase 6: New world modal (Surface 4) ─────────────────────────────────────
+
+msgid "ui.new_world.title"
+msgstr "Nieuwe wereld"
+
+msgid "ui.new_world.name_label"
+msgstr "Wereldnaam"
+
+msgid "ui.new_world.name_placeholder"
+msgstr "Mijn wereld"
+
+msgid "ui.new_world.name_char_counter"
+msgstr "{n}/24"
+
+msgid "ui.new_world.name_error_empty"
+msgstr "Geef je wereld een naam."
+
+msgid "ui.new_world.name_error_profanity"
+msgstr "Kies een andere naam."
+
+msgid "ui.new_world.seed_label"
+msgstr "Seed (optioneel)"
+
+msgid "ui.new_world.seed_placeholder"
+msgstr "Willekeurig"
+
+msgid "ui.new_world.seed_hint"
+msgstr "Laat leeg voor een willekeurige seed."
+
+msgid "ui.new_world.mode_label"
+msgstr "Modus"
+
+msgid "ui.new_world.mode_survival"
+msgstr "Overleving"
+
+msgid "ui.new_world.mode_creative"
+msgstr "Creatief"
+
+msgid "ui.new_world.create"
+msgstr "Aanmaken"
+
+msgid "ui.new_world.creating"
+msgstr "Aanmaken…"
+
+msgid "ui.new_world.cancel"
+msgstr "Annuleren"
+
+# ─── Phase 6: FTUE overlay (Surface 5) ───────────────────────────────────────
+
+msgid "ui.ftue.step_1"
+msgstr "Open de kist — je hebt wat daarin zit nodig voor het donker wordt."
+
+msgid "ui.ftue.step_2"
+msgstr "Probeer een boom te kappen. Tik en houd een boomblok vast."
+
+msgid "ui.ftue.step_3"
+msgstr "Je kunt alles in je inventaris terugplaatsen in de wereld. Probeer een houten plank te plaatsen."
+
+msgid "ui.ftue.complete"
+msgstr "Dat is het. De wereld is van jou."
+
+msgid "ui.ftue.night_hint"
+msgstr "Tijd om te slapen. Loop naar het bed."
+
+msgid "ui.ftue.progress_label"
+msgstr "Stap {n}/{total}"
+
+# ─── Phase 6: Deep-link inline sign-in + joiner tip (Surface 6) ──────────────
+
+msgid "ui.deeplink.connecting"
+msgstr "Verbinding maken..."
+
+msgid "ui.deeplink.heading"
+msgstr "Log in om mee te doen in de wereld van je vriend"
+
+msgid "ui.deeplink.body"
+msgstr "Je vriend wacht op je."
+
+msgid "ui.deeplink.email_placeholder"
+msgstr "E-mail"
+
+msgid "ui.deeplink.password_placeholder"
+msgstr "Wachtwoord"
+
+msgid "ui.deeplink.sign_in"
+msgstr "Inloggen"
+
+msgid "ui.deeplink.create_account"
+msgstr "Account aanmaken"
+
+msgid "ui.deeplink.joiner_tip"
+msgstr "Dit is de wereld van {friend}. Zij hebben wat je nodig hebt om te beginnen."
+
+# ─── Phase 6: Sign-in panel back link (Surface 7) ────────────────────────────
+
+msgid "ui.signin.back_to_title"
+msgstr "Terug naar het startscherm"
+
+# ─── Phase 6: Friends panel standalone title (Surface 8) ─────────────────────
+
+msgid "ui.friends.title_standalone"
+msgstr "Vrienden"
+
+# ─── Phase 6: Locale picker (Plan 06-10) ─────────────────────────────────────
+
+msgid "ui.settings.language_label"
+msgstr "Taal"
+
+msgid "ui.settings.locale_en"
+msgstr "English"
+
+msgid "ui.settings.locale_nl"
+msgstr "Nederlands"

@@ -1,0 +1,69 @@
+# SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# pr-checks.yml — Lightweight PR lint job
+#
+# Runs on pull_request events only. Executes the same scope-checks as ci.yml
+# (glossary, REUSE, feature-flags, i18n round-trip, GUT unit tests) but SKIPS
+# the 20-minute export matrix to give fast red/green signal on a PR.
+#
+# The full export matrix runs separately via ci.yml (triggered on push to any branch
+# and on pull_request in parallel — PRs get both this cheap check and the matrix).
+
+name: pr-checks
+
+on:
+  pull_request:
+
+env:
+  GODOT_VERSION: "4.6.3"
+
+jobs:
+  scope-checks:
+    name: PR scope checks (glossary · REUSE · feature-flags · i18n · unit tests)
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system tools (ripgrep, gettext, pipx)
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends ripgrep gettext python3-pip python3-venv
+          python3 -m pip install --user pipx --quiet
+          python3 -m pipx ensurepath || true
+
+      - name: Install REUSE tool
+        run: python3 -m pipx install reuse || python3 -m pip install --user reuse
+
+      - name: Glossary check — no forbidden terminology in player-facing surfaces
+        run: bash scripts/glossary-check.sh
+
+      - name: REUSE / SPDX header lint
+        run: |
+          if command -v reuse &>/dev/null; then
+            reuse lint
+          else
+            python3 -m reuse lint
+          fi
+
+      - name: Feature-flag invariant — all §9 deferred flags must be false
+        run: bash scripts/verify-feature-flags.sh
+
+      - name: i18n round-trip — extract .pot and check it matches committed version
+        run: |
+          cp locale/messages.pot locale/messages.pot.committed
+          bash scripts/extract-pot.sh
+          if ! diff -q locale/messages.pot.committed locale/messages.pot; then
+            echo "FAIL: locale/messages.pot is stale — run scripts/extract-pot.sh and commit the result." >&2
+            diff locale/messages.pot.committed locale/messages.pot >&2
+            exit 1
+          fi
+          echo "OK: locale/messages.pot is up to date."
+
+      - name: GUT unit tests (headless)
+        run: |
+          bash scripts/install-deps.sh --check || true
+          godot --headless -s addons/gut/gut_cmdln.gd -- -gdir=tests/unit -gexit

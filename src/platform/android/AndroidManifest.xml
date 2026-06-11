@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+
+AndroidManifest.xml — Minimal manifest for the CubicraftiaThermal plugin library.
+No activities are declared; this is a library-only module.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.cubicraftia.android">
+    <!-- No special permissions needed: getThermalHeadroom / currentThermalStatus
+         are normal-level calls on PowerManager. readSysfsZone reads a world-readable
+         sysfs path that does not require a manifest permission on most kernels. -->
+</manifest>

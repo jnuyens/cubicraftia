@@ -1,0 +1,22 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; pickaxe_iron.tres — ToolDefinition for the iron pickaxe (tier 2).
+; Breaks all ore types including diamond ore (tier 2 per DOCS §3.4).
+; max_durability = 240.
+
+[gd_resource type="Resource" script_class="ToolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/tools/tool_definition.gd" id="1_tooldef"]
+
+[resource]
+script = ExtResource("1_tooldef")
+tool_id = "pickaxe_iron"
+display_name_key = "tools.pickaxe_iron.name"
+icon_path = "res://assets/textures/icons/pickaxe_iron.png"
+category = 0
+tier = 2
+max_durability = 240
+dynamite_radius_m = 5.0
+lantern_light_radius_m = 8.0
+mesh = null

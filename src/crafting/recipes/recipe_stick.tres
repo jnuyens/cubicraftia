@@ -1,0 +1,24 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_stick.tres — 2 wooden planks → 4 sticks (SHAPELESS, 2×2 grid).
+; UAT test 9 feedback: the original shaped variant needed planks in slots
+; 0 AND 2 specifically, which is the wrong UX for the basic-recipe 2×2 inline
+; grid — users naturally drop a stack on a single slot. Cubicraftia follows
+; the classic sandbox model: 2×2 inline grid = shapeless recipes (ingredients
+; count, position doesn't); 3×3 workbench = shaped recipes (positional tools).
+; D-07: recipe ratios at Claude's discretion. Ref: 03-07a-SUMMARY.md.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_stick"
+display_name_key = "recipes.stick.name"
+inputs = [{"def_id": "wood_plank", "count": 2, "slot": -1}]
+output_def_id = "stick"
+output_count = 4
+shaped = false
+grid_size = 2

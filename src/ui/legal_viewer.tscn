@@ -1,0 +1,19 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; legal_viewer.tscn — EULA + Privacy Policy viewer (Surface E).
+;
+; Architecture: CanvasLayer layer 15 (above title screen, below modals at 20).
+; All content is built procedurally in legal_viewer.gd _build_ui() and open().
+; This scene file is a minimal container — the script handles all UI construction.
+;
+; Usage: instantiate this scene, add to SceneTree root, then call .open("eula")
+; or .open("privacy"). The layer ensures it renders above the title screen.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/legal_viewer.gd" id="1_legal_viewer"]
+
+[node name="LegalViewer" type="CanvasLayer"]
+layer = 15
+script = ExtResource("1_legal_viewer")

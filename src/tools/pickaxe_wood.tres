@@ -1,0 +1,22 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; pickaxe_wood.tres — ToolDefinition for the wooden pickaxe (tier 0).
+; Breaks stone and cobblestone only (tier 0 per DOCS §3.4).
+; max_durability = 60 (weakest tier).
+
+[gd_resource type="Resource" script_class="ToolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/tools/tool_definition.gd" id="1_tooldef"]
+
+[resource]
+script = ExtResource("1_tooldef")
+tool_id = "pickaxe_wood"
+display_name_key = "tools.pickaxe_wood.name"
+icon_path = "res://assets/textures/icons/pickaxe_wood.png"
+category = 0
+tier = 0
+max_durability = 60
+dynamite_radius_m = 5.0
+lantern_light_radius_m = 8.0
+mesh = null

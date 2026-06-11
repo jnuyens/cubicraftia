@@ -1,0 +1,5 @@
+SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+Procedurally generated stylised low-poly creature mesh, built from primitives
+with real BSDF materials by tools/gen_creatures.py (headless Blender). No
+third-party scan data; original Cubicraftia asset.

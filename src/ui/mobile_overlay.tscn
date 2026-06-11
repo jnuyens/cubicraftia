@@ -1,0 +1,180 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; mobile_overlay.tscn - Mobile control overlay scene.
+;
+; Per UI-SPEC.md Mobile Control Overlay diagram:
+;   - Control root, FULL_RECT, visible only on mobile (gated by script _ready).
+;   - Left side: VirtualJoystick, anchored bottom-left.
+;   - Right side: Jump / Place / Break TouchScreenButtons, anchored bottom-right.
+;   - Bottom centre: Hotbar.
+;   - Bottom right: Palette button (disabled per DOC-09).
+;
+; TouchScreenButton.action values match project.godot [input] section exactly:
+;   jump, place, break.
+;
+; Textures are loaded at runtime by mobile_overlay.gd to avoid import requirements.
+; The palette button uses modulate.a = 0.5 (50% opacity = disabled visual state).
+
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/ui/mobile_overlay.gd" id="1_overlay"]
+[ext_resource type="Script" path="res://src/ui/virtual_joystick.gd" id="2_joystick"]
+[ext_resource type="PackedScene" path="res://src/ui/hotbar.tscn" id="3_hotbar"]
+
+; ─── Root control ─────────────────────────────────────────────────────────────
+[node name="MobileOverlay" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_overlay")
+
+; ─── Virtual Joystick (bottom-left) ──────────────────────────────────────────
+[node name="VirtualJoystick" type="Control" parent="."]
+layout_mode = 0
+script = ExtResource("2_joystick")
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -160.0
+offset_right = 160.0
+offset_bottom = -16.0
+custom_minimum_size = Vector2(144, 144)
+
+; ─── Right buttons (Jump / Place / Break) ────────────────────────────────────
+[node name="RightButtons" type="HBoxContainer" parent="."]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -128.0
+offset_right = -16.0
+offset_bottom = -16.0
+add_theme_constant_override("separation") = 8
+
+; Jump button - texture loaded at runtime by script to avoid import requirement
+[node name="JumpButton" type="TouchScreenButton" parent="RightButtons"]
+action = &"jump"
+tooltip_text = "Jump"
+custom_minimum_size = Vector2(96, 96)
+
+; Place button
+[node name="PlaceButton" type="TouchScreenButton" parent="RightButtons"]
+action = &"place"
+tooltip_text = "Place"
+custom_minimum_size = Vector2(96, 96)
+
+; Break button
+[node name="BreakButton" type="TouchScreenButton" parent="RightButtons"]
+action = &"break"
+tooltip_text = "Break"
+custom_minimum_size = Vector2(96, 96)
+
+; ─── Hotbar (bottom-centre) ──────────────────────────────────────────────────
+[node name="Hotbar" parent="." instance=ExtResource("3_hotbar")]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -284.0
+offset_top = -96.0
+offset_right = 284.0
+offset_bottom = -16.0
+
+; ─── Palette button (bottom-right, ENABLED in Plan 02-12) ────────────────────
+; 64x64, fully opaque. Tapping expands the brick palette bottom sheet.
+; Texture loaded at runtime to avoid import requirement.
+[node name="PaletteButton" type="TouchScreenButton" parent="."]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -168.0
+offset_right = -16.0
+offset_bottom = -104.0
+action = &""
+modulate = Color(1, 1, 1, 1)
+disabled = false
+custom_minimum_size = Vector2(64, 64)
+tooltip_text = "Open brick palette"
+
+; ─── Palette expansion flag ───────────────────────────────────────────────────
+; This node is a Control whose visible property is toggled by mobile_overlay.gd
+; when the palette bottom sheet expands/collapses. The crosshair hides when
+; palette_expanded_marker is visible (= palette is open).
+; Named "PaletteExpandedMarker" so mobile_overlay.gd can look it up by name.
+[node name="PaletteExpandedMarker" type="Control" parent="."]
+visible = false
+
+; ─── Inventory button (top-right) — Plan 03-05 ───────────────────────────────
+; 64×64 TouchScreenButton anchored top-right.
+; On press: emits ui_inventory_toggle Input action so Builder._unhandled_input
+; picks it up via the same path as keyboard E (per 03-UI-SPEC.md L172 mobile button).
+; Visible on mobile only (gated by OS.has_feature("mobile") in _ready).
+; Tooltip: "Open inventory" / "Close inventory" updated dynamically by notify_inventory_open.
+; Texture loaded at runtime (assets/textures/icons/tab_inventory.png ships in Plan 03-09).
+[node name="InventoryButton" type="TouchScreenButton" parent="."]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -80.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 80.0
+action = &""
+modulate = Color(1, 1, 1, 1)
+disabled = false
+custom_minimum_size = Vector2(64, 64)
+tooltip_text = "Open inventory"
+
+; ─── Friends button (top-right, below InventoryButton) — Plan 04-06 ──────────
+; 64×64 TouchScreenButton. Action: ui_friends_open. Position below InventoryButton
+; (offset_top = 16 + 64 + 8 = 88) per UI-SPEC §Control Scheme Extensions.
+; Texture: icon_friends.png (ships in Plan 04-06 asset pass — loaded at runtime).
+; On press: mobile_overlay.gd._on_friends_pressed() calls friends_panel.open().
+[node name="FriendsButton" type="TouchScreenButton" parent="."]
+layout_mode = 0
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -80.0
+offset_top = 88.0
+offset_right = -16.0
+offset_bottom = 152.0
+action = &"ui_friends_open"
+modulate = Color(1, 1, 1, 1)
+disabled = false
+custom_minimum_size = Vector2(64, 64)
+tooltip_text = "Open friends"
+
+; ─── Chat button (bottom-left, above VirtualJoystick) — Plan 04-06 ───────────
+; 64×64 TouchScreenButton. Action: ui_chat_toggle. Position above VirtualJoystick
+; (offset_top ≈ -240) per UI-SPEC §Control Scheme Extensions.
+; Texture: icon_mute.png repurposed as placeholder (loaded at runtime).
+; On press: mobile_overlay.gd._on_chat_pressed() emits ui_chat_toggle action.
+[node name="ChatButton" type="TouchScreenButton" parent="."]
+layout_mode = 0
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -240.0
+offset_right = 80.0
+offset_bottom = -176.0
+action = &"ui_chat_toggle"
+modulate = Color(1, 1, 1, 1)
+disabled = false
+custom_minimum_size = Vector2(64, 64)
+tooltip_text = "Chat"

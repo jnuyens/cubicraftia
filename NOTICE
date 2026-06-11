@@ -1,0 +1,41 @@
+NOTICE — Cubicraftia
+====================
+
+This file lists third-party components shipped with Cubicraftia.
+The full GPL-3.0-or-later licence text is in the LICENSE file at the repo root.
+
+SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+
+---
+
+Third-party components
+----------------------
+
+1. Godot Engine 4.6.3
+   Copyright (c) 2014-present Godot Engine contributors
+   Copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur
+   SPDX-License-Identifier: MIT
+   Source: https://github.com/godotengine/godot
+
+2. Zylann/godot_voxel (pinned commit 4a9d311)
+   Copyright (c) Marc Zerbel (Zylann) and contributors
+   SPDX-License-Identifier: MIT
+   Source: https://github.com/Zylann/godot_voxel
+
+3. FastNoiseLite (bundled with Godot 4.6.3)
+   Copyright (c) 2020 Jordan Peck and contributors
+   SPDX-License-Identifier: MIT
+   Source: https://github.com/Auburn/FastNoiseLite
+   Note: Bundled as part of the Godot Engine; no separate installation required.
+
+4. bitwes/Gut (GDScript Unit Testing) v9.4.0
+   Copyright (c) 2021 Tom "bitwes" Butts and contributors
+   SPDX-License-Identifier: MIT
+   Source: https://github.com/bitwes/Gut
+
+5. Noto Sans (Regular + SemiBold)
+   Copyright (c) 2012 Google Inc.
+   SPDX-License-Identifier: OFL-1.1
+   Source: https://fonts.google.com/noto/specimen/Noto+Sans
+   Note: The SIL Open Font License 1.1 is GPL-3.0-compatible per OFL §1.

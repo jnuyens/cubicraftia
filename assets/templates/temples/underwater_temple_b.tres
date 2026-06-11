@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="BrickTemplate" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; underwater_temple_b.tres — Underwater temple variant B.
+; Elongated hall with glass side windows, stone pillars, diamond_ore altar.
+; Palette: glass natural, stone/cobble natural, cyan (10) + light-blue (11) trim.
+; Contains gold chest at altar.
+; DOCS.md §2 — underwater temple structure; CONTEXT.md D-07, D-08 (notable rarity).
+
+[ext_resource type="Script" path="res://src/bricks/brick_template.gd" id="1_btmpl"]
+
+[resource]
+script = ExtResource("1_btmpl")
+bricks = [
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 2, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 3, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 4, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(10, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(10, 2, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(10, 3, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(10, 4, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 6)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 2, 6)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 3, 6)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(10, 1, 6)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(10, 2, 6)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(10, 3, 6)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(2, 2, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(4, 2, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(6, 2, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(8, 2, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(2, 3, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(4, 3, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(6, 3, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(8, 3, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(2, 2, 6)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(4, 2, 6)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(6, 2, 6)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(8, 2, 6)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(2, 3, 6)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(4, 3, 6)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(6, 3, 6)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(8, 3, 6)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(5, 2, 3)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(5, 3, 3)},
+	{"def_id": "diamond_ore","colour_index": -1, "cell": Vector3i(5, 4, 3)},
+	{"def_id": "round_1x1_brick","colour_index": 10, "cell": Vector3i(3, 2, 3)},
+	{"def_id": "round_1x1_brick","colour_index": 11, "cell": Vector3i(7, 2, 3)},
+	{"def_id": "round_1x1_plate","colour_index": 10, "cell": Vector3i(3, 3, 3)},
+	{"def_id": "round_1x1_plate","colour_index": 11, "cell": Vector3i(7, 3, 3)},
+	{"def_id": "torch",      "colour_index": 10, "cell": Vector3i(0, 5, 3)},
+	{"def_id": "torch",      "colour_index": 11, "cell": Vector3i(10, 5, 3)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(5, 5, 1)}
+]
+terrain_overrides = []
+loot_chests = [
+	{"chest_type": "gold", "cell": Vector3i(5, 1, 3)}
+]
+npc_spawns = []
+bbox = AABB(0, 0, 0, 11, 6, 7)
+allowed_biomes = Array[int]([5])

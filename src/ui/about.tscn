@@ -1,0 +1,58 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; about.tscn - About / Credits screen.
+;
+; Per UI-SPEC.md About screen and Copywriting Contract.
+;
+; ALLOWLISTED in scripts/glossary-allowlist.txt: src/ui/about.tscn
+; because the disclaimer label contains "LEGO Group" verbatim (via tr("ui.about.disclaimer")).
+;
+; The disclaimer label text is populated at runtime by about.gd via tr().
+; At scene file level, text = "" (not translated) to satisfy DOC-10 test_no_hardcoded_strings.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/about.gd" id="1_about"]
+
+[node name="About" type="PanelContainer"]
+custom_minimum_size = Vector2(480, 0)
+script = ExtResource("1_about")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+[node name="VersionLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.8)
+
+[node name="LicenseLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.8)
+
+[node name="LicenseButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = ""
+
+[node name="DisclaimerLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.7)
+
+[node name="BackButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = ""
+size_flags_horizontal = 8

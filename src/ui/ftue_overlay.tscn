@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://ftue_overlay"]
+
+[ext_resource type="Script" path="res://src/ui/ftue_overlay.gd" id="1_ftue_overlay"]
+
+[node name="FtueOverlay" type="CanvasLayer"]
+layer = 20
+script = ExtResource("1_ftue_overlay")

@@ -1,0 +1,64 @@
+[gd_resource type="Resource" script_class="BrickTemplate" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; desert_village_c.tres — Desert village variant C.
+; Four compact buildings arranged in a cluster with a central well (round bricks).
+; Palette: tan (16) + sand-yellow (17) walls, white (0) tile roofs, iron accents.
+; NPCs: 4 desert-skin wandering builders.
+; DOCS.md §2 — desert village structure; CONTEXT.md D-07 (3-5 variants), D-09 (NPC slots).
+
+[ext_resource type="Script" path="res://src/bricks/brick_template.gd" id="1_btmpl"]
+
+[resource]
+script = ExtResource("1_btmpl")
+bricks = [
+	{"def_id": "brick_2x2", "colour_index": 16, "cell": Vector3i(0, 1, 0)},
+	{"def_id": "brick_2x2", "colour_index": 16, "cell": Vector3i(0, 2, 0)},
+	{"def_id": "brick_2x2", "colour_index": 16, "cell": Vector3i(0, 3, 0)},
+	{"def_id": "plate_2x2", "colour_index": 17, "cell": Vector3i(0, 0, 0)},
+	{"def_id": "tile_2x2",  "colour_index": 0,  "cell": Vector3i(0, 4, 0)},
+	{"def_id": "brick_2x2", "colour_index": 17, "cell": Vector3i(5, 1, 0)},
+	{"def_id": "brick_2x2", "colour_index": 17, "cell": Vector3i(5, 2, 0)},
+	{"def_id": "plate_2x2", "colour_index": 16, "cell": Vector3i(5, 0, 0)},
+	{"def_id": "tile_2x2",  "colour_index": 0,  "cell": Vector3i(5, 3, 0)},
+	{"def_id": "brick_2x2", "colour_index": 16, "cell": Vector3i(0, 1, 5)},
+	{"def_id": "brick_2x2", "colour_index": 16, "cell": Vector3i(0, 2, 5)},
+	{"def_id": "plate_2x2", "colour_index": 17, "cell": Vector3i(0, 0, 5)},
+	{"def_id": "tile_2x2",  "colour_index": 0,  "cell": Vector3i(0, 3, 5)},
+	{"def_id": "brick_2x2", "colour_index": 17, "cell": Vector3i(5, 1, 5)},
+	{"def_id": "brick_2x2", "colour_index": 17, "cell": Vector3i(5, 2, 5)},
+	{"def_id": "plate_2x2", "colour_index": 16, "cell": Vector3i(5, 0, 5)},
+	{"def_id": "tile_2x2",  "colour_index": 0,  "cell": Vector3i(5, 3, 5)},
+	{"def_id": "round_2x2_brick", "colour_index": 1, "cell": Vector3i(3, 1, 3)},
+	{"def_id": "round_1x1_plate", "colour_index": 1, "cell": Vector3i(3, 2, 3)},
+	{"def_id": "round_1x1_brick", "colour_index": 11, "cell": Vector3i(3, 2, 4)},
+	{"def_id": "window_1x2", "colour_index": 11, "cell": Vector3i(0, 2, 2)},
+	{"def_id": "window_1x2", "colour_index": 11, "cell": Vector3i(5, 2, 2)},
+	{"def_id": "door_1x4",  "colour_index": 15, "cell": Vector3i(1, 1, 0)},
+	{"def_id": "door_1x4",  "colour_index": 15, "cell": Vector3i(6, 1, 5)},
+	{"def_id": "flower",    "colour_index": 6,  "cell": Vector3i(2, 1, 8)},
+	{"def_id": "flower",    "colour_index": 4,  "cell": Vector3i(6, 1, 8)},
+	{"def_id": "torch",     "colour_index": 5,  "cell": Vector3i(0, 3, 2)},
+	{"def_id": "torch",     "colour_index": 5,  "cell": Vector3i(7, 3, 2)},
+	{"def_id": "sand",      "colour_index": -1, "cell": Vector3i(2, 0, 2)},
+	{"def_id": "sand",      "colour_index": -1, "cell": Vector3i(3, 0, 1)},
+	{"def_id": "sand",      "colour_index": -1, "cell": Vector3i(4, 0, 2)},
+	{"def_id": "iron_ore",  "colour_index": -1, "cell": Vector3i(3, 0, 2)},
+	{"def_id": "sign",      "colour_index": 15, "cell": Vector3i(3, 2, 2)},
+	{"def_id": "lantern",   "colour_index": 6,  "cell": Vector3i(1, 1, 7)},
+	{"def_id": "lantern",   "colour_index": 6,  "cell": Vector3i(6, 1, 7)}
+]
+terrain_overrides = []
+loot_chests = [
+	{"chest_type": "regular", "cell": Vector3i(6, 1, 1)}
+]
+npc_spawns = [
+	{"patrol_path": PackedVector3Array(1, 1, 1, 3, 1, 1, 3, 1, 3, 1, 1, 3), "skin_variant": "desert"},
+	{"patrol_path": PackedVector3Array(5, 1, 1, 7, 1, 1, 7, 1, 4), "skin_variant": "desert"},
+	{"patrol_path": PackedVector3Array(1, 1, 5, 3, 1, 5, 3, 1, 8, 1, 1, 8), "skin_variant": "desert"},
+	{"patrol_path": PackedVector3Array(6, 1, 5, 8, 1, 5, 8, 1, 8), "skin_variant": "desert"}
+]
+bbox = AABB(0, 0, 0, 9, 5, 9)
+allowed_biomes = Array[int]([1])

@@ -1,0 +1,24 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; strawberry.tres — Strawberry ItemDefinition (D-16: rare grassland super-heal).
+; heal_amount=6 — the highest single-item heal in the game, exceeding all cooked food.
+; Per D-16: strawberries spawn rarely on grassland-biome surfaces; per-chunk respawn
+; cadence is gated by last_picked_session_id (RESEARCH Pattern 5 + Pitfall 10).
+; category="strawberry" distinguishes it from "cooked_food" for UI categorisation.
+
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+item_id = "strawberry"
+display_name_key = "items.strawberry.name"
+icon_path = "res://assets/textures/icons/strawberry.png"
+category = "strawberry"
+max_stack = 64
+tier = ""
+heal_amount = 6
+consumed_on_use = true
+vfx_on_use = ""

@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_sword_diamond.tres — generated to wire the art-crafting card for sword_diamond.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_sword_diamond"
+display_name_key = "recipes.sword_diamond.name"
+inputs = [{"def_id": "diamond_ore", "count": 1, "slot": 1}, {"def_id": "diamond_ore", "count": 1, "slot": 4}, {"def_id": "stick", "count": 1, "slot": 7}]
+output_def_id = "sword"
+output_count = 1
+shaped = true
+grid_size = 3

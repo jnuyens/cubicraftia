@@ -1,0 +1,109 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; benchmark_scene.tscn — Deterministic benchmark scene (Plan 07 + Plan 02-15).
+;
+; Purpose:
+;   Standalone scene for the Motorola One Macro thermal benchmark (CONTEXT.md D-02/D-03).
+;   Does NOT include the MobileOverlay, FirstLaunchDisclaimer, or Toast nodes — the
+;   benchmark must be fully deterministic with no user-facing UI that could interfere.
+;
+; Structure (mirrors main_scene.tscn but with BenchmarkRunner as root script):
+;   BenchmarkScene (Node3D, benchmark_runner.gd)
+;   ├── WorldEnvironment              — sky + ambient (same as main_scene)
+;   ├── Sun (DirectionalLight3D)      — shadows off per Tier-3 (§7.2)
+;   ├── Terrain (terrain.tscn)        — VoxelTerrain, seed=1234 (fixed, deterministic)
+;   ├── Builder (builder.tscn)        — CharacterBody3D; input disabled by BenchmarkRunner
+;   │   └── VoxelViewer               — view_distance=80 (5 chunks, Tier-3)
+;   ├── StudGrid (stud_grid.gd)       — sparse stud-grid for place/break tracking
+;   ├── BrickRenderer (MultiMesh)     — GPU-batched brick rendering
+;   └── Phase2DynamiteMacro (Node3D) — Plan 02-15: worst-case dynamite-blast macro
+;       Activated by BenchmarkRunner.start_phase_2_macro() BEFORE the 30-min thermal loop.
+;       The macro pre-places 100 bricks in a 10×10 grid at the worst-case 4-chunk-
+;       intersection spot, ignites dynamite at t=5 s (blast at t=8 s), records frame
+;       times to user://benchmarks/02-dynamite.csv, then yields to the thermal loop.
+;
+; T-07-01 mitigation:
+;   This scene is NOT the project's run/main_scene. It is only launched via
+;   scripts/run-benchmark.sh (which temporarily overrides the main scene for the
+;   benchmark APK export). The production APK uses src/world/main_scene.tscn.
+;
+; Rendering:
+;   The Mobile renderer is used (project.godot rendering/renderer/rendering_method.mobile=mobile).
+;   The BenchmarkRunner._apply_tier3_preset() method sets render_distance=80 and
+;   shadows=off on _ready() before any FPS sampling begins.
+
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="PackedScene" path="res://src/world/terrain.tscn" id="1_terrain"]
+[ext_resource type="PackedScene" path="res://src/builder/builder.tscn" id="2_builder"]
+[ext_resource type="Script" path="res://src/world/stud_grid.gd" id="3_studgrid"]
+[ext_resource type="Resource" path="res://src/bricks/brick_1x1.tres" id="4_brick1x1"]
+[ext_resource type="Script" path="res://src/world/benchmark_runner.gd" id="5_runner"]
+
+; ─── Sky environment (same as main_scene — #5BAEEC sky colour) ──────────────
+[sub_resource type="Sky" id="1_sky"]
+
+[sub_resource type="Environment" id="2_env"]
+background_mode = 2
+sky = SubResource("1_sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.357, 0.682, 0.925, 1)
+ambient_light_energy = 0.3
+fog_enabled = false
+volumetric_fog_enabled = false
+glow_enabled = false
+ssao_enabled = false
+ssil_enabled = false
+sdfgi_enabled = false
+
+; ─── MultiMesh for placed bricks ─────────────────────────────────────────────
+[sub_resource type="MultiMesh" id="3_multimesh"]
+transform_format = 1
+mesh = null
+instance_count = 0
+
+; ─── Root node (benchmark_runner.gd as root script) ──────────────────────────
+[node name="BenchmarkScene" type="Node3D"]
+script = ExtResource("5_runner")
+
+; ─── WorldEnvironment ────────────────────────────────────────────────────────
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("2_env")
+
+; ─── Directional light (sun) — shadows OFF per Tier-3 (§7.2) ────────────────
+; BenchmarkRunner._apply_tier3_preset() enforces shadow_enabled=false on _ready().
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.35, 0.354, 0, 0.710, 0.703, -0.5, -0.607, 0.613, 0, 0, 0)
+shadow_enabled = false
+light_energy = 1.2
+
+; ─── Terrain (instances terrain.tscn with fixed seed=1234) ───────────────────
+[node name="Terrain" parent="." instance=ExtResource("1_terrain")]
+
+; ─── Builder (input disabled by BenchmarkRunner._ready()) ────────────────────
+; Spawned high at Y=32 so it falls onto terrain. BenchmarkRunner scripts the walk.
+[node name="Builder" parent="." instance=ExtResource("2_builder")]
+position = Vector3(4, 32, 4)
+
+; ─── VoxelViewer drives chunk streaming from the builder's scripted position ──
+[node name="VoxelViewer" type="VoxelViewer" parent="Builder"]
+view_distance = 80
+requires_visuals = true
+requires_collisions = true
+
+; ─── StudGrid: sparse hash map for benchmark place/break events ──────────────
+[node name="StudGrid" type="Node" parent="."]
+script = ExtResource("3_studgrid")
+
+; ─── BrickRenderer: GPU-batched MultiMeshInstance3D ──────────────────────────
+[node name="BrickRenderer" type="MultiMeshInstance3D" parent="."]
+multimesh = SubResource("3_multimesh")
+
+; ─── Phase2DynamiteMacro (Plan 02-15) ────────────────────────────────────────
+; Activated by BenchmarkRunner.start_phase_2_macro() before the thermal loop.
+; Holds no children; all logic is in BenchmarkRunner (it drives the macro by
+; time-accumulation, placing bricks via StudGrid and detonating DynamiteHandler).
+; The node exists so TSCN load_steps=12 remains accurate and future sub-nodes
+; (e.g. a DynamiteHandler instance) can be wired here without a scene-tree change.
+[node name="Phase2DynamiteMacro" type="Node3D" parent="."]

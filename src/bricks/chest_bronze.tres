@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; chest_bronze.tres — BrickDefinition for the bronze chest (2×2 footprint, 3 plates tall).
+; Tier: bronze — requires key_bronze to unlock. Slot count: 48 (DOCS §4.4).
+; Material tint: orange #E68A1D (CONTEXT D-03 + UI-SPEC L149-151).
+; Mesh: null placeholder until Phase 3 polish ships distinct bronze-chest silhouette .glb per D-03.
+; TODO Phase 3 polish: replace mesh with distinct bronze-chest silhouette .glb per D-03.
+; Silhouette spec: banded chunky box with visible metal bands (03-CONTEXT.md D-03).
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "chest_bronze"
+display_name_key = "chests.bronze.name"
+dimensions = Vector3i(2, 1, 2)
+height_plates = 3
+studs_top = []
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}, {"x": 0.0, "y": 0.0, "z": 1.0, "gender": "female"}, {"x": 1.0, "y": 0.0, "z": 0.0, "gender": "female"}, {"x": 1.0, "y": 0.0, "z": 1.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "metal"
+mesh = null
+category = 5
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 3
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(1, 0, 0), Vector3i(1, 0, 1)]

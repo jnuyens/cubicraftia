@@ -1,0 +1,103 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; handover_screen.tscn — Host failover overlay scene (Surface 9).
+;
+; Root: CanvasLayer layer=100 (HandoverScreen, script=handover_screen.gd), visible=false.
+; Children:
+;   Background — ColorRect: full-rect, navy 0.88α, mouse_filter=STOP (blocks game clicks).
+;   Background/Content — VBoxContainer: centered, max-width 400px.
+;     Content/IconRect — TextureRect: 48×48, icon_freeze.png placeholder.
+;     Content/Heading  — Label: tr("ui.handover.heading"), 20px semibold, brick white.
+;     Content/Subtitle — Label: tr("ui.handover.subtitle"), 16px regular, brick white 70%.
+;     Content/Spinner  — AnimatedSprite2D: 4-frame spinner at 2 Hz, autoplay.
+;
+; No Button, no AcceptDialog, no Escape handler — not dismissible by the player.
+
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/ui/handover_screen.gd" id="1_handover"]
+[ext_resource type="Texture2D" path="res://assets/textures/icons/icon_freeze.png" id="2_icon_freeze"]
+[ext_resource type="Texture2D" path="res://assets/textures/icons/icon_spinner.png" id="3_icon_spinner"]
+
+[sub_resource type="SpriteFrames" id="1_spinner_frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_icon_spinner")
+}],
+"loop": true,
+"name": &"default",
+"speed": 2.0
+}]
+
+[node name="HandoverScreen" type="CanvasLayer"]
+layer = 100
+script = ExtResource("1_handover")
+visible = false
+
+; ─── Full-screen navy overlay — mouse_filter=STOP blocks game interaction ─────
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.106, 0.173, 0.337, 0.88)
+mouse_filter = 0
+
+; ─── Centred content container ────────────────────────────────────────────────
+[node name="Content" type="VBoxContainer" parent="Background"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -120.0
+offset_right = 200.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+; ─── Icon placeholder (48×48, tinted brick-white) ────────────────────────────
+[node name="IconRect" type="TextureRect" parent="Background/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(48.0, 48.0)
+size_flags_horizontal = 4
+texture = ExtResource("2_icon_freeze")
+expand_mode = 1
+stretch_mode = 5
+modulate = Color(0.945, 0.941, 0.918, 1.0)
+
+; ─── Heading label ────────────────────────────────────────────────────────────
+[node name="Heading" type="Label" parent="Background/Content"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = ""
+horizontal_alignment = 1
+theme_type_variation = &"DisplaySemibold"
+modulate = Color(0.945, 0.941, 0.918, 1.0)
+
+; ─── Subtitle label ───────────────────────────────────────────────────────────
+[node name="Subtitle" type="Label" parent="Background/Content"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = ""
+horizontal_alignment = 1
+modulate = Color(0.945, 0.941, 0.918, 0.7)
+
+; ─── 4-frame spinner — AnimatedSprite2D at 2 Hz, autoplay ────────────────────
+[node name="Spinner" type="AnimatedSprite2D" parent="Background/Content"]
+layout_mode = 2
+position = Vector2(0.0, 0.0)
+scale = Vector2(1.5, 1.5)
+sprite_frames = SubResource("1_spinner_frames")
+autoplay = "default"
+centered = true

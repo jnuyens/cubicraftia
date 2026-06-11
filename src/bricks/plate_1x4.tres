@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; plate_1x4.tres — BrickDefinition for the 1×4 plate.
+; Mesh: assets/meshes/plate_1x4.glb (null until Plan 02-09).
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "plate_1x4"
+display_name_key = "bricks.plate_1x4.name"
+dimensions = Vector3i(1, 1, 4)
+height_plates = 1
+studs_top = [{"x": 0.0, "y": 1.0, "z": 0.0, "gender": "male"}, {"x": 0.0, "y": 1.0, "z": 1.0, "gender": "male"}, {"x": 0.0, "y": 1.0, "z": 2.0, "gender": "male"}, {"x": 0.0, "y": 1.0, "z": 3.0, "gender": "male"}]
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}, {"x": 0.0, "y": 0.0, "z": 1.0, "gender": "female"}, {"x": 0.0, "y": 0.0, "z": 2.0, "gender": "female"}, {"x": 0.0, "y": 0.0, "z": 3.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "plastic_solid"
+mesh = null
+category = 1
+palette_colour_index = -1
+colour_swappable = true
+natural_colour_token = -1
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0), Vector3i(0, 0, 1), Vector3i(0, 0, 2), Vector3i(0, 0, 3)]

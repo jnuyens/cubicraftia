@@ -1,0 +1,73 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; bed_entity.tscn — Placed builder-bed entity scene.
+;
+; StaticBody3D root with bed_entity.gd script.
+;
+; Structure:
+;   BedEntity (StaticBody3D) — root, script attached
+;   ├─ CollisionShape3D — BoxShape3D 2 m × 0.5 m × 1 m (wide flat bed footprint)
+;   ├─ Mesh (MeshInstance3D) — placeholder flat BoxMesh, brown (#7A4A23)
+;   ├─ Headboard (MeshInstance3D) — narrow box at head-end for visual read
+;   └─ WalkupPrompt (Label3D) — billboarded 1.5 m above origin; shows sleep/too-early prompt
+;
+; TODO Phase 3 polish: distinct bed mesh with mattress + headboard per UI-SPEC L43.
+; Placeholder meshes per brick-mesh-null-phase2 STATE decision.
+
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://src/world/bed_entity.gd" id="1_bed"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(2, 0.5, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_mattress"]
+size = Vector3(2, 0.4, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mattress"]
+albedo_color = Color(0.478, 0.29, 0.137, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_headboard"]
+size = Vector3(0.15, 0.6, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_headboard"]
+albedo_color = Color(0.35, 0.20, 0.09, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillow"]
+size = Vector3(0.5, 0.12, 0.4)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pillow"]
+albedo_color = Color(0.9, 0.9, 0.85, 1)
+
+[node name="BedEntity" type="StaticBody3D"]
+script = ExtResource("1_bed")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
+shape = SubResource("BoxShape3D_1")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+mesh = SubResource("BoxMesh_mattress")
+surface_material_override/0 = SubResource("StandardMaterial3D_mattress")
+
+[node name="Headboard" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.075, 0.4, 0)
+mesh = SubResource("BoxMesh_headboard")
+surface_material_override/0 = SubResource("StandardMaterial3D_headboard")
+
+[node name="Pillow" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.65, 0.47, 0)
+mesh = SubResource("BoxMesh_pillow")
+surface_material_override/0 = SubResource("StandardMaterial3D_pillow")
+
+[node name="WalkupPrompt" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+billboard = 1
+no_depth_test = true
+pixel_size = 0.005
+outline_size = 4
+text = ""
+modulate = Color(0.945, 0.941, 0.918, 1)
+visible = false

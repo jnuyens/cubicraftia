@@ -1,0 +1,1779 @@
+# SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Cubicraftia — English translation
+# Phase 1: full UI string set per UI-SPEC.md Copywriting Contract (Plan 06).
+# NL translation in Phase 6.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Cubicraftia 0.1.0\n"
+"PO-Revision-Date: 2026-05-25\n"
+"Last-Translator: Cubicraftia contributors\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# ─── Mobile control overlay ──────────────────────────────────────────────────
+
+msgid "ui.builder.place"
+msgstr "Place"
+
+msgid "ui.builder.break"
+msgstr "Break"
+
+msgid "ui.builder.jump"
+msgstr "Jump"
+
+# ─── Hotbar ──────────────────────────────────────────────────────────────────
+
+msgid "ui.hotbar.slot_empty"
+msgstr "Slot {n} — empty"
+
+msgid "ui.hotbar.slot_filled"
+msgstr "Slot {n} — {brick_name}"
+
+# ─── Graphics presets ─────────────────────────────────────────────────────────
+
+msgid "ui.settings.graphics.apply"
+msgstr "Apply preset"
+
+msgid "ui.settings.graphics.preset.auto"
+msgstr "Auto"
+
+msgid "ui.settings.graphics.preset.low"
+msgstr "Low"
+
+msgid "ui.settings.graphics.preset.medium"
+msgstr "Medium"
+
+msgid "ui.settings.graphics.preset.high"
+msgstr "High"
+
+msgid "ui.settings.graphics.reset"
+msgstr "Reset graphics to defaults"
+
+msgid "ui.settings.graphics.reset.confirm"
+msgstr "Reset your graphics settings to the Auto preset? Custom render-distance and shadow overrides will be cleared."
+
+msgid "ui.settings.graphics.reset.do"
+msgstr "Reset"
+
+# ─── IAP stub ─────────────────────────────────────────────────────────────────
+
+msgid "ui.settings.iap.title"
+msgstr "Brick Packs"
+
+msgid "ui.settings.iap.coming_later"
+msgstr "Brick packs arrive in a later release."
+
+# ─── About screen ─────────────────────────────────────────────────────────────
+
+msgid "ui.about.title"
+msgstr "About Cubicraftia"
+
+msgid "ui.about.disclaimer"
+msgstr "Cubicraftia is not affiliated with, endorsed by, or sponsored by the LEGO Group or Mojang Studios. All brick shapes, names, and game terms used in Cubicraftia are original (see §10 of the design docs). The LEGO trademark is the property of the LEGO Group."
+
+msgid "ui.about.version"
+msgstr "Version {version}"
+
+msgid "ui.about.license"
+msgstr "Licensed under GPL-3.0-or-later"
+
+# ─── First-launch disclaimer ──────────────────────────────────────────────────
+
+msgid "ui.first_launch.disclaimer"
+msgstr "Cubicraftia is not affiliated with, endorsed by, or sponsored by the LEGO Group or Mojang Studios. All brick shapes, names, and game terms used in Cubicraftia are original (see §10 of the design docs). The LEGO trademark is the property of the LEGO Group."
+
+msgid "ui.first_launch.acknowledge"
+msgstr "Got it"
+
+# ─── Toast notifications ─────────────────────────────────────────────────────
+
+msgid "ui.toast.graphics_adjusted"
+msgstr "Graphics adjusted for performance."
+
+msgid "ui.settings.graphics_adjusted"
+msgstr "Graphics adjusted for performance."
+
+msgid "ui.toast.feature_in_later_release"
+msgstr "This feature arrives in a later release."
+
+# ─── Device tier warnings ─────────────────────────────────────────────────────
+
+msgid "ui.device.unsupported"
+msgstr "This device does not meet Cubicraftia's minimum requirements. The game may run slowly or crash. You can continue anyway, or pick another device."
+
+msgid "ui.device.continue_anyway"
+msgstr "Continue anyway"
+
+msgid "ui.device.quit"
+msgstr "Quit"
+
+# ─── Common controls ──────────────────────────────────────────────────────────
+
+msgid "ui.common.cancel"
+msgstr "Cancel"
+
+msgid "ui.common.done"
+msgstr "Done"
+
+msgid "ui.common.back"
+msgstr "Back"
+
+# ─── Brick names ──────────────────────────────────────────────────────────────
+
+msgid "bricks.brick_1x1.name"
+msgstr "1×1 brick"
+
+msgid "bricks.brick_1x2.name"
+msgstr "1×2 brick"
+
+msgid "bricks.brick_1x3.name"
+msgstr "1×3 brick"
+
+msgid "bricks.brick_1x4.name"
+msgstr "1×4 brick"
+
+msgid "bricks.brick_2x2.name"
+msgstr "2×2 brick"
+
+msgid "bricks.brick_2x3.name"
+msgstr "2×3 brick"
+
+msgid "bricks.brick_2x4.name"
+msgstr "2×4 brick"
+
+msgid "bricks.plate_1x1.name"
+msgstr "1×1 plate"
+
+msgid "bricks.plate_1x2.name"
+msgstr "1×2 plate"
+
+msgid "bricks.plate_1x4.name"
+msgstr "1×4 plate"
+
+msgid "bricks.plate_2x2.name"
+msgstr "2×2 plate"
+
+msgid "bricks.plate_2x4.name"
+msgstr "2×4 plate"
+
+msgid "bricks.slope_1x1x1.name"
+msgstr "1×1×1 slope"
+
+msgid "bricks.slope_1x2x1.name"
+msgstr "1×2×1 slope"
+
+msgid "bricks.slope_1x2x2.name"
+msgstr "1×2×2 slope"
+
+msgid "bricks.slope_2x2_corner.name"
+msgstr "2×2 corner slope"
+
+msgid "bricks.tile_1x1.name"
+msgstr "1×1 tile"
+
+msgid "bricks.tile_1x2.name"
+msgstr "1×2 tile"
+
+msgid "bricks.tile_2x2.name"
+msgstr "2×2 tile"
+
+msgid "bricks.round_1x1_brick.name"
+msgstr "1×1 round brick"
+
+msgid "bricks.round_2x2_brick.name"
+msgstr "2×2 round brick"
+
+msgid "bricks.round_1x1_plate.name"
+msgstr "1×1 round plate"
+
+msgid "bricks.cylinder_1x1.name"
+msgstr "1×1 cylinder"
+
+msgid "bricks.wheel.name"
+msgstr "Wheel"
+
+msgid "bricks.door_1x4.name"
+msgstr "Door"
+
+msgid "bricks.window_1x2.name"
+msgstr "Window"
+
+msgid "bricks.trapdoor_2x2.name"
+msgstr "Trapdoor"
+
+msgid "bricks.workbench.name"
+msgstr "Workbench"
+
+msgid "bricks.chest_regular.name"
+msgstr "Regular chest"
+
+msgid "bricks.flower.name"
+msgstr "Flower"
+
+msgid "bricks.lantern.name"
+msgstr "Lantern"
+
+msgid "bricks.torch.name"
+msgstr "Torch"
+
+msgid "bricks.ladder.name"
+msgstr "Ladder"
+
+msgid "bricks.sign.name"
+msgstr "Sign"
+
+msgid "bricks.wood_log.name"
+msgstr "Wood log"
+
+msgid "bricks.wood_plank.name"
+msgstr "Wood plank"
+
+msgid "bricks.stone.name"
+msgstr "Stone"
+
+msgid "bricks.cobblestone.name"
+msgstr "Cobblestone"
+
+msgid "bricks.copper_ore.name"
+msgstr "Copper ore"
+
+msgid "bricks.iron_ore.name"
+msgstr "Iron ore"
+
+msgid "bricks.diamond_ore.name"
+msgstr "Diamond ore"
+
+msgid "bricks.sand.name"
+msgstr "Sand"
+
+msgid "bricks.glass.name"
+msgstr "Glass"
+
+msgid "bricks.pickaxe.name"
+msgstr "Pickaxe"
+
+msgid "bricks.shovel.name"
+msgstr "Shovel"
+
+msgid "bricks.sword.name"
+msgstr "Sword"
+
+msgid "bricks.dynamite.name"
+msgstr "Dynamite"
+
+msgid "bricks.lantern_handheld.name"
+msgstr "Handheld lantern"
+
+msgid "bricks.bone.name"
+msgstr "Bone"
+
+msgid "bricks.slime_cube.name"
+msgstr "Slime cube"
+
+# ─── Brick category chips ─────────────────────────────────────────────────────
+
+msgid "ui.palette.category.all"
+msgstr "All"
+
+msgid "ui.palette.category.rectangular"
+msgstr "Rectangular"
+
+msgid "ui.palette.category.plates"
+msgstr "Plates"
+
+msgid "ui.palette.category.slopes"
+msgstr "Slopes"
+
+msgid "ui.palette.category.tiles"
+msgstr "Tiles"
+
+msgid "ui.palette.category.round"
+msgstr "Round"
+
+msgid "ui.palette.category.functional"
+msgstr "Functional"
+
+msgid "ui.palette.category.decorative"
+msgstr "Decorative"
+
+msgid "ui.palette.category.materials"
+msgstr "Materials"
+
+msgid "ui.palette.category.accessories"
+msgstr "Accessories"
+
+msgid "ui.palette.category.mob_drops"
+msgstr "Mob drops"
+
+# ─── Day / Night & Weather ────────────────────────────────────────────────────
+
+msgid "ui.world.deep_dark_warning"
+msgstr "Something stirs in the darkness."
+
+msgid "ui.weather.rain_dance_summoned"
+msgstr "The sky listens. Rain begins."
+
+msgid "ui.weather.sky_wont_listen_again_today"
+msgstr "The sky won't listen again today."
+
+# ─── Structure discovered toasts (Plan 02-07) ────────────────────────────────
+
+msgid "ui.world.found_village"
+msgstr "You found a village."
+
+msgid "ui.world.found_temple"
+msgstr "You found a temple."
+
+msgid "ui.world.found_shipwreck"
+msgstr "You found a shipwreck."
+
+msgid "ui.world.found_dungeon"
+msgstr "You found a dungeon."
+
+msgid "ui.world.found_mineshaft"
+msgstr "You found a mineshaft."
+
+# ─── Camera mode (Plan 08.5) ─────────────────────────────────────────────────
+
+msgid "ui.camera.mode_fpv"
+msgstr "First-person view"
+
+msgid "ui.camera.mode_chase"
+msgstr "Third-person view"
+
+msgid "ui.camera.toggle_hint"
+msgstr "Press V to switch view"
+
+# ─── Builder placement feedback (Plan 02-09) ──────────────────────────────────
+
+msgid "ui.builder.cant_place_there"
+msgstr "Can't place there."
+
+msgid "ui.builder.no_tool"
+msgstr "Select a brick or tool from the hotbar."
+
+msgid "ui.builder.placed"
+msgstr "Placed!"
+
+# ─── Tool names (Plan 02-10) ─────────────────────────────────────────────────
+
+msgid "tools.pickaxe_wood.name"
+msgstr "Wooden pickaxe"
+
+msgid "tools.pickaxe_stone.name"
+msgstr "Stone pickaxe"
+
+msgid "tools.pickaxe_iron.name"
+msgstr "Iron pickaxe"
+
+msgid "tools.pickaxe_diamond.name"
+msgstr "Diamond pickaxe"
+
+msgid "tools.shovel.name"
+msgstr "Shovel"
+
+msgid "tools.dynamite.name"
+msgstr "Dynamite"
+
+msgid "tools.lantern_handheld.name"
+msgstr "Lantern"
+
+# ─── Tool durability HUD (Plan 02-10, survival mode only) ────────────────────
+
+msgid "ui.tool.worn_out"
+msgstr "{tool_name} broke."
+
+msgid "ui.tool.durability_sr"
+msgstr "Durability: {pct}%"
+
+msgid "ui.tool.dynamite_fuse_lit"
+msgstr "Fuse lit — step back!"
+
+# ─── Mode badge (Plan 02-10) ─────────────────────────────────────────────────
+
+msgid "ui.hud.mode.survival"
+msgstr "Survival"
+
+msgid "ui.hud.mode.sandbox"
+msgstr "Sandbox"
+
+# ─── Brick palette UI (Plan 02-12) ───────────────────────────────────────────
+
+msgid "ui.palette.equip"
+msgstr "Equip"
+
+msgid "ui.palette.open"
+msgstr "Open brick palette"
+
+msgid "ui.palette.search_placeholder"
+msgstr "Search bricks…"
+
+msgid "ui.palette.search_empty_heading"
+msgstr "No bricks found"
+
+msgid "ui.palette.search_empty_body"
+msgstr "Try a different name or category."
+
+msgid "ui.palette.colour.all"
+msgstr "All colours"
+
+msgid "ui.palette.tile.sr_label"
+msgstr "{brick_name}, {colour_name}"
+
+msgid "ui.palette.close"
+msgstr "Close"
+
+# ─── Dropped items (Plan 02-11) ──────────────────────────────────────────────
+
+msgid "ui.world.items_dropped_nearby"
+msgstr "{count} items nearby."
+
+# ─── Inventory + Hotbar (Phase 3 — Plan 03-05) ───────────────────────────────
+
+msgid "ui.inventory.open"
+msgstr "Open inventory"
+
+msgid "ui.inventory.close"
+msgstr "Close inventory"
+
+msgid "ui.inventory.title"
+msgstr "Inventory"
+
+msgid "ui.inventory.tab.inventory"
+msgstr "Inventory"
+
+msgid "ui.inventory.tab.recipes"
+msgstr "Recipes"
+
+msgid "ui.inventory.cell.empty"
+msgstr "Slot {row},{col} — empty"
+
+msgid "ui.inventory.cell.filled"
+msgstr "Slot {row},{col} — {item_name}, {count}"
+
+msgid "ui.inventory.full"
+msgstr "Inventory full."
+
+msgid "ui.inventory.picked_up"
+msgstr "+{count} {item_name}"
+
+msgid "ui.crafting.inline.heading"
+msgstr "Crafting (2 by 2)"
+
+msgid "ui.item.eat"
+msgstr "Eat"
+
+msgid "ui.crafting.workbench.heading"
+msgstr "Crafting (3 by 3)"
+
+# ─── HP / Damage / Death / Sleep (Phase 3 — Plan 03-04 consumes) ────────────
+
+msgid "ui.hp.bar_sr"
+msgstr "Health: {hp} of 10"
+
+msgid "ui.death.headline"
+msgstr "You died"
+
+msgid "ui.death.subtitle"
+msgstr "Respawning at your bed…"
+
+msgid "ui.death.subtitle_spawn"
+msgstr "Respawning at world spawn…"
+
+msgid "ui.death.countdown"
+msgstr "Respawning in {n}s"
+
+msgid "ui.death_pile.sr"
+msgstr "Your dropped items — walk through to collect"
+
+msgid "ui.sleep.cancelled_unsafe"
+msgstr "You can't sleep — too dangerous."
+
+msgid "ui.bed.too_early_prompt"
+msgstr "Sleep is for the night"
+
+msgid "ui.hp.gained_tick"
+msgstr "+{n} HP"
+
+# ─── Workbench + Walk-up prompts (Plan 03-07b + 03-06 consume) ───────────────
+
+msgid "ui.workbench.title"
+msgstr "Workbench"
+
+msgid "ui.workbench.open_prompt"
+msgstr "Hold SHIFT to use workbench"
+
+msgid "ui.chest.open_prompt"
+msgstr "Hold SHIFT to open chest"
+
+msgid "ui.chest.locked_prompt"
+msgstr "Locked — needs {key_name}"
+
+msgid "ui.chest.title_suffix"
+msgstr "Chest"
+
+msgid "ui.chest.your_inventory"
+msgstr "Your inventory"
+
+msgid "ui.chest.tier.regular"
+msgstr "Regular"
+
+msgid "ui.chest.tier.bronze"
+msgstr "Bronze"
+
+msgid "ui.chest.tier.silver"
+msgstr "Silver"
+
+msgid "ui.chest.tier.gold"
+msgstr "Gold"
+
+msgid "ui.chest.tier.diamond"
+msgstr "Diamond"
+
+msgid "ui.bed.sleep_prompt"
+msgstr "Hold SHIFT to sleep"
+
+msgid "ui.strawberry.pickup_prompt"
+msgstr "Pick strawberry"
+
+# ─── Chests + Keys (Plan 03-06 consumes) ─────────────────────────────────────
+
+msgid "chests.regular.name"
+msgstr "Chest"
+
+msgid "chests.bronze.name"
+msgstr "Bronze chest"
+
+msgid "chests.silver.name"
+msgstr "Silver chest"
+
+msgid "chests.gold.name"
+msgstr "Gold chest"
+
+msgid "chests.diamond.name"
+msgstr "Diamond chest"
+
+msgid "chests.double_regular.name"
+msgstr "Large chest"
+
+msgid "items.key_bronze.name"
+msgstr "Bronze key"
+
+msgid "items.key_silver.name"
+msgstr "Silver key"
+
+msgid "items.key_gold.name"
+msgstr "Gold key"
+
+msgid "items.key_diamond.name"
+msgstr "Diamond key"
+
+# ─── Recipes (Plan 03-07a + 03-07b consume) ──────────────────────────────────
+
+msgid "recipes.wooden_plank.name"
+msgstr "Wooden plank"
+
+msgid "recipes.stick.name"
+msgstr "Stick"
+
+msgid "recipes.pickaxe_wood.name"
+msgstr "Wooden pickaxe"
+
+msgid "recipes.shovel_wood.name"
+msgstr "Wooden shovel"
+
+msgid "recipes.sword_wood.name"
+msgstr "Wooden sword"
+
+msgid "recipes.dynamite.name"
+msgstr "Dynamite"
+
+msgid "recipes.lantern.name"
+msgstr "Lantern"
+
+msgid "recipes.torch.name"
+msgstr "Torch"
+
+msgid "recipes.ladder.name"
+msgstr "Ladder"
+
+msgid "recipes.chest.name"
+msgstr "Chest"
+
+msgid "recipes.workbench.name"
+msgstr "Workbench"
+
+msgid "ui.recipes.empty.title"
+msgstr "No recipes yet"
+
+msgid "ui.recipes.empty.body"
+msgstr "Gather ingredients or craft something at a workbench to start your recipe book."
+
+msgid "ui.recipes.fill_grid"
+msgstr "Auto-fill"
+
+# ─── Food + Strawberries (Plan 03-09 consumes) ───────────────────────────────
+
+msgid "items.food_cooked_generic.name"
+msgstr "Cooked food"
+
+msgid "items.food_tom_yum.name"
+msgstr "Tom Yum spicy seafood soup"
+
+msgid "items.food_roasted_fish.name"
+msgstr "Roasted fish"
+
+msgid "items.food_bread.name"
+msgstr "Bread"
+
+msgid "items.food_pie.name"
+msgstr "Pie"
+
+msgid "items.strawberry.name"
+msgstr "Strawberry"
+
+# ─── Creatures (Plan 03-10 consumes — screen-reader only per UI-SPEC L250) ───
+
+msgid "creatures.laser_penguin.name"
+msgstr "Laser penguin"
+
+msgid "creatures.ghost.name"
+msgstr "Ghost"
+
+msgid "creatures.vampire.name"
+msgstr "Vampire"
+
+msgid "creatures.bat_vampire.name"
+msgstr "Vampire bat"
+
+msgid "creatures.bat.name"
+msgstr "Bat"
+
+msgid "creatures.cube_slime_large.name"
+msgstr "Cube slime"
+
+msgid "creatures.cube_slime_medium.name"
+msgstr "Cube slime"
+
+msgid "creatures.cube_slime_small.name"
+msgstr "Cube slime"
+
+# ─── Phase 4: Multiplayer & host failover (Plan 04-01) ───────────────────────
+# All Phase 4 i18n keys. Surfaces: signin, friends, session, invite, join,
+# players, chat, handover, netstatus, settings.
+# NL translation deferred to Phase 6 per STATE.md locale-header-only convention.
+
+# ─── Sign-in flow (Surface 1) ────────────────────────────────────────────────
+
+msgid "ui.signin.title"
+msgstr "Sign in to Cubicraftia"
+
+msgid "ui.signin.tab.signin"
+msgstr "Sign in"
+
+msgid "ui.signin.tab.create"
+msgstr "Create account"
+
+msgid "ui.signin.email_placeholder"
+msgstr "Email address"
+
+msgid "ui.signin.password_placeholder"
+msgstr "Password"
+
+msgid "ui.signin.submit_signin"
+msgstr "Sign in"
+
+msgid "ui.signin.submit_create"
+msgstr "Create account"
+
+msgid "ui.signin.age_checkbox"
+msgstr "I am 13 or older."
+
+msgid "ui.signin.apple"
+msgstr "Sign in with Apple"
+
+msgid "ui.signin.google"
+msgstr "Sign in with Google"
+
+msgid "ui.signin.verification_notice"
+msgstr "A verification link has been sent. You can play now — some features unlock after verification."
+
+msgid "ui.signin.error_invalid_credentials"
+msgstr "Incorrect email or password."
+
+msgid "ui.signin.error_email_taken"
+msgstr "An account with that email already exists."
+
+msgid "ui.signin.error_network"
+msgstr "Can't reach the server. Check your internet."
+
+msgid "ui.signin.error_profanity_username"
+msgstr "That username isn't allowed. Please choose another."
+
+# ─── Friends list panel (Surface 2) ──────────────────────────────────────────
+
+msgid "ui.friends.title"
+msgstr "Friends"
+
+msgid "ui.friends.search_placeholder"
+msgstr "Search by username…"
+
+msgid "ui.friends.search_empty"
+msgstr "No builder found."
+
+msgid "ui.friends.section_pending"
+msgstr "Requests"
+
+msgid "ui.friends.section_list"
+msgstr "Friends"
+
+msgid "ui.friends.status_online"
+msgstr "Online"
+
+msgid "ui.friends.status_in_world"
+msgstr "Online · in {world_name}"
+
+msgid "ui.friends.status_offline"
+msgstr "Offline"
+
+msgid "ui.friends.join"
+msgstr "Join"
+
+msgid "ui.friends.accept"
+msgstr "Accept"
+
+msgid "ui.friends.decline"
+msgstr "Decline"
+
+msgid "ui.friends.empty_heading"
+msgstr "No friends yet"
+
+msgid "ui.friends.empty_body"
+msgstr "Share an invite link from the pause menu to add friends."
+
+msgid "ui.friends.unfriend"
+msgstr "Unfriend"
+
+msgid "ui.friends.block"
+msgstr "Block"
+
+msgid "ui.friends.block_confirm"
+msgstr "Block {username}? They won't be able to find you."
+
+msgid "ui.friends.block_confirm_action"
+msgstr "Block"
+
+msgid "ui.friends.limit_reached"
+msgstr "Friend list is full (50 max)"
+
+# ─── Sessions browser (Surface 3) ────────────────────────────────────────────
+
+msgid "ui.session.open_status"
+msgstr "Open · {world_name}"
+
+msgid "ui.session.join_loading"
+msgstr "Joining…"
+
+msgid "ui.session.join_failed"
+msgstr "Couldn't join — {reason}. Try again."
+
+# ─── Invite link generation (Surface 4) ──────────────────────────────────────
+
+msgid "ui.invite.title"
+msgstr "Invite a friend"
+
+msgid "ui.invite.link_label"
+msgstr "Invite link"
+
+msgid "ui.invite.ttl_countdown"
+msgstr "Expires in {hh_mm_ss}"
+
+msgid "ui.invite.copy"
+msgstr "Copy link"
+
+msgid "ui.invite.copied"
+msgstr "Copied!"
+
+msgid "ui.invite.share"
+msgstr "Share"
+
+msgid "ui.invite.close"
+msgstr "Close"
+
+msgid "ui.invite.generating"
+msgstr "Generating link…"
+
+msgid "ui.invite.error_network"
+msgstr "Couldn't generate a link. Check your internet."
+
+msgid "ui.invite.error_not_signed_in"
+msgstr "Sign in to invite friends."
+
+msgid "ui.invite.error_not_verified"
+msgstr "Verify your email to send invites."
+
+# ─── Join-from-invite flow (Surface 5) ───────────────────────────────────────
+
+msgid "ui.join.heading"
+msgstr "Joining {username}'s world…"
+
+msgid "ui.join.status_connecting"
+msgstr "Connecting…"
+
+msgid "ui.join.status_loading"
+msgstr "Loading world…"
+
+msgid "ui.join.new_friends_toast"
+msgstr "You and {username} are now friends."
+
+msgid "ui.join.error_session_full"
+msgstr "The session is full."
+
+msgid "ui.join.error_expired"
+msgstr "The invite has expired."
+
+msgid "ui.join.error_connection"
+msgstr "Connection failed — check your internet."
+
+msgid "ui.join.back"
+msgstr "Back"
+
+msgid "ui.join.error_unverified_session_age"
+msgstr "This session is too old to join with an unverified account. Verify your email first."
+
+# ─── Pause menu — Players tab (Surface 6) ────────────────────────────────────
+
+msgid "ui.players.tab_label"
+msgstr "Players"
+
+msgid "ui.players.invite_action"
+msgstr "Invite a friend"
+
+msgid "ui.players.host_label"
+msgstr "(Host)"
+
+msgid "ui.players.kick"
+msgstr "Kick"
+
+msgid "ui.players.kick_confirm"
+msgstr "Kick {username}? They can rejoin via invite."
+
+msgid "ui.players.kick_confirm_action"
+msgstr "Confirm kick"
+
+msgid "ui.players.kick_cancel"
+msgstr "Cancel"
+
+msgid "ui.players.freeze"
+msgstr "Freeze"
+
+msgid "ui.players.unfreeze"
+msgstr "Unfreeze"
+
+msgid "ui.players.rollback_warning"
+msgstr "Restore the world to ~30 minutes ago. Affects everyone."
+
+msgid "ui.players.rollback_action"
+msgstr "Roll back world"
+
+msgid "ui.players.rollback_confirm_title"
+msgstr "Roll back world?"
+
+msgid "ui.players.rollback_confirm_body"
+msgstr "This restores everyone to the last automatic snapshot, about 30 minutes ago. All builds since then will be lost."
+
+msgid "ui.players.rollback_confirm_action"
+msgstr "Roll back"
+
+msgid "ui.players.rollback_cancel"
+msgstr "Cancel"
+
+msgid "ui.players.laggy_label"
+msgstr "Laggy"
+
+msgid "ui.players.settings_tab_label"
+msgstr "Settings"
+
+# ─── Chat overlay (Surface 7) ─────────────────────────────────────────────────
+
+msgid "ui.chat.input_placeholder"
+msgstr "Message…"
+
+msgid "ui.chat.send"
+msgstr "Send"
+
+msgid "ui.chat.open"
+msgstr "Chat"
+
+msgid "ui.chat.close"
+msgstr "Close chat"
+
+msgid "ui.chat.rate_limit_wait"
+msgstr "Slow down — you can send another message in {n}s."
+
+msgid "ui.chat.mute_player"
+msgstr "Mute {username}"
+
+msgid "ui.chat.unmute_player"
+msgstr "Unmute {username}"
+
+msgid "ui.chat.report_message"
+msgstr "Report message"
+
+msgid "ui.chat.filtered_message"
+msgstr "[filtered]"
+
+# ─── Handover screen (Surface 9) ─────────────────────────────────────────────
+
+msgid "ui.handover.heading"
+msgstr "Switching host — keeping the world…"
+
+msgid "ui.handover.subtitle"
+msgstr "Hold on a moment."
+
+msgid "ui.handover.subtitle_slow"
+msgstr "This is taking longer than expected…"
+
+# ─── Network status HUD (Surface 10) ─────────────────────────────────────────
+
+msgid "ui.netstatus.relay_badge"
+msgstr "Relay"
+
+# ─── Settings — nameplates (Surface 8) ───────────────────────────────────────
+
+msgid "ui.settings.show_nameplates"
+msgstr "Show player names"
+
+# ─── Phase 5: Safety, Moderation & Store Readiness ───────────────────────────
+# Added in plan 05-01 per 05-UI-SPEC.md i18n Contract (53 new keys).
+# NL translations deferred to Phase 6. Msgstr values populated from
+# 05-UI-SPEC.md Copywriting Contract where English copy is specified.
+
+# Surface A — Block confirmation modal
+msgid "ui.block.title"
+msgstr "Block {username}?"
+
+msgid "ui.block.body"
+msgstr "They won't see you or your world. You won't see them."
+
+msgid "ui.block.confirm_action"
+msgstr "Block {username}"
+
+msgid "ui.block.cancel"
+msgstr "Cancel"
+
+msgid "ui.block.toast_blocked"
+msgstr "You blocked {username}."
+
+# Surface B — Report flow (2-step modal)
+msgid "ui.report.title_player"
+msgstr "Report {username}"
+
+msgid "ui.report.title_message"
+msgstr "Report this message"
+
+msgid "ui.report.subtitle_category"
+msgstr "What's the problem?"
+
+msgid "ui.report.category_harassment"
+msgstr "Harassment or threats"
+
+msgid "ui.report.category_spam"
+msgstr "Spam or fake content"
+
+msgid "ui.report.category_cheating"
+msgstr "Cheating"
+
+msgid "ui.report.category_csam"
+msgstr "Child safety concern"
+
+msgid "ui.report.category_other"
+msgstr "Something else"
+
+msgid "ui.report.reason_placeholder"
+msgstr "Add details (optional)"
+
+msgid "ui.report.char_counter"
+msgstr "{n}/500"
+
+msgid "ui.report.context_label"
+msgstr "Reported message and context:"
+
+msgid "ui.report.next"
+msgstr "Next"
+
+msgid "ui.report.back"
+msgstr "Back"
+
+msgid "ui.report.submit"
+msgstr "Submit report"
+
+msgid "ui.report.cancel"
+msgstr "Cancel"
+
+msgid "ui.report.toast_submitted"
+msgstr "Report submitted. Our team will review."
+
+# Surface C — Age gate (date-of-birth picker at sign-up)
+msgid "ui.signin.dob_label"
+msgstr "Date of birth"
+
+msgid "ui.signin.dob_day_placeholder"
+msgstr "Day"
+
+msgid "ui.signin.dob_month_placeholder"
+msgstr "Month"
+
+msgid "ui.signin.dob_year_placeholder"
+msgstr "Year"
+
+msgid "ui.signin.dob_month_jan"
+msgstr "January"
+
+msgid "ui.signin.dob_month_feb"
+msgstr "February"
+
+msgid "ui.signin.dob_month_mar"
+msgstr "March"
+
+msgid "ui.signin.dob_month_apr"
+msgstr "April"
+
+msgid "ui.signin.dob_month_may"
+msgstr "May"
+
+msgid "ui.signin.dob_month_jun"
+msgstr "June"
+
+msgid "ui.signin.dob_month_jul"
+msgstr "July"
+
+msgid "ui.signin.dob_month_aug"
+msgstr "August"
+
+msgid "ui.signin.dob_month_sep"
+msgstr "September"
+
+msgid "ui.signin.dob_month_oct"
+msgstr "October"
+
+msgid "ui.signin.dob_month_nov"
+msgstr "November"
+
+msgid "ui.signin.dob_month_dec"
+msgstr "December"
+
+msgid "ui.signin.error_dob_incomplete"
+msgstr "Please enter your date of birth."
+
+msgid "ui.signin.error_dob_invalid"
+msgstr "Please enter a valid date."
+
+# Surface D — Parental consent panel
+msgid "ui.consent.title"
+msgstr "Ask a parent to confirm"
+
+msgid "ui.consent.body"
+msgstr "You'll need a parent or guardian to approve your account before you can play with friends. Enter their email address and we'll send them a confirmation link."
+
+msgid "ui.consent.parent_email_placeholder"
+msgstr "Parent or guardian's email"
+
+msgid "ui.consent.send_link"
+msgstr "Send link"
+
+msgid "ui.consent.sending"
+msgstr "Sending…"
+
+msgid "ui.consent.why_label"
+msgstr "Why am I seeing this?"
+
+msgid "ui.consent.why_explanation"
+msgstr "Cubicraftia asks players under 13 for a parent's permission before they can join sessions or chat with friends. Your parent's email is only used to send this confirmation — it is not stored after they confirm."
+
+msgid "ui.consent.skip"
+msgstr "Skip for now"
+
+msgid "ui.consent.success_heading"
+msgstr "Link sent!"
+
+msgid "ui.consent.success_body"
+msgstr "We sent a confirmation link to {parent_email}. Ask your parent to check their email and tap the link."
+
+msgid "ui.consent.done"
+msgstr "Done"
+
+msgid "ui.consent.resend"
+msgstr "Resend"
+
+msgid "ui.consent.resent_toast"
+msgstr "Sent again."
+
+msgid "ui.consent.error_invalid_email"
+msgstr "Please enter a valid email address."
+
+msgid "ui.consent.error_network"
+msgstr "Could not send the email. Check your connection and try again."
+
+# Surface E — EULA + Privacy viewer
+msgid "ui.legal.terms_link"
+msgstr "Terms of Use"
+
+msgid "ui.legal.privacy_link"
+msgstr "Privacy Policy"
+
+msgid "ui.legal.viewer_close"
+msgstr "Close"
+
+msgid "ui.legal.footer_version"
+msgstr "Version: {hash}"
+
+msgid "ui.legal.agree_button"
+msgstr "I agree"
+
+msgid "ui.legal.english_only_notice"
+msgstr "The following legal text is provided in English only. This is the binding version."
+
+msgid "ui.legal.reack_title"
+msgstr "We updated our Terms of Use"
+
+msgid "ui.legal.reack_body"
+msgstr "Please review and accept the new terms to continue."
+
+msgid "ui.legal.reack_review"
+msgstr "Review Terms"
+
+msgid "ui.legal.reack_signout"
+msgstr "Sign out"
+
+# Surface F — Restricted-account banner
+msgid "ui.restricted.banner_label"
+msgstr "Awaiting parent's confirmation —"
+
+msgid "ui.restricted.resend_link"
+msgstr "Resend email"
+
+msgid "ui.restricted.join_blocked_title"
+msgstr "Parental approval needed"
+
+msgid "ui.restricted.join_blocked_body"
+msgstr "Your account needs a parent's approval before you can join sessions. Ask your parent to check their email."
+
+msgid "ui.restricted.join_blocked_resend"
+msgstr "Resend email"
+
+msgid "ui.restricted.join_blocked_cancel"
+msgstr "Cancel"
+
+# Surface G — Username gating error states
+msgid "ui.username.error_format"
+msgstr "Username must be 3–20 characters. Letters, numbers, and underscore only."
+
+msgid "ui.username.error_taken"
+msgstr "That username is taken. Try a different one."
+
+msgid "ui.username.error_profanity"
+msgstr "Please choose a different username."
+
+msgid "ui.username.error_reserved"
+msgstr "That username is reserved."
+
+msgid "ui.username.error_cooldown"
+msgstr "You can change your username again in {n} days."
+
+msgid "ui.username.cooldown_label"
+msgstr "Username change available in {n} days."
+
+msgid "ui.username.inline_valid"
+msgstr ""
+
+# Surface H — Friends panel additions (report item)
+msgid "ui.friends.report"
+msgstr "Report"
+
+# Surface I — Chat overlay additions (report context menu)
+msgid "ui.chat.report_context_menu_item"
+msgstr "Report this message"
+
+# Surface J — In-world nameplate additions
+msgid "ui.nameplate.report_action"
+msgstr "Report {username}"
+
+msgid "ui.nameplate.block_action"
+msgstr "Block {username}"
+
+# Surface L — Settings menu: legal section + account section
+msgid "ui.settings.legal_section_title"
+msgstr "Legal"
+
+msgid "ui.settings.terms_button"
+msgstr "Terms of Use"
+
+msgid "ui.settings.privacy_button"
+msgstr "Privacy Policy"
+
+msgid "ui.settings.account_section_title"
+msgstr "Account"
+
+msgid "ui.settings.account_username_label"
+msgstr "Username: {current}"
+
+msgid "ui.settings.account_change_username"
+msgstr "Change username"
+
+msgid "ui.settings.account_change_save"
+msgstr "Save"
+
+msgid "ui.settings.account_change_cancel"
+msgstr "Cancel"
+
+msgid "ui.settings.account_delete_button"
+msgstr "Delete account"
+
+msgid "ui.settings.account_delete_title"
+msgstr "Delete your account?"
+
+msgid "ui.settings.account_delete_body"
+msgstr "Your account will be permanently deleted after 7 days. You can cancel during this time by signing back in."
+
+msgid "ui.settings.account_delete_confirm"
+msgstr "Delete account"
+
+msgid "ui.settings.account_delete_cancel"
+msgstr "Cancel"
+
+msgid "ui.settings.account_delete_pending"
+msgstr "Account deletion pending — cancels on {date}."
+
+msgid "ui.settings.account_delete_cancel_action"
+msgstr "Cancel deletion"
+
+# ─── Phase 6: Title screen (Surface 1) ────────────────────────────────────────
+
+msgid "ui.title.tagline"
+msgstr "Build. Survive. Play together."
+
+msgid "ui.title.continue_as"
+msgstr "Continue as {username}"
+
+msgid "ui.title.continue"
+msgstr "Continue"
+
+msgid "ui.title.sign_in"
+msgstr "Sign in"
+
+msgid "ui.title.create_account"
+msgstr "Create account"
+
+msgid "ui.title.continue_offline"
+msgstr "Continue offline"
+
+msgid "ui.title.settings"
+msgstr "Settings"
+
+msgid "ui.title.customize"
+msgstr "Customize Builder"
+
+# ─── Phase 6: Avatar creator (Surface 2) ─────────────────────────────────────
+
+msgid "ui.avatar.title"
+msgstr "Choose your builder"
+
+msgid "ui.avatar.section_skin"
+msgstr "Skin"
+
+msgid "ui.avatar.section_head"
+msgstr "Head"
+
+msgid "ui.avatar.section_body"
+msgstr "Body"
+
+msgid "ui.avatar.section_legs"
+msgstr "Legs"
+
+msgid "ui.avatar.section_hand"
+msgstr "Hand"
+
+msgid "ui.avatar.presets_label"
+msgstr "Quick start"
+
+msgid "ui.avatar.preset_1"
+msgstr "The Scout"
+
+msgid "ui.avatar.preset_2"
+msgstr "The Builder"
+
+msgid "ui.avatar.preset_3"
+msgstr "The Explorer"
+
+msgid "ui.avatar.preset_4"
+msgstr "The Craftsperson"
+
+msgid "ui.avatar.preset_5"
+msgstr "The Adventurer"
+
+msgid "ui.avatar.preset_6"
+msgstr "The Wanderer"
+
+msgid "ui.avatar.preset_7"
+msgstr "The Creator"
+
+msgid "ui.avatar.preset_8"
+msgstr "The Survivor"
+
+msgid "ui.avatar.randomise"
+msgstr "Randomise"
+
+msgid "ui.avatar.shape_square"
+msgstr "Square"
+
+msgid "ui.avatar.shape_round"
+msgstr "Round"
+
+msgid "ui.avatar.shape_tall"
+msgstr "Tall"
+
+msgid "ui.avatar.expr_neutral"
+msgstr "Neutral"
+
+msgid "ui.avatar.expr_happy"
+msgstr "Happy"
+
+msgid "ui.avatar.expr_cool"
+msgstr "Cool"
+
+msgid "ui.avatar.expr_surprised"
+msgstr "Surprised"
+
+msgid "ui.avatar.expr_sleepy"
+msgstr "Sleepy"
+
+msgid "ui.avatar.accessory_none"
+msgstr "None"
+
+msgid "ui.avatar.accessory_backpack"
+msgstr "Backpack"
+
+msgid "ui.avatar.accessory_cape"
+msgstr "Cape"
+
+msgid "ui.avatar.shoes_none"
+msgstr "None"
+
+msgid "ui.avatar.shoes_boots"
+msgstr "Boots"
+
+msgid "ui.avatar.shoes_sneakers"
+msgstr "Sneakers"
+
+msgid "ui.avatar.hand_none"
+msgstr "None"
+
+msgid "ui.avatar.hand_pickaxe"
+msgstr "Pickaxe"
+
+msgid "ui.avatar.hand_lantern"
+msgstr "Lantern"
+
+msgid "ui.avatar.hand_flower"
+msgstr "Flower"
+
+msgid "ui.avatar.hand_blank"
+msgstr "Blank"
+
+msgid "ui.avatar.done"
+msgstr "Done"
+
+msgid "ui.avatar.back"
+msgstr "Back"
+
+# ─── Phase 6: World select / home screen (Surface 3) ─────────────────────────
+
+msgid "ui.world_select.title"
+msgstr "Your Worlds"
+
+msgid "ui.world_select.friends"
+msgstr "Friends"
+
+msgid "ui.world_select.settings_tooltip"
+msgstr "Settings"
+
+msgid "ui.world_select.new_world"
+msgstr "New world"
+
+msgid "ui.world_select.worlds_cap_error"
+msgstr "Delete a world to create a new one"
+
+msgid "ui.world_select.play"
+msgstr "Play"
+
+msgid "ui.world_select.mode_creative"
+msgstr "Creative"
+
+msgid "ui.world_select.mode_survival"
+msgstr "Survival"
+
+msgid "ui.world_select.last_played_today"
+msgstr "Today"
+
+msgid "ui.world_select.last_played_yesterday"
+msgstr "Yesterday"
+
+msgid "ui.world_select.last_played_n_days_ago"
+msgstr "{n} days ago"
+
+msgid "ui.world_select.ctx_rename"
+msgstr "Rename"
+
+msgid "ui.world_select.ctx_duplicate"
+msgstr "Duplicate"
+
+msgid "ui.world_select.ctx_export"
+msgstr "Export"
+
+msgid "ui.world_select.ctx_delete"
+msgstr "Delete"
+
+msgid "ui.world_select.delete_title"
+msgstr "Delete world?"
+
+msgid "ui.world_select.delete_body"
+msgstr "This world cannot be recovered."
+
+msgid "ui.world_select.delete_confirm"
+msgstr "Delete"
+
+msgid "ui.world_select.delete_cancel"
+msgstr "Cancel"
+
+msgid "ui.world_select.empty_heading"
+msgstr "No worlds yet"
+
+msgid "ui.world_select.empty_body"
+msgstr "Create your first world to get started."
+
+# ─── Phase 6: New world modal (Surface 4) ─────────────────────────────────────
+
+msgid "ui.new_world.title"
+msgstr "New world"
+
+msgid "ui.new_world.name_label"
+msgstr "World name"
+
+msgid "ui.new_world.name_placeholder"
+msgstr "My world"
+
+msgid "ui.new_world.name_char_counter"
+msgstr "{n}/24"
+
+msgid "ui.new_world.name_error_empty"
+msgstr "Please enter a world name."
+
+msgid "ui.new_world.name_error_profanity"
+msgstr "Please choose a different name."
+
+msgid "ui.new_world.seed_label"
+msgstr "Seed (optional)"
+
+msgid "ui.new_world.seed_placeholder"
+msgstr "Random"
+
+msgid "ui.new_world.seed_hint"
+msgstr "Leave blank for a random seed."
+
+msgid "ui.new_world.mode_label"
+msgstr "Mode"
+
+msgid "ui.new_world.mode_survival"
+msgstr "Survival"
+
+msgid "ui.new_world.mode_creative"
+msgstr "Creative"
+
+msgid "ui.new_world.create"
+msgstr "Create"
+
+msgid "ui.new_world.creating"
+msgstr "Creating…"
+
+msgid "ui.new_world.cancel"
+msgstr "Cancel"
+
+# ─── Phase 6: FTUE overlay (Surface 5) ───────────────────────────────────────
+
+msgid "ui.ftue.step_1"
+msgstr "Open the chest — you'll need what's inside before nightfall."
+
+msgid "ui.ftue.step_2"
+msgstr "Aim at a tree block and hold to break it — hold the left mouse button (or tap-and-hold on touch)."
+
+msgid "ui.ftue.step_3"
+msgstr "Press B to open your building blocks. You can place anything from your inventory into the world — try placing a wooden plank."
+
+msgid "ui.ftue.complete"
+msgstr "That's it. The world is yours."
+
+msgid "ui.ftue.night_hint"
+msgstr "Time to sleep. Walk to the bed."
+
+msgid "ui.ftue.progress_label"
+msgstr "Step {n}/{total}"
+
+# ─── Phase 6: Deep-link inline sign-in + joiner tip (Surface 6) ──────────────
+
+msgid "ui.deeplink.connecting"
+msgstr "Connecting..."
+
+msgid "ui.deeplink.heading"
+msgstr "Sign in to join your friend's world"
+
+msgid "ui.deeplink.body"
+msgstr "Your friend is waiting."
+
+msgid "ui.deeplink.email_placeholder"
+msgstr "Email"
+
+msgid "ui.deeplink.password_placeholder"
+msgstr "Password"
+
+msgid "ui.deeplink.sign_in"
+msgstr "Sign in"
+
+msgid "ui.deeplink.create_account"
+msgstr "Create account"
+
+msgid "ui.deeplink.joiner_tip"
+msgstr "This is {friend}'s world. They have what you need to get started."
+
+# ─── Phase 6: Sign-in panel back link (Surface 7) ────────────────────────────
+
+msgid "ui.signin.back_to_title"
+msgstr "Back to title"
+
+# ─── Phase 6: Friends panel standalone title (Surface 8) ─────────────────────
+
+msgid "ui.friends.title_standalone"
+msgstr "Friends"
+
+# ─── Phase 6: Locale picker (Plan 06-10) ─────────────────────────────────────
+
+msgid "ui.settings.language_label"
+msgstr "Language"
+
+msgid "ui.settings.locale_en"
+msgstr "English"
+
+msgid "ui.settings.locale_nl"
+msgstr "Nederlands"
+
+# ─── Generated crafting cards (recipes + items) ───
+
+msgid "recipes.pickaxe_stone.name"
+msgstr "Stone pickaxe"
+
+msgid "recipes.pickaxe_iron.name"
+msgstr "Iron pickaxe"
+
+msgid "recipes.pickaxe_diamond.name"
+msgstr "Diamond pickaxe"
+
+msgid "recipes.pickaxe_gold.name"
+msgstr "Gold pickaxe"
+
+msgid "recipes.shovel_stone.name"
+msgstr "Stone shovel"
+
+msgid "recipes.shovel_iron.name"
+msgstr "Iron shovel"
+
+msgid "recipes.shovel_diamond.name"
+msgstr "Diamond shovel"
+
+msgid "recipes.shovel_gold.name"
+msgstr "Gold shovel"
+
+msgid "recipes.sword_diamond.name"
+msgstr "Diamond sword"
+
+msgid "recipes.stone_block.name"
+msgstr "Stone block"
+
+msgid "recipes.glass_block.name"
+msgstr "Glass block"
+
+msgid "recipes.furnace.name"
+msgstr "Furnace"
+
+msgid "recipes.bucket.name"
+msgstr "Bucket"
+
+msgid "recipes.bread.name"
+msgstr "Bread"
+
+msgid "recipes.sugar.name"
+msgstr "Sugar"
+
+msgid "recipes.campfire.name"
+msgstr "Campfire"
+
+msgid "recipes.coal_block.name"
+msgstr "Coal block"
+
+msgid "recipes.bow.name"
+msgstr "Bow"
+
+msgid "recipes.flint_and_steel.name"
+msgstr "Flint and steel"
+
+msgid "recipes.chestplate_iron.name"
+msgstr "Iron chestplate"
+
+msgid "recipes.chestplate_leather.name"
+msgstr "Leather chestplate"
+
+msgid "recipes.helmet_diamond.name"
+msgstr "Diamond helmet"
+
+msgid "recipes.helmet_gold.name"
+msgstr "Gold helmet"
+
+msgid "recipes.nether_portal.name"
+msgstr "Portal"
+
+msgid "bricks.gold_ingot.name"
+msgstr "Gold ingot"
+
+msgid "bricks.coal.name"
+msgstr "Coal"
+
+msgid "bricks.leather.name"
+msgstr "Leather"
+
+msgid "bricks.string.name"
+msgstr "String"
+
+msgid "bricks.wheat.name"
+msgstr "Wheat"
+
+msgid "bricks.sugar_cane.name"
+msgstr "Sugar cane"
+
+msgid "bricks.obsidian.name"
+msgstr "Obsidian"
+
+msgid "bricks.furnace.name"
+msgstr "Furnace"
+
+msgid "bricks.bucket.name"
+msgstr "Bucket"
+
+msgid "bricks.sugar.name"
+msgstr "Sugar"
+
+msgid "bricks.bread.name"
+msgstr "Bread"
+
+msgid "bricks.campfire.name"
+msgstr "Campfire"
+
+msgid "bricks.coal_block.name"
+msgstr "Coal block"
+
+msgid "bricks.bow.name"
+msgstr "Bow"
+
+msgid "bricks.flint_and_steel.name"
+msgstr "Flint and steel"
+
+msgid "bricks.chestplate_iron.name"
+msgstr "Iron chestplate"
+
+msgid "bricks.chestplate_leather.name"
+msgstr "Leather chestplate"
+
+msgid "bricks.helmet_diamond.name"
+msgstr "Diamond helmet"
+
+msgid "bricks.helmet_gold.name"
+msgstr "Gold helmet"
+
+msgid "bricks.nether_portal.name"
+msgstr "Portal"
+
+# ─── Tool items (art-tools models) ───
+msgid "bricks.axe.name"
+msgstr "Axe"
+
+msgid "bricks.hammer.name"
+msgstr "Hammer"
+
+msgid "bricks.fishing_rod.name"
+msgstr "Fishing rod"
+
+msgid "bricks.compass.name"
+msgstr "Compass"
+
+msgid "bricks.map.name"
+msgstr "Map"
+
+# ─── Crops (harvestable) ───
+msgid "ui.crop.harvest_prompt"
+msgstr "Hold SHIFT to harvest"
+
+msgid "bricks.crafting_table_advanced.name"
+msgstr "Advanced Workbench"
+
+msgid "bricks.painting_small_1.name"
+msgstr "Painting (Mountain)"
+
+msgid "bricks.painting_small_2.name"
+msgstr "Painting (Night)"
+
+msgid "bricks.flower_pot.name"
+msgstr "Flower Pot"
+
+msgid "bricks.pot_red_flower.name"
+msgstr "Red Flower Pot"
+
+msgid "bricks.pot_blue_flower.name"
+msgstr "Blue Flower Pot"
+
+msgid "bricks.pot_yellow_flower.name"
+msgstr "Yellow Flower Pot"
+
+msgid "bricks.pot_white_flower.name"
+msgstr "White Flower Pot"
+
+msgid "bricks.pot_pink_flower.name"
+msgstr "Pink Flower Pot"
+
+msgid "bricks.well.name"
+msgstr "Well"
+
+msgid "bricks.barrel.name"
+msgstr "Barrel"
+
+msgid "bricks.bookshelf.name"
+msgstr "Bookshelf"
+
+msgid "bricks.crate.name"
+msgstr "Crate"
+
+msgid "bricks.chair_wood.name"
+msgstr "Wooden Chair"
+
+msgid "bricks.anvil.name"
+msgstr "Anvil"
+
+msgid "bricks.table_wood.name"
+msgstr "Wooden Table"
+
+msgid "ui.mystery.orb"
+msgstr "A green orb streaks across the sky… leaving only questions."

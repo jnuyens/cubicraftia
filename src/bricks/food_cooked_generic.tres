@@ -1,0 +1,23 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; food_cooked_generic.tres — Generic cooked food ItemDefinition.
+; Modest heal (2 HP) — the "leftover stew" option when no named food is available.
+; Per D-13: cooked food is found-only loot in v1 (no farming/cooking pipeline).
+; Per D-13 heal scale: generic = 2 HP, named variants up to 4 HP.
+
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+item_id = "food_cooked_generic"
+display_name_key = "items.food_cooked_generic.name"
+icon_path = "res://assets/textures/icons/food_cooked_generic.png"
+category = "cooked_food"
+max_stack = 64
+tier = ""
+heal_amount = 2
+consumed_on_use = true
+vfx_on_use = ""

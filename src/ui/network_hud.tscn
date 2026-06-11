@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://network_hud"]
+
+[ext_resource type="Script" path="res://src/ui/network_hud.gd" id="1_network_hud"]
+
+[node name="NetworkHud" type="VBoxContainer"]
+anchor_left = 1.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 0.0
+offset_left = -200.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 16.0
+grow_horizontal = 0
+grow_vertical = 2
+size_flags_horizontal = 8
+visible = false
+script = ExtResource("1_network_hud")

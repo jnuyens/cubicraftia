@@ -1,0 +1,57 @@
+[gd_scene load_steps=2 format=3 uid="uid://chat_overlay"]
+
+[ext_resource type="Script" path="res://src/ui/chat_overlay.gd" id="1_chat_overlay"]
+
+[node name="ChatOverlay" type="CanvasLayer"]
+layer = 5
+script = ExtResource("1_chat_overlay")
+
+[node name="HistoryPanel" type="PanelContainer" parent="."]
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 0.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = -272.0
+offset_right = 368.0
+offset_bottom = -56.0
+grow_horizontal = 2
+grow_vertical = 0
+visible = false
+group = "chat_history_panel"
+
+[node name="VBox" type="VBoxContainer" parent="HistoryPanel"]
+layout_mode = 2
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HistoryPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 188)
+
+[node name="HistoryContainer" type="VBoxContainer" parent="HistoryPanel/VBox/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="InputRow" type="HBoxContainer" parent="HistoryPanel/VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="InputField" type="LineEdit" parent="HistoryPanel/VBox/InputRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_length = 200
+
+[node name="SendButton" type="Button" parent="HistoryPanel/VBox/InputRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(80, 0)
+
+[node name="RateLimitLabel" type="Label" parent="HistoryPanel/VBox"]
+layout_mode = 2
+visible = false
+text = ""
+autowrap_mode = 3

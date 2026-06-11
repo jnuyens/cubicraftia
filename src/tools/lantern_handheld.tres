@@ -1,0 +1,23 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; lantern_handheld.tres — ToolDefinition for the handheld lantern.
+; max_durability = 0 signals "never wears out" (DOCS §3.4: "Lantern never wears out").
+; lantern_light_radius_m = 8.0: OmniLight3D range wired in builder.tscn.
+; light_cull_mask = 2 (CHANNEL_BUILDER_ONLY) per Pitfall 9 — does not suppress mob spawning.
+
+[gd_resource type="Resource" script_class="ToolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/tools/tool_definition.gd" id="1_tooldef"]
+
+[resource]
+script = ExtResource("1_tooldef")
+tool_id = "lantern_handheld"
+display_name_key = "tools.lantern_handheld.name"
+icon_path = "res://assets/textures/icons/lantern_handheld_off.png"
+category = 3
+tier = 0
+max_durability = 0
+dynamite_radius_m = 5.0
+lantern_light_radius_m = 8.0
+mesh = null

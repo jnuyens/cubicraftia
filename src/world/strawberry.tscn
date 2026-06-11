@@ -1,0 +1,63 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; strawberry.tscn — Grassland strawberry collectible entity scene.
+;
+; StaticBody3D root with strawberry.gd script.
+;
+; Structure:
+;   Strawberry (StaticBody3D) — root, script attached
+;   ├─ CollisionShape3D — BoxShape3D 0.3 m × 0.3 m × 0.3 m (hitbox; no physics blocking)
+;   ├─ Mesh (MeshInstance3D) — placeholder SphereeMesh (rough strawberry body); modulate #D63828
+;   ├─ LeafMesh (MeshInstance3D) — small box representing leaves on top; modulate #5DBB46
+;   └─ WalkupPrompt (Label3D) — billboarded prompt above the berry
+;
+; Colours per UI-SPEC L151:
+;   Body: #D63828 (brick-red / strawberry red)
+;   Leaves: #5DBB46 (leaf green)
+;
+; TODO Phase 3 polish: replace placeholder meshes with stylised-PBR strawberry bush per UI-SPEC L151.
+; collision_layer=0, collision_mask=0 — entity is visual-only; no physics blocking.
+
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://src/world/strawberry.gd" id="1_strawberry"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(0.3, 0.3, 0.3)
+
+[sub_resource type="SphereMesh" id="SphereMesh_body"]
+radius = 0.15
+height = 0.3
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.839, 0.22, 0.157, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_leaves"]
+size = Vector3(0.2, 0.1, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_leaves"]
+albedo_color = Color(0.365, 0.733, 0.275, 1)
+
+[node name="Strawberry" type="StaticBody3D"]
+script = ExtResource("1_strawberry")
+collision_layer = 0
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_1")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="LeafMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+mesh = SubResource("BoxMesh_leaves")
+surface_material_override/0 = SubResource("StandardMaterial3D_leaves")
+
+[node name="WalkupPrompt" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+billboard = 1
+font_size = 20
+text = "Pick strawberry"

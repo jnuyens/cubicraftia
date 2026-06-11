@@ -1,0 +1,22 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; title_scene.tscn — Title screen root scene (Surface 1).
+;
+; Run/main_scene registered in project.godot (Plan 06-03).
+; Root: CanvasLayer (layer=0). All UI nodes are built programmatically
+; in title_scene.gd _build_ui() to keep .tscn minimal and avoid
+; hard node-path dependencies.
+;
+; Background TextureRect with UV-pan ShaderMaterial is created in script.
+; Logo (96px Label "Cubicraftia"), tagline, 5 buttons, legal footer, version
+; label, and AudioStreamPlayer are all children built in _build_ui().
+
+[gd_scene load_steps=2 format=3 uid="uid://b06title0003"]
+
+[ext_resource type="Script" path="res://src/ui/title_scene.gd" id="1_title"]
+
+; ─── Root: CanvasLayer layer=0 ───────────────────────────────────────────────
+[node name="TitleScene" type="CanvasLayer"]
+layer = 0
+script = ExtResource("1_title")

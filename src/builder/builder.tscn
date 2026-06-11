@@ -1,0 +1,115 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; builder.tscn — Player character scene (Phase 1 rough-art, extended in Plan 08.5).
+;
+; Structure:
+;   Builder (CharacterBody3D)        — root; builder.gd handles movement + aim
+;   ├── CollisionShape3D             — capsule (radius 0.4, height 1.8) for physics
+;   ├── MeshInstance3D               — rough-art capsule placeholder (Phase 6 replaces)
+;   ├── Camera3D                     — first-person camera at eye height (Y=1.6)
+;   └── CameraPivot (Node3D, Y=1.6)  — chase-cam pivot; yaw lives on Builder, pitch here
+;       ├── CameraRay (RayCast3D)    — wall-collision probe, length 4.0, collision_mask=1
+;       └── ChaseCamera (Camera3D)   — direct child of CameraPivot; position.z set each
+;                                       physics frame by builder.gd (no interpolation)
+;
+; Phase 1 rough-art (CONTEXT.md D-01): no builder mesh, no skinned character.
+; The capsule collider is the only visible representation until Phase 6.
+;
+; Plan 05 contract: builder.gd exposes get_aim_origin() and get_aim_direction()
+; for the place/break raycast. Plan 06 wires the mobile touch overlay to the
+; same input actions (move_left/right/forward/back, jump) bound here on desktop.
+;
+; Plan 08.5 additions:
+;   - CameraPivot / CameraRay / ChaseCamera for third-person chase mode.
+;   - Camera3D (FPV) current=false in scene; script activates correct one on _ready.
+;   - CameraRay collision_mask=1 so it detects WorldStaticBody / terrain.
+;   - Default camera mode is chase (per user decision 2026-05-26).
+;
+; Direct-Orbit camera (feat(07)):
+;   - SpringArm3D replaced by a manual RayCast3D (CameraRay) for ZERO-latency wall
+;     collision — no SpringArm smoothing / lerp anywhere. Each physics frame the ray
+;     is force-updated and camera_chase.position.z is set directly (instant, no Tween).
+;   - Eliminates motion-sickness artefacts caused by SpringArm interpolation.
+
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/builder/builder.gd" id="1_builder"]
+
+; ─── Capsule collision shape (radius=0.4 m, height=1.8 m) ────────────────────
+[sub_resource type="CapsuleShape3D" id="1_capsule"]
+radius = 0.4
+height = 1.8
+
+; ─── Builder mesh placeholder (wireframe capsule for rough-art visibility) ────
+; Phase 6 replaces this with the real builder mesh. Empty MeshInstance3D for now.
+[sub_resource type="CapsuleMesh" id="2_capsule_mesh"]
+radius = 0.4
+height = 1.8
+
+; ─── Root node ───────────────────────────────────────────────────────────────
+[node name="Builder" type="CharacterBody3D"]
+script = ExtResource("1_builder")
+
+; ─── Collision shape ─────────────────────────────────────────────────────────
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("1_capsule")
+position = Vector3(0, 0.9, 0)
+
+; ─── Visual placeholder (rough-art capsule mesh) ─────────────────────────────
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("2_capsule_mesh")
+position = Vector3(0, 0.9, 0)
+
+; ─── First-person camera at eye height ───────────────────────────────────────
+; current=false: builder.gd sets the active camera via _apply_camera_mode() on _ready.
+[node name="Camera3D" type="Camera3D" parent="."]
+current = false
+position = Vector3(0, 1.6, 0)
+
+; ─── Chase-cam pivot (Plan 08.5) ─────────────────────────────────────────────
+; Positioned at eye height (Y=1.6) so the SpringArm3D arcs around the same focal point
+; as the FPV camera. Yaw is handled by rotating the Builder body; pitch is applied here
+; (camera_pivot.rotation.x = _camera_pitch) so the arm sweeps over and under.
+[node name="CameraPivot" type="Node3D" parent="."]
+position = Vector3(0, 1.6, 0)
+
+; ─── CameraRay — wall-collision probe (Direct-Orbit, feat(07)) ───────────────
+; Replaces SpringArm3D. target_position.z = 4.0 m (default desired distance;
+; clamped [2.0, 8.0] by scroll-wheel via _chase_distance in builder.gd).
+; collision_mask=1 — Layer 1 is WorldStaticBody / VoxelTerrain. (T-CAM-02 mitigation).
+; The ray is force-updated each physics frame; camera_chase.position.z is set
+; directly with NO interpolation, giving instant (zero-latency) wall retraction.
+[node name="CameraRay" type="RayCast3D" parent="CameraPivot"]
+collision_mask = 1
+target_position = Vector3(0, 0, 4)
+
+; ─── Chase camera — direct child of CameraPivot (Direct-Orbit, feat(07)) ─────
+; Position.z=4 puts it 4 m behind the builder (+Z in local CameraPivot space = behind).
+; builder.gd sets position.z every physics frame based on CameraRay hit distance.
+; current=false; script activates it when camera_mode == CHASE.
+[node name="ChaseCamera" type="Camera3D" parent="CameraPivot"]
+current = false
+position = Vector3(0, 0, 4)
+
+; ─── Hand attachment point for held tools (Plan 02-10) ───────────────────────
+; Position: Vector3(0.3, 1.0, -0.4) — slightly right, at arm height, in front of builder.
+; Holds the HandheldLanternLight OmniLight3D when the lantern is equipped.
+[node name="Hand" type="Node3D" parent="."]
+position = Vector3(0.3, 1.0, -0.4)
+
+; ─── Handheld lantern OmniLight3D (Plan 02-10) ───────────────────────────────
+; Pitfall 9 mitigation: light_cull_mask = 2 (CHANNEL_BUILDER_ONLY) so this light
+; illuminates only the builder's visual layer and does NOT suppress hostile mob spawning
+; in dungeons / deep-dark areas (Plan 06 lighting channels).
+;
+; omni_range = 8.0: matches lantern_handheld.tres.lantern_light_radius_m.
+; light_color = #F5C30D (warm yellow per brick palette anchors, D-03).
+; light_energy = 1.5: bright enough to be useful; not overblown.
+; visible = false: toggled by Builder.set_handheld_lantern(lit) from hotbar.gd.
+[node name="HandheldLanternLight" type="OmniLight3D" parent="Hand"]
+visible = false
+light_color = Color(0.961, 0.765, 0.051, 1.0)
+light_energy = 1.5
+light_cull_mask = 2
+omni_range = 8.0

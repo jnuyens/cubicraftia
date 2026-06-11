@@ -1,0 +1,23 @@
+[Unit]
+Description=Cubicraftia WebRTC Signaling Server
+After=network.target
+Documentation=https://github.com/cubicraftia/cubicraftia
+
+[Service]
+Type=simple
+User=cubicraftia
+Group=cubicraftia
+ExecStart=/usr/local/bin/cubicraftia-signaling
+EnvironmentFile=/etc/cubicraftia/signaling.env
+Restart=on-failure
+RestartSec=5s
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/cubicraftia
+
+[Install]
+WantedBy=multi-user.target

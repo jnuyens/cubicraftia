@@ -1,0 +1,20 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; preset_chip.tscn - Graphics preset chip button.
+;
+; Per UI-SPEC.md §Settings Screen:
+;   96x40px chip, HBoxContainer-friendly.
+;   Active: filled #F5C30D with #1B2C56 16px semibold label.
+;   Inactive: outlined #F1F0EA 1px stroke with #F1F0EA label.
+;
+; Usage: Set the preset_id property to "auto", "low", "medium", or "high".
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/preset_chip.gd" id="1_chip"]
+
+[node name="PresetChip" type="Button"]
+custom_minimum_size = Vector2(96, 40)
+script = ExtResource("1_chip")
+preset_id = &"auto"

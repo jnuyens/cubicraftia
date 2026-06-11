@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "bookshelf"
+display_name_key = "bricks.bookshelf.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 3
+studs_top = []
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "plastic_solid"
+mesh = null
+category = 6
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = -1
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0)]
+icon_path = "res://assets/textures/icons/bookshelf.png"

@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_shovel_stone.tres — generated to wire the art-crafting card for shovel_stone.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_shovel_stone"
+display_name_key = "recipes.shovel_stone.name"
+inputs = [{"def_id": "cobblestone", "count": 1, "slot": 1}, {"def_id": "stick", "count": 1, "slot": 4}, {"def_id": "stick", "count": 1, "slot": 7}]
+output_def_id = "shovel"
+output_count = 1
+shaped = true
+grid_size = 3

@@ -1,0 +1,75 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; laser_penguin.tscn — LaserPenguin: ground-based hostile with charge-up laser-cone attack.
+;
+; Visual placeholder: white + black capsule mesh tinted #F1F0EA (body) + #111111 (head/belly)
+; per UI-SPEC L151. Full creature .glb to be authored in Phase 3 art pass.
+; TODO Phase 3 polish: replace Body placeholder capsule with distinct penguin .glb per art pass.
+;
+; D-09 tell nodes:
+;   EyeGlowParticles — GPUParticles3D emitting during charge (orange→red gradient).
+;   WhineAudio       — AudioStreamPlayer3D (stream null v1; TODO: wire whine.ogg).
+;   LaserShapeCast   — ShapeCast3D cone 3 m forward for hit detection.
+;
+; References: laser_penguin.gd, 03-CONTEXT.md D-09, 03-PATTERNS.md L389-427.
+
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/combat/laser_penguin.gd" id="1_script"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.3
+height = 0.6
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.28
+height = 0.55
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.945, 0.941, 0.914, 1)
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_laser"]
+radius = 0.1
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_glow"]
+emission_shape = 2
+emission_sphere_radius = 0.05
+direction = Vector3(0, 1, 0)
+spread = 30.0
+initial_velocity_min = 0.2
+initial_velocity_max = 0.5
+color = Color(0.902, 0.541, 0.114, 1)
+
+[node name="LaserPenguin" type="CharacterBody3D"]
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="ChargeTimer" type="Timer" parent="."]
+wait_time = 0.8
+one_shot = true
+
+[node name="EyeGlowParticles" type="GPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0.05)
+emitting = false
+amount = 12
+lifetime = 0.4
+one_shot = false
+process_material = SubResource("ParticleProcessMaterial_glow")
+
+[node name="WhineAudio" type="AudioStreamPlayer3D" parent="."]
+max_distance = 15.0
+
+[node name="LaserShapeCast" type="ShapeCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+target_position = Vector3(0, 0, -3)
+shape = SubResource("SphereShape3D_laser")
+max_results = 8

@@ -1,0 +1,104 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; join_screen.tscn — Join-from-invite overlay (Surface 5).
+;
+; Root: CanvasLayer (layer=20), group "join_screen"
+;   - Overlay: ColorRect (navy 80% alpha, full rect)
+;     - Content: VBoxContainer (spinner + status label, centred)
+;       - Heading: Label (20px, brick-white)
+;       - Spinner: AnimatedSprite2D (icon_spinner, 2 Hz)
+;       - StatusLabel: Label (14px, brick-white 70%)
+;     - ErrorContent: VBoxContainer (error heading + body + back button, centred, hidden by default)
+;       - ErrorHeading: Label (16px, destructive red)
+;       - ErrorBody: Label (14px, brick-white)
+;       - BackButton: Button (secondary, 200px)
+;
+; All text set at runtime — zero hardcoded English strings.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/join_screen.gd" id="1_script"]
+
+[node name="JoinScreen" type="CanvasLayer"]
+layer = 20
+visible = false
+add_to_group = ["join_screen"]
+script = ExtResource("1_script")
+
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.106, 0.173, 0.337, 0.8)
+
+[node name="Content" type="VBoxContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -100.0
+offset_right = 200.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Heading" type="Label" parent="Overlay/Content"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+[node name="StatusLabel" type="Label" parent="Overlay/Content"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.7)
+
+[node name="ErrorContent" type="VBoxContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -80.0
+offset_right = 200.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="ErrorHeading" type="Label" parent="Overlay/ErrorContent"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 16
+theme_override_colors/font_color = Color(0.839, 0.220, 0.157, 1.0)
+
+[node name="ErrorBody" type="Label" parent="Overlay/ErrorContent"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+[node name="BackButton" type="Button" parent="Overlay/ErrorContent"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+size_flags_horizontal = 4
+text = ""

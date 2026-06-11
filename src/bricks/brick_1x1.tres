@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; brick_1x1.tres — BrickDefinition for the 1×1 standard brick (Phase 1 + Plan 02-04 extension).
+; Mesh is loaded dynamically via BrickDefinition.from_gltf("res://assets/meshes/brick_1x1.glb").
+; This .tres stores the identity metadata; the actual mesh reference is populated at runtime.
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "brick_1x1"
+display_name_key = "bricks.brick_1x1.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 3
+studs_top = [{"x": 0.0, "y": 1.0, "z": 0.0, "gender": "male"}]
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "plastic_solid"
+mesh = null
+category = 0
+palette_colour_index = -1
+colour_swappable = true
+natural_colour_token = -1
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0)]

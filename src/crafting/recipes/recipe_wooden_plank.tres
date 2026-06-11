@@ -1,0 +1,19 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_wooden_plank.tres — 1 wood log → 4 wooden planks (shapeless, 2×2 grid).
+; D-07: recipe ratios at Claude's discretion. Ref: 03-07a-SUMMARY.md.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_wooden_plank"
+display_name_key = "recipes.wooden_plank.name"
+inputs = [{"def_id": "wood_log", "count": 1, "slot": -1}]
+output_def_id = "wood_plank"
+output_count = 4
+shaped = false
+grid_size = 2

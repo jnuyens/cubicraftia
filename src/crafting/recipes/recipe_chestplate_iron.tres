@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_chestplate_iron.tres — generated to wire the art-crafting card for chestplate_iron.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_chestplate_iron"
+display_name_key = "recipes.chestplate_iron.name"
+inputs = [{"def_id": "iron_ore", "count": 1, "slot": 0}, {"def_id": "iron_ore", "count": 1, "slot": 2}, {"def_id": "iron_ore", "count": 1, "slot": 3}, {"def_id": "iron_ore", "count": 1, "slot": 4}, {"def_id": "iron_ore", "count": 1, "slot": 5}, {"def_id": "iron_ore", "count": 1, "slot": 6}, {"def_id": "iron_ore", "count": 1, "slot": 7}, {"def_id": "iron_ore", "count": 1, "slot": 8}]
+output_def_id = "chestplate_iron"
+output_count = 1
+shaped = true
+grid_size = 3

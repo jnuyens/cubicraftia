@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "kind": "quadruped",
+  "facing": "-x",
+  "notes": "Quadruped layout. legs rotate around their hip socket (X axis = forward/back swing). Head rotates around Y (yaw look L/R) and Z (pitch nod). Tail rotates around X (wag).",
+  "pieces": {
+    "panda_leg_fl": {
+      "pivot": [
+        -0.1925,
+        -0.11199999999999999,
+        0.2
+      ],
+      "rotates_on": "x",
+      "joint": "hip_fl"
+    },
+    "panda_leg_fr": {
+      "pivot": [
+        -0.1925,
+        0.11199999999999999,
+        0.2
+      ],
+      "rotates_on": "x",
+      "joint": "hip_fr"
+    },
+    "panda_leg_bl": {
+      "pivot": [
+        0.1925,
+        -0.11199999999999999,
+        0.2
+      ],
+      "rotates_on": "x",
+      "joint": "hip_bl"
+    },
+    "panda_leg_br": {
+      "pivot": [
+        0.1925,
+        0.11199999999999999,
+        0.2
+      ],
+      "rotates_on": "x",
+      "joint": "hip_br"
+    },
+    "panda_body": {
+      "pivot": [
+        0,
+        0,
+        0.34
+      ],
+      "rotates_on": null
+    },
+    "panda_head": {
+      "pivot": [
+        -0.275,
+        0,
+        0.37
+      ],
+      "rotates_on": "y",
+      "joint": "neck"
+    },
+    "panda_tail": {
+      "pivot": [
+        0.275,
+        0,
+        0.42000000000000004
+      ],
+      "rotates_on": "x",
+      "joint": "tail_base"
+    }
+  }
+}

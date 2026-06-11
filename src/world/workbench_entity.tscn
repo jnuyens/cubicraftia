@@ -1,0 +1,50 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; workbench_entity.tscn — Placed workbench entity scene.
+;
+; StaticBody3D root with workbench_entity.gd script.
+;
+; Structure:
+;   WorkbenchEntity (StaticBody3D) — root, script attached
+;   ├─ CollisionShape3D — BoxShape3D 1 m × 1 m × 1 m
+;   ├─ Mesh (MeshInstance3D) — placeholder BoxMesh tinted brown; swapped in art pass
+;   └─ WalkupPrompt (Label3D) — billboarded 1.5 m above origin; shows open prompt
+;
+; Mesh is null-equivalent placeholder per brick-mesh-null-phase2 STATE decision until art pass.
+; TODO Phase 3 polish: replace Mesh with a distinct workbench .glb.
+
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/world/workbench_entity.gd" id="1_workbench"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(1, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_body"]
+size = Vector3(1, 1, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.4, 0.25, 0.1, 1)
+
+[node name="WorkbenchEntity" type="StaticBody3D"]
+script = ExtResource("1_workbench")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+shape = SubResource("BoxShape3D_1")
+
+[node name="Mesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("BoxMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="WalkupPrompt" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
+billboard = 1
+no_depth_test = true
+pixel_size = 0.005
+outline_size = 4
+text = ""
+modulate = Color(0.945, 0.941, 0.918, 1)
+visible = false

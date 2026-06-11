@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://report_modal"]
+
+[ext_resource type="Script" path="res://src/ui/report_modal.gd" id="1_report_modal"]
+
+[node name="ReportModal" type="CanvasLayer"]
+layer = 20
+script = ExtResource("1_report_modal")

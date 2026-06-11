@@ -1,0 +1,65 @@
+[gd_resource type="Resource" script_class="BrickTemplate" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; jungle_temple_a.tres — Jungle temple variant A.
+; Stepped pyramid structure: stone base, cobblestone mid, diamond-ore crown.
+; Palette: stone/cobblestone natural, diamond_ore natural accent, dark-green (9) vine-flowers.
+; Contains silver + bronze chest.
+; DOCS.md §2 — jungle temple structure; CONTEXT.md D-07 (3 variants), D-08 (notable rarity).
+
+[ext_resource type="Script" path="res://src/bricks/brick_template.gd" id="1_btmpl"]
+
+[resource]
+script = ExtResource("1_btmpl")
+bricks = [
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(1, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(2, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(3, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 0)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 4)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(1, 1, 4)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(2, 1, 4)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(3, 1, 4)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 4)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(1, 2, 1)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(2, 2, 1)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(3, 2, 1)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(1, 2, 3)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(2, 2, 3)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(3, 2, 3)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(1, 3, 2)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(2, 3, 2)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(3, 3, 2)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(1, 4, 2)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(2, 4, 2)},
+	{"def_id": "cobblestone","colour_index": -1, "cell": Vector3i(3, 4, 2)},
+	{"def_id": "diamond_ore","colour_index": -1, "cell": Vector3i(2, 5, 2)},
+	{"def_id": "diamond_ore","colour_index": -1, "cell": Vector3i(2, 6, 2)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 1)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 2)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(0, 1, 3)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 1)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 2)},
+	{"def_id": "stone",      "colour_index": -1, "cell": Vector3i(4, 1, 3)},
+	{"def_id": "flower",     "colour_index": 9,  "cell": Vector3i(0, 2, 0)},
+	{"def_id": "flower",     "colour_index": 8,  "cell": Vector3i(4, 2, 4)},
+	{"def_id": "flower",     "colour_index": 9,  "cell": Vector3i(0, 2, 4)},
+	{"def_id": "torch",      "colour_index": 5,  "cell": Vector3i(0, 2, 2)},
+	{"def_id": "torch",      "colour_index": 5,  "cell": Vector3i(4, 2, 2)},
+	{"def_id": "ladder",     "colour_index": 15, "cell": Vector3i(2, 1, 0)},
+	{"def_id": "ladder",     "colour_index": 15, "cell": Vector3i(2, 2, 0)},
+	{"def_id": "ladder",     "colour_index": 15, "cell": Vector3i(2, 3, 0)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(1, 3, 2)},
+	{"def_id": "glass",      "colour_index": -1, "cell": Vector3i(3, 3, 2)}
+]
+terrain_overrides = []
+loot_chests = [
+	{"chest_type": "silver", "cell": Vector3i(2, 2, 2)},
+	{"chest_type": "bronze", "cell": Vector3i(1, 1, 2)}
+]
+npc_spawns = []
+bbox = AABB(0, 0, 0, 5, 7, 5)
+allowed_biomes = Array[int]([3])

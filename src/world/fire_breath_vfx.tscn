@@ -1,0 +1,57 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; fire_breath_vfx.tscn — Tom Yum fire-breath particle effect scene (D-13).
+;
+; Node3D root with fire_breath_vfx.gd script.
+;
+; Structure:
+;   FireBreathVfx (Node3D) — root, script attached
+;   └─ Particles (GPUParticles3D) — forward-facing flame puff; 30 particles; 0.3 s; one_shot
+;
+; Particle settings (cosmetic-only per T-03-09-DR-04):
+;   - amount = 30; lifetime = 0.3 s; one_shot = true; explosiveness = 0.4
+;   - direction = Vector3(0, 0, -1) (forward along -Z, Godot convention)
+;   - spread = 15 degrees (narrow cone)
+;   - initial_velocity: min=1.5, max=2.5 m/s
+;   - scale: min=0.2, max=0.4 (small particles, ~10% dynamite scale per CONTEXT D-13)
+;   - color_ramp: #E68A1D (orange) → #D63828 (red) → alpha=0
+;   - NO Area3D, NO CollisionShape3D (T-03-09-DR-04: cosmetic-only invariant)
+;
+; TODO Phase 3 polish: extract dynamite particle shader for direct reuse per CONTEXT D-13.
+
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/world/fire_breath_vfx.gd" id="1_firevfx"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_1"]
+direction = Vector3(0, 0, -1)
+spread = 15.0
+initial_velocity_min = 1.5
+initial_velocity_max = 2.5
+scale_min = 0.2
+scale_max = 0.4
+lifetime_randomness = 0.3
+color = Color(0.906, 0.541, 0.114, 1)
+
+[sub_resource type="Gradient" id="Gradient_fire"]
+colors = PackedColorArray(0.906, 0.541, 0.114, 1.0, 0.839, 0.22, 0.157, 1.0, 0.839, 0.22, 0.157, 0.0)
+offsets = PackedFloat32Array(0.0, 0.6, 1.0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_1"]
+gradient = SubResource("Gradient_fire")
+
+[sub_resource type="QuadMesh" id="QuadMesh_1"]
+size = Vector2(0.3, 0.3)
+
+[node name="FireBreathVfx" type="Node3D"]
+script = ExtResource("1_firevfx")
+
+[node name="Particles" type="GPUParticles3D" parent="."]
+amount = 30
+lifetime = 0.3
+one_shot = true
+explosiveness = 0.4
+fixed_fps = 30
+process_material = SubResource("ParticleProcessMaterial_1")
+draw_pass_1 = SubResource("QuadMesh_1")

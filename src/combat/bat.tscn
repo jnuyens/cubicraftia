@@ -1,0 +1,41 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; bat.tscn — Bat: flying swoop attacker (also used as vampire bat-form via variant="vampire").
+;
+; Visual placeholder: flat brown mesh tinted #7A4A23 per UI-SPEC L151.
+; variant="vampire": dark grey body variant (D-09 visual cue — set via bat.gd._ready).
+; TODO Phase 3 polish: replace Body placeholder with distinct bat .glb per art pass.
+;
+; D-09 tell node:
+;   ChitterAudio — AudioStreamPlayer3D (stream null v1; TODO: wire chitter.ogg).
+;
+; References: bat.gd, 03-CONTEXT.md D-09, 03-PATTERNS.md L444-447.
+
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/combat/bat.gd" id="1_script"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_1"]
+radius = 0.3
+
+[sub_resource type="SphereMesh" id="SphereMesh_body"]
+radius = 0.28
+height = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.478, 0.290, 0.137, 1)
+transparency = 0
+
+[node name="Bat" type="CharacterBody3D"]
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("SphereShape3D_1")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="ChitterAudio" type="AudioStreamPlayer3D" parent="."]
+max_distance = 12.0

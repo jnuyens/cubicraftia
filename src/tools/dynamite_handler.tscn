@@ -1,0 +1,71 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; dynamite_handler.tscn — DynamiteHandler entity scene.
+;
+; Root: Node3D (DynamiteHandler script) with:
+;   - Timer (FuseTimer): wait_time=3.0, one_shot=true, autostart=false
+;   - GPUParticles3D (FlashParticles): orange/yellow burst on detonation
+;   - GPUParticles3D (FuseSparks): small wisps that emit during the fuse
+;   - MeshInstance3D (DynamiteStick): small red cylinder placeholder (Phase 2 art pass)
+;
+; References:
+;   DOCS.md §3.4 — dynamite tool VFX
+;   02-UI-SPEC.md §"Dynamite VFX sequence" — flash + sparks sequence
+;   02-PATTERNS.md §"src/tools/dynamite_handler.gd" — Timer + GPUParticles3D pattern
+
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://src/tools/dynamite_handler.gd" id="1_dynhandler"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_flash"]
+color = Color(1.0, 0.55, 0.0, 1.0)
+emission_shape = 0
+initial_velocity_min = 4.0
+initial_velocity_max = 8.0
+spread = 180.0
+gravity = Vector3(0, -9.8, 0)
+scale_min = 0.3
+scale_max = 0.8
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_sparks"]
+color = Color(1.0, 0.9, 0.2, 1.0)
+emission_shape = 0
+initial_velocity_min = 0.5
+initial_velocity_max = 2.0
+spread = 45.0
+gravity = Vector3(0, -9.8, 0)
+scale_min = 0.05
+scale_max = 0.15
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_stick"]
+top_radius = 0.1
+bottom_radius = 0.1
+height = 0.4
+
+[node name="DynamiteHandler" type="Node3D"]
+script = ExtResource("1_dynhandler")
+
+[node name="FuseTimer" type="Timer" parent="."]
+wait_time = 3.0
+one_shot = true
+autostart = false
+
+[node name="FlashParticles" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 120
+lifetime = 0.6
+one_shot = true
+explosiveness = 0.95
+process_material = SubResource("ParticleProcessMaterial_flash")
+
+[node name="FuseSparks" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 24
+lifetime = 0.4
+one_shot = false
+explosiveness = 0.0
+process_material = SubResource("ParticleProcessMaterial_sparks")
+
+[node name="DynamiteStick" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_stick")

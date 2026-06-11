@@ -1,0 +1,25 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; palette_tile.tscn — One palette tile with 3D rotating brick preview.
+;
+; Per UI-SPEC.md §PaletteTile spec:
+;   Control root (custom_minimum_size 64x64 desktop / 56x56 mobile — set by parent)
+;   SubViewportContainer (full_rect), SubViewport (UPDATE_WHEN_VISIBLE, transparent_bg)
+;   Camera3D (fov=30), DirectionalLight3D x2 (key + rim), MeshInstance3D (set at runtime)
+;   Colour swatch dot (12x12px, bottom-right)
+;   Tap button (full_rect, invisible)
+;
+; The actual node tree is built programmatically in palette_tile.gd _ready()
+; so that layout parameters (tile size) can be set dynamically by the parent grid.
+; This .tscn only carries the root node + script binding.
+;
+; D-12: SubViewport.update_mode = UPDATE_WHEN_VISIBLE provides scroll-aware culling.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/palette_tile.gd" id="1_tile"]
+
+[node name="PaletteTile" type="Control"]
+custom_minimum_size = Vector2(64, 64)
+script = ExtResource("1_tile")

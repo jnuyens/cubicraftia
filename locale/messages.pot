@@ -1,0 +1,182 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Cubicraftia contributors
+# This file is distributed under the same license as the Cubicraftia package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Cubicraftia 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "ui.about.title"
+msgstr ""
+
+msgid "ui.about.version"
+msgstr ""
+
+msgid "ui.about.license"
+msgstr ""
+
+msgid "ui.about.disclaimer"
+msgstr ""
+
+msgid "ui.common.back"
+msgstr ""
+
+msgid "ui.palette.search_placeholder"
+msgstr ""
+
+msgid "ui.palette.colour.all"
+msgstr ""
+
+msgid "ui.palette.search_empty_heading"
+msgstr ""
+
+msgid "ui.palette.search_empty_body"
+msgstr ""
+
+msgid "ui.chest.key_slot_label"
+msgstr ""
+
+msgid "ui.death.headline"
+msgstr ""
+
+msgid "ui.death.countdown"
+msgstr ""
+
+msgid "ui.death.subtitle"
+msgstr ""
+
+msgid "ui.death.subtitle_spawn"
+msgstr ""
+
+msgid "ui.first_launch.disclaimer"
+msgstr ""
+
+msgid "ui.first_launch.acknowledge"
+msgstr ""
+
+msgid "ui.hotbar.slot_empty"
+msgstr ""
+
+msgid "ui.hud.mode.survival"
+msgstr ""
+
+msgid "ui.hud.mode.sandbox"
+msgstr ""
+
+msgid "ui.hotbar.slot_filled"
+msgstr ""
+
+msgid "ui.inventory.cell.filled"
+msgstr ""
+
+msgid "ui.inventory.cell.empty"
+msgstr ""
+
+msgid "ui.palette.open"
+msgstr ""
+
+msgid "ui.inventory.open"
+msgstr ""
+
+msgid "ui.inventory.close"
+msgstr ""
+
+msgid "ui.palette.tile.sr_label"
+msgstr ""
+
+msgid "ui.recipes.fill_grid"
+msgstr ""
+
+msgid "ui.recipes.empty.title"
+msgstr ""
+
+msgid "ui.recipes.empty.body"
+msgstr ""
+
+msgid "ui.settings.iap.title"
+msgstr ""
+
+msgid "ui.settings.iap.coming_later"
+msgstr ""
+
+msgid "ui.common.done"
+msgstr ""
+
+msgid "ui.settings.graphics.reset"
+msgstr ""
+
+msgid "ui.settings.graphics.reset.confirm"
+msgstr ""
+
+msgid "ui.settings.graphics.reset.do"
+msgstr ""
+
+msgid "ui.tool.durability_sr"
+msgstr ""
+
+msgid "ui.builder.place"
+msgstr ""
+
+msgid "ui.builder.break"
+msgstr ""
+
+msgid "ui.builder.jump"
+msgstr ""
+
+msgid "ui.settings.graphics.apply"
+msgstr ""
+
+msgid "ui.settings.graphics.preset.auto"
+msgstr ""
+
+msgid "ui.settings.graphics.preset.low"
+msgstr ""
+
+msgid "ui.settings.graphics.preset.medium"
+msgstr ""
+
+msgid "ui.settings.graphics.preset.high"
+msgstr ""
+
+msgid "ui.toast.graphics_adjusted"
+msgstr ""
+
+msgid "ui.toast.feature_in_later_release"
+msgstr ""
+
+msgid "ui.device.unsupported"
+msgstr ""
+
+msgid "ui.device.continue_anyway"
+msgstr ""
+
+msgid "ui.device.quit"
+msgstr ""
+
+msgid "ui.common.cancel"
+msgstr ""
+
+msgid "bricks.brick_1x1.name"
+msgstr ""
+
+msgid "items.key_"
+msgstr ""
+
+msgid "ui.chest.locked_prompt"
+msgstr ""
+
+msgid "ui.chest.open_prompt"
+msgstr ""
+
+msgid "ui.workbench.open_prompt"
+msgstr ""

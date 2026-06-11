@@ -1,0 +1,22 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; shovel.tres — ToolDefinition for the shovel.
+; Breaks terrain (dirt, sand, gravel) faster than bare hands.
+; max_durability = 80 (survival mode only; no wear in sandbox).
+
+[gd_resource type="Resource" script_class="ToolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/tools/tool_definition.gd" id="1_tooldef"]
+
+[resource]
+script = ExtResource("1_tooldef")
+tool_id = "shovel"
+display_name_key = "tools.shovel.name"
+icon_path = "res://assets/textures/icons/shovel_iron.png"
+category = 1
+tier = 0
+max_durability = 80
+dynamite_radius_m = 5.0
+lantern_light_radius_m = 8.0
+mesh = null

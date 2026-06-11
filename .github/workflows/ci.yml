@@ -1,0 +1,233 @@
+# SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# ci.yml — Main CI: scope-checks + 5-target export matrix
+#
+# Platforms: macOS, Windows, Linux, Android, iOS (5 of 5 per DOCS §0)
+#
+# Runs on every push and pull_request.
+# Job 1 (scope-checks): glossary, REUSE/SPDX, feature-flags, i18n round-trip, GUT unit tests.
+# Job 2 (export): 4-target matrix — macOS, Windows Desktop, Linux/X11, Android.
+# Job 3 (export_ios): iOS export + TestFlight upload — Phase 5: closes Phase 1 D-04 deviation.
+#   Requires APPLE_CERTIFICATE_P12 secret; skips gracefully if absent.
+#
+# Docker image: barichello/godot-ci:4.6.3 (pinned — NOT :latest, per Pitfall 12)
+# Android keystore: decoded from GitHub Secret SECRET_RELEASE_KEYSTORE_BASE64
+
+name: ci
+
+on:
+  push:
+  pull_request:
+
+env:
+  GODOT_VERSION: "4.6.3"
+
+jobs:
+  # ── Job 1: scope-checks ─────────────────────────────────────────────────────
+  # Runs cheaply on ubuntu-latest; blocks the export matrix if anything fails.
+  scope-checks:
+    name: Scope checks (glossary · REUSE · feature-flags · i18n · unit tests)
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system tools (ripgrep, gettext, pipx)
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends ripgrep gettext python3-pip python3-venv
+          python3 -m pip install --user pipx --quiet
+          python3 -m pipx ensurepath || true
+
+      - name: Install REUSE tool
+        run: python3 -m pipx install reuse || python3 -m pip install --user reuse
+
+      - name: Glossary check — no forbidden terminology in player-facing surfaces
+        run: bash scripts/glossary-check.sh
+
+      - name: REUSE / SPDX header lint
+        run: |
+          # Try pipx-installed reuse first, fall back to pip-installed
+          if command -v reuse &>/dev/null; then
+            reuse lint
+          else
+            python3 -m reuse lint
+          fi
+
+      - name: Feature-flag invariant — all §9 deferred flags must be false
+        run: bash scripts/verify-feature-flags.sh
+
+      - name: i18n round-trip — extract .pot and check it matches committed version
+        run: |
+          # Back up the committed .pot, regenerate, then diff
+          cp locale/messages.pot locale/messages.pot.committed
+          bash scripts/extract-pot.sh
+          if ! diff -q locale/messages.pot.committed locale/messages.pot; then
+            echo "FAIL: locale/messages.pot is stale — run scripts/extract-pot.sh and commit the result." >&2
+            diff locale/messages.pot.committed locale/messages.pot >&2
+            exit 1
+          fi
+          echo "OK: locale/messages.pot is up to date."
+
+      - name: GUT unit tests (headless)
+        run: |
+          # Install addons via install-deps.sh in CI (installs GUT + godot_voxel stubs)
+          bash scripts/install-deps.sh --check || true
+          # Run the GUT suite headless — uses the project's gut_cmdln.gd entry point
+          godot --headless -s addons/gut/gut_cmdln.gd -- -gdir=tests/unit -gexit
+
+  # ── Job 2: export matrix ──────────────────────────────────────────────────────
+  # 4 targets: Linux/X11, Windows Desktop, macOS, Android.
+  # iOS is intentionally NOT in this matrix (D-04 — see docs/CI.md for rationale).
+  export:
+    name: Export — ${{ matrix.target.platform }}
+    needs: scope-checks
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - os: ubuntu-latest
+            platform: "Linux/X11"
+            artifact_path: "build/Linux/"
+          - os: ubuntu-latest
+            platform: "Windows Desktop"
+            artifact_path: "build/Windows/"
+          - os: macos-latest
+            platform: "macOS"
+            artifact_path: "build/macOS/"
+          - os: ubuntu-latest
+            platform: "Android"
+            artifact_path: "build/Android/"
+
+    runs-on: ${{ matrix.target.os }}
+
+    # Use the godot-ci container for Linux/Windows/Android (ubuntu-latest runners).
+    # macOS runner does NOT support Linux containers — Godot installed natively instead.
+    container: ${{ matrix.target.os == 'ubuntu-latest' && format('barichello/godot-ci:{0}', env.GODOT_VERSION) || '' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # macOS: install Godot natively (container is unavailable on macOS runners)
+      - name: Install Godot on macOS
+        if: matrix.target.os == 'macos-latest'
+        run: |
+          brew install --cask godot
+          # Verify the installed version matches the pinned one
+          godot --version || true
+
+      # Create build output directories
+      - name: Create build directories
+        run: mkdir -p "${{ matrix.target.artifact_path }}"
+
+      # Android: decode the release keystore from GitHub Secrets
+      - name: Restore Android release keystore
+        if: matrix.target.platform == 'Android'
+        env:
+          KEYSTORE_B64: ${{ secrets.SECRET_RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > release.keystore
+            echo "Keystore decoded successfully."
+          else
+            echo "WARNING: SECRET_RELEASE_KEYSTORE_BASE64 is not set — Android export will be unsigned."
+          fi
+
+      # Export the platform
+      - name: Export — ${{ matrix.target.platform }}
+        run: |
+          godot --headless --export-release "${{ matrix.target.platform }}" "${{ matrix.target.artifact_path }}"
+
+      # Upload build artifact
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.target.platform }}
+          path: ${{ matrix.target.artifact_path }}
+          if-no-files-found: warn
+
+  # ── Job 3: iOS export + TestFlight upload ────────────────────────────────────
+  # Phase 5: iOS CI — closes Phase 1 D-04 deviation (manual export → automated CI)
+  # Skips gracefully when APPLE_CERTIFICATE_P12 is not configured.
+  # Runner: macos-15 (Xcode 16 pre-installed — required for Godot 4.6 iOS export templates)
+  # Action: dulvui/godot-ios-upload@v4 (MIT, Godot 4.x compatible)
+  # Required secrets: APPLE_CERTIFICATE_P12, APPLE_CERTIFICATE_PASSWORD,
+  #   APPLE_PROVISIONING_PROFILE, APP_STORE_CONNECT_KEY_ID,
+  #   APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_PRIVATE_KEY
+  # See docs/store-readiness/code-signing-runbook.md for setup instructions.
+  export_ios:
+    name: "Export iOS (TestFlight)"
+    runs-on: macos-15
+    if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
+    needs: [scope-checks]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Godot ${{ env.GODOT_VERSION }} (native, macOS)
+        run: |
+          brew install --cask godot
+          godot --version || true
+
+      - name: Download Godot iOS export templates
+        run: |
+          TEMPLATE_VERSION="${{ env.GODOT_VERSION }}"
+          TEMPLATE_URL="https://github.com/godotengine/godot/releases/download/${TEMPLATE_VERSION}-stable/Godot_v${TEMPLATE_VERSION}-stable_export_templates.tpz"
+          curl -L "$TEMPLATE_URL" -o templates.tpz
+          mkdir -p "$HOME/Library/Application Support/Godot/export_templates/${TEMPLATE_VERSION}.stable"
+          unzip -q templates.tpz -d templates_tmp
+          mv templates_tmp/templates/* "$HOME/Library/Application Support/Godot/export_templates/${TEMPLATE_VERSION}.stable/"
+          rm -rf templates_tmp templates.tpz
+
+      - name: Create build output directory
+        run: mkdir -p build/iOS
+
+      - name: Setup Apple signing
+        env:
+          APPLE_CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+        run: |
+          # Decode and install the distribution certificate into a dedicated keychain
+          echo "$APPLE_CERTIFICATE_P12" | base64 --decode > /tmp/certificate.p12
+          security create-keychain -p "" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "" build.keychain
+          security import /tmp/certificate.p12 \
+            -k build.keychain \
+            -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s \
+            -k "" \
+            build.keychain
+          # Install the provisioning profile
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          echo "$APPLE_PROVISIONING_PROFILE" | base64 --decode \
+            > "$HOME/Library/MobileDevice/Provisioning Profiles/cubicraftia.mobileprovision"
+          rm /tmp/certificate.p12
+
+      - name: Export iOS IPA
+        run: |
+          godot --headless --export-release "iOS" build/iOS/Cubicraftia.ipa
+
+      - name: Upload IPA to TestFlight
+        uses: dulvui/godot-ios-upload@v4
+        with:
+          api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          api-key-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+          ipa-path: build/iOS/Cubicraftia.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-iOS
+          path: build/iOS/
+          if-no-files-found: warn

@@ -1,0 +1,35 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; structure_mineshaft.tres — Structure table for mineshaft chest TIER selection.
+; Rolls which tier of chest spawns at each chest slot in a mineshaft.
+; Per D-04: mineshafts host lower-tier chests including bronze (70% regular, 30% bronze).
+; Bronze keys drop from creature kills in dim caves AND from bronze chests here (D-04).
+; min_rolls=1, max_rolls=1 → exactly one chest per slot.
+; Anchors: 03-CONTEXT.md D-04.
+
+[gd_resource type="Resource" script_class="LootTable" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://src/loot/loot_table.gd" id="1_loottable"]
+[ext_resource type="Script" path="res://src/loot/loot_entry.gd" id="2_lootentry"]
+
+[sub_resource type="Resource" id="Resource_1"]
+script = ExtResource("2_lootentry")
+def_id = "chest_regular"
+weight = 70.0
+min_count = 1
+max_count = 1
+
+[sub_resource type="Resource" id="Resource_2"]
+script = ExtResource("2_lootentry")
+def_id = "chest_bronze"
+weight = 30.0
+min_count = 1
+max_count = 1
+
+[resource]
+script = ExtResource("1_loottable")
+table_id = "structure_mineshaft"
+min_rolls = 1
+max_rolls = 1
+entries = [SubResource("Resource_1"), SubResource("Resource_2")]

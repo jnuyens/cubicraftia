@@ -1,0 +1,29 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; sign_in_panel.tscn — Sign-in / Create account panel (Surface 1).
+;
+; Root: CanvasLayer (layer=10), not visible by default.
+; Child: Control (full rect) — the script builds all child nodes programmatically
+;   in _ready() so there are no hard scene-tree dependencies on node names.
+;
+; Usage: instantiate this scene, add to the scene tree, then call .visible = true
+;   when the player has not yet signed in. Connect sign_in_complete signal to
+;   proceed to main gameplay.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/sign_in_panel.gd" id="1_sign_in"]
+
+; ─── Root: CanvasLayer layer=10 ──────────────────────────────────────────────
+[node name="SignInPanel" type="CanvasLayer"]
+layer = 10
+visible = false
+
+; Add to group so other nodes can locate this panel.
+[node name="Panel" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_sign_in")

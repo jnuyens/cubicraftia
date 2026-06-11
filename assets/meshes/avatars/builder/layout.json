@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "notes": "pivot positions are world-space anchors; each piece .glb is centred so its origin = pivot.",
+  "pieces": {
+    "builder_legs_l": {
+      "pivot": [
+        -0.055,
+        0,
+        0.28
+      ],
+      "rotates_on": "x",
+      "joint": "hip_l"
+    },
+    "builder_legs_r": {
+      "pivot": [
+        0.055,
+        0,
+        0.28
+      ],
+      "rotates_on": "x",
+      "joint": "hip_r"
+    },
+    "builder_pelvis": {
+      "pivot": [
+        0,
+        0,
+        0.28
+      ],
+      "rotates_on": null
+    },
+    "builder_torso": {
+      "pivot": [
+        0,
+        0,
+        0.33
+      ],
+      "rotates_on": null
+    },
+    "builder_arm_l": {
+      "pivot": [
+        -0.19,
+        0,
+        0.61
+      ],
+      "rotates_on": "x",
+      "joint": "shoulder_l"
+    },
+    "builder_arm_r": {
+      "pivot": [
+        0.19,
+        0,
+        0.61
+      ],
+      "rotates_on": "x",
+      "joint": "shoulder_r"
+    },
+    "builder_head": {
+      "pivot": [
+        0,
+        0,
+        0.65
+      ],
+      "rotates_on": "z",
+      "joint": "neck"
+    }
+  }
+}

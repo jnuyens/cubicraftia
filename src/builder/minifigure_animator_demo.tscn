@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://b1nifigdemo01"]
+
+[ext_resource type="Script" path="res://src/builder/minifigure_animator_demo.gd" id="1_demo"]
+
+[node name="MinifigureAnimatorDemo" type="Node3D"]
+script = ExtResource("1_demo")

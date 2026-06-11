@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; iron_ore.tres — BrickDefinition for the iron ore brick.
+; natural_colour_token=1 (light grey #A6A6A6 per BrickPalette index 1).
+; Mesh: assets/meshes/iron_ore.glb (null until Plan 02-09).
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "iron_ore"
+display_name_key = "bricks.iron_ore.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 3
+studs_top = [{"x": 0.0, "y": 1.0, "z": 0.0, "gender": "male"}]
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "ore"
+mesh = null
+category = 7
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 1
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0)]

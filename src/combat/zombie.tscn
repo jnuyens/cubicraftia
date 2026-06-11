@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/combat/melee_humanoid.gd" id="1_script"]
+
+[sub_resource type="CapsuleShape3D" id="cap"]
+radius = 0.4
+height = 1.8
+
+[node name="Zombie" type="CharacterBody3D"]
+script = ExtResource("1_script")
+kind_id = "zombie"
+target_height = 1.85
+default_max_hp = 5
+default_move_speed = 1.6
+default_attack_damage = 2
+default_detect_radius = 10.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("cap")

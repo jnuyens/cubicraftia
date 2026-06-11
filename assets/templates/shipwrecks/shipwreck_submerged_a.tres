@@ -1,0 +1,58 @@
+[gd_resource type="Resource" script_class="BrickTemplate" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; shipwreck_submerged_a.tres — Submerged shipwreck variant A.
+; Sunken hull mostly intact; slime_cube algae on hull, flowers as coral, iron veins.
+; Palette: wood_plank/wood_log natural, slime_cube natural (algae), cyan (10) flowers.
+; Contains regular chest (waterlogged).
+; DOCS.md §2 — shipwreck structure; CONTEXT.md D-07, D-08.
+
+[ext_resource type="Script" path="res://src/bricks/brick_template.gd" id="1_btmpl"]
+
+[resource]
+script = ExtResource("1_btmpl")
+bricks = [
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(0, 1, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(1, 1, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(2, 1, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(3, 1, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(4, 1, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(5, 1, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(6, 1, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(7, 1, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(0, 1, 3)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(1, 1, 3)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(2, 1, 3)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(3, 1, 3)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(5, 1, 3)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(6, 1, 3)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(7, 1, 3)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(0, 2, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(7, 2, 0)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(0, 2, 3)},
+	{"def_id": "wood_plank","colour_index": -1, "cell": Vector3i(7, 2, 3)},
+	{"def_id": "wood_log",  "colour_index": -1, "cell": Vector3i(3, 1, 1)},
+	{"def_id": "wood_log",  "colour_index": -1, "cell": Vector3i(3, 2, 1)},
+	{"def_id": "slime_cube","colour_index": -1, "cell": Vector3i(0, 2, 1)},
+	{"def_id": "slime_cube","colour_index": -1, "cell": Vector3i(2, 2, 0)},
+	{"def_id": "slime_cube","colour_index": -1, "cell": Vector3i(5, 2, 3)},
+	{"def_id": "slime_cube","colour_index": -1, "cell": Vector3i(7, 2, 1)},
+	{"def_id": "iron_ore",  "colour_index": -1, "cell": Vector3i(1, 2, 0)},
+	{"def_id": "iron_ore",  "colour_index": -1, "cell": Vector3i(6, 2, 3)},
+	{"def_id": "flower",    "colour_index": 10, "cell": Vector3i(0, 2, 2)},
+	{"def_id": "flower",    "colour_index": 11, "cell": Vector3i(7, 2, 2)},
+	{"def_id": "flower",    "colour_index": 10, "cell": Vector3i(4, 2, 0)},
+	{"def_id": "flower",    "colour_index": 11, "cell": Vector3i(4, 2, 3)},
+	{"def_id": "round_1x1_plate","colour_index": 10, "cell": Vector3i(2, 2, 2)},
+	{"def_id": "round_1x1_plate","colour_index": 11, "cell": Vector3i(5, 2, 2)},
+	{"def_id": "torch",     "colour_index": 10, "cell": Vector3i(3, 3, 1)}
+]
+terrain_overrides = []
+loot_chests = [
+	{"chest_type": "regular", "cell": Vector3i(4, 1, 2)}
+]
+npc_spawns = []
+bbox = AABB(0, 0, 0, 8, 4, 4)
+allowed_biomes = Array[int]([5])

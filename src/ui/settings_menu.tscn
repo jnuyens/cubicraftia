@@ -1,0 +1,137 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; settings_menu.tscn - Settings screen.
+;
+; Per UI-SPEC.md §Settings Screen:
+;   - Graphics section: 4 preset chips (Auto/Low/Medium/High via settings_menu.gd)
+;   - Brick Packs section: Iap.is_available() == false → coming_later copy
+;   - About section: version + license + disclaimer text
+;   - Done button closes the panel.
+;
+; Plan 04-07 extension:
+;   - TabRow: HBoxContainer with PlayersTabBtn + SettingsTabBtn
+;   - PlayersContent: VBoxContainer (initially hidden, holds PlayersTab instance)
+;   - SettingsContent: VBoxContainer wrapping Graphics/BrickPacks/About sections
+;
+; Section labels use tr() keys for DOC-10 compliance.
+; The Brick Packs "coming later" text contains NO hardcoded English - set by gd.
+; Note: ui.settings.graphics.preset.auto key must appear so glossary check picks it up.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/settings_menu.gd" id="1_settings"]
+
+[node name="SettingsMenu" type="PanelContainer"]
+custom_minimum_size = Vector2(480, 0)
+script = ExtResource("1_settings")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+; ─── Title ────────────────────────────────────────────────────────────────────
+[node name="TitleLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+; ─── Tab row (Plan 04-07) ─────────────────────────────────────────────────────
+[node name="TabRow" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="PlayersTabBtn" type="Button" parent="VBox/TabRow"]
+layout_mode = 2
+text = ""
+size_flags_horizontal = 3
+
+[node name="SettingsTabBtn" type="Button" parent="VBox/TabRow"]
+layout_mode = 2
+text = ""
+size_flags_horizontal = 3
+
+; ─── Separator ───────────────────────────────────────────────────────────────
+[node name="Sep0" type="HSeparator" parent="VBox"]
+layout_mode = 2
+
+; ─── Players content (Plan 04-07: PlayersTab instance added by _inject_players_tab) ──
+[node name="PlayersContent" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+visible = false
+theme_override_constants/separation = 8
+
+; ─── Settings content wrapper ────────────────────────────────────────────────
+[node name="SettingsContent" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+; ─── Graphics section ────────────────────────────────────────────────────────
+[node name="GraphicsSection" type="VBoxContainer" parent="VBox/SettingsContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GraphicsLabel" type="Label" parent="VBox/SettingsContent/GraphicsSection"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+; Preset chips row (chips added procedurally by settings_menu.gd _build_preset_chips)
+[node name="ChipsRow" type="HBoxContainer" parent="VBox/SettingsContent/GraphicsSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+; Reset button (destructive styling applied by settings_menu.gd _setup_buttons)
+[node name="ResetButton" type="Button" parent="VBox/SettingsContent/GraphicsSection"]
+layout_mode = 2
+text = ""
+
+; ─── Separator ───────────────────────────────────────────────────────────────
+[node name="Sep2" type="HSeparator" parent="VBox/SettingsContent"]
+layout_mode = 2
+
+; ─── Brick Packs section ──────────────────────────────────────────────────────
+[node name="BrickPacksSection" type="VBoxContainer" parent="VBox/SettingsContent"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BrickPacksLabel" type="Label" parent="VBox/SettingsContent/BrickPacksSection"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+; This label is populated by settings_menu.gd based on Iap.is_available()
+[node name="ComingLaterLabel" type="Label" parent="VBox/SettingsContent/BrickPacksSection"]
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.7)
+theme_override_font_sizes/font_size = 14
+
+; ─── Separator ───────────────────────────────────────────────────────────────
+[node name="Sep3" type="HSeparator" parent="VBox/SettingsContent"]
+layout_mode = 2
+
+; ─── About section ───────────────────────────────────────────────────────────
+[node name="AboutSection" type="VBoxContainer" parent="VBox/SettingsContent"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="AboutLabel" type="Label" parent="VBox/SettingsContent/AboutSection"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+[node name="AboutButton" type="Button" parent="VBox/SettingsContent/AboutSection"]
+layout_mode = 2
+text = ""
+
+; ─── Done button ─────────────────────────────────────────────────────────────
+[node name="DoneButton" type="Button" parent="VBox"]
+layout_mode = 2
+text = ""
+size_flags_horizontal = 8

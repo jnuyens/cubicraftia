@@ -1,0 +1,57 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; vampire.tscn — Vampire: humanoid hostile that transforms into bat form at HP ≤ 2.
+;
+; Visual placeholder: dark grey capsule tinted #3F3F3F per UI-SPEC L151.
+; TODO Phase 3 polish: replace Body with distinct vampire builder figure + cape .glb per art pass.
+;
+; D-09 tell nodes:
+;   Eyes            — small MeshInstance3D spheres; modulate tweened to #D63828 during transform.
+;   AnimationPlayer — "wing_spread" anim (0.5 s tell phase 2); also handles death anim.
+;
+; References: vampire.gd, 03-CONTEXT.md D-09, 03-PATTERNS.md L444-467.
+
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/combat/vampire.gd" id="1_script"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
+radius = 0.4
+height = 1.5
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
+radius = 0.37
+height = 1.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_body"]
+albedo_color = Color(0.247, 0.247, 0.247, 1)
+
+[sub_resource type="SphereMesh" id="SphereMesh_eyes"]
+radius = 0.06
+height = 0.12
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_eyes"]
+albedo_color = Color(0.824, 0.220, 0.157, 1)
+emission_enabled = true
+emission = Color(0.824, 0.220, 0.157, 1)
+emission_energy_multiplier = 0.5
+
+[node name="Vampire" type="CharacterBody3D"]
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+shape = SubResource("CapsuleShape3D_1")
+
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+mesh = SubResource("CapsuleMesh_body")
+surface_material_override/0 = SubResource("StandardMaterial3D_body")
+
+[node name="Eyes" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 1.35, 0.3)
+mesh = SubResource("SphereMesh_eyes")
+surface_material_override/0 = SubResource("StandardMaterial3D_eyes")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]

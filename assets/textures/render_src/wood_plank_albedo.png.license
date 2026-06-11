@@ -1,0 +1,4 @@
+SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+Procedural wood-plank albedo (scripts) used by tools/render_item_icon.gd to texture
+the wood_plank brick model when rendering its inventory thumbnail.

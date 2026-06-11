@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; builder_bed.tres — BrickDefinition for the builder-bed (2×1, 1 plate tall).
+; Placed by the survival starter kit at world origin (D-15 + DOCS §5.6).
+; Mesh: null placeholder until art pass (brick-mesh-null-phase2 decision).
+; TODO Phase 3 polish: distinct bed mesh with mattress + headboard per UI-SPEC L43.
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "builder_bed"
+display_name_key = "ui.bed.name"
+dimensions = Vector3i(2, 1, 1)
+height_plates = 2
+studs_top = []
+studs_bottom = [{"x": 0.0, "y": 0.0, "z": 0.0, "gender": "female"}, {"x": 1.0, "y": 0.0, "z": 0.0, "gender": "female"}]
+stud_profile = "concave_top"
+material_id = "wood"
+mesh = null
+category = 5
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = "brown"
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0), Vector3i(1, 0, 0)]
+icon_path = "res://assets/textures/icons/bed_single.png"

@@ -1,0 +1,27 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; helmet_diamond.tres — crafting item BrickDefinition (registered via BrickRegistry.register_pack).
+; Output/ingredient for the art-crafting recipe cards. Inventory item; no world mesh yet.
+
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "helmet_diamond"
+display_name_key = "bricks.helmet_diamond.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 1
+studs_top = []
+studs_bottom = []
+stud_profile = "concave_top"
+material_id = "gem"
+mesh = null
+category = 8
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 15
+iap_pack_origin = "crafting_items"
+footprint_cells = [Vector3i(0, 0, 0)]

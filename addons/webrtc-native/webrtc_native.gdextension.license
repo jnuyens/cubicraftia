@@ -1,0 +1,12 @@
+SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+SPDX-License-Identifier: GPL-3.0-or-later
+
+webrtc_native.gdextension — GDExtension manifest for the WebRTC native addon.
+Source: https://github.com/godotengine/webrtc-native/releases/tag/1.1.0-stable
+(godot-extension-webrtc.zip, 1.1.0-stable). Binaries: MPL-2.0 (libdatachannel);
+see LICENSE.webrtc-native. Binaries installed by scripts/install-deps.sh; see
+addons/webrtc-native/README.md.
+
+The SPDX header lives in this sidecar rather than inline because Godot parses the
+.gdextension as a ConfigFile (comment char ';'), and a leading '#' comment block
+made the parser miss the [configuration] section ("must contain entry_symbol").

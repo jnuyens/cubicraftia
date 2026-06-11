@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_nether_portal.tres — generated to wire the art-crafting card for nether_portal.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_nether_portal"
+display_name_key = "recipes.nether_portal.name"
+inputs = [{"def_id": "obsidian", "count": 1, "slot": 0}, {"def_id": "obsidian", "count": 1, "slot": 1}, {"def_id": "obsidian", "count": 1, "slot": 2}, {"def_id": "obsidian", "count": 1, "slot": 3}]
+output_def_id = "nether_portal"
+output_count = 1
+shaped = true
+grid_size = 2

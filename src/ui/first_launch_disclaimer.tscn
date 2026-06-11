@@ -1,0 +1,62 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; first_launch_disclaimer.tscn - First-launch disclaimer dialog.
+;
+; Shows on the very first run (user://settings.cfg [first_launch] acknowledged absent).
+; Cannot be dismissed without tapping "Got it".
+;
+; Per UI-SPEC.md "Disclaimers + Legal Surface":
+;   - Body: tr("ui.first_launch.disclaimer") = same as ui.about.disclaimer.
+;   - Primary button: tr("ui.first_launch.acknowledge") = "Got it".
+;   - After acknowledge: writes [first_launch] acknowledged=true to user://settings.cfg.
+;
+; ALLOWLISTED in scripts/glossary-allowlist.txt: src/ui/first_launch_disclaimer.tscn
+; (the label text contains "LEGO Group" verbatim via tr("ui.first_launch.disclaimer")).
+;
+; text = "" for all labels at scene level (populated by gd at runtime via tr())
+; to satisfy DOC-10 test_no_hardcoded_strings.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/first_launch_disclaimer.gd" id="1_disclaimer"]
+
+[node name="FirstLaunchDisclaimer" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_disclaimer")
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 0
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -180.0
+offset_right = 240.0
+offset_bottom = 180.0
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = ""
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
+
+[node name="DisclaimerLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.9)
+
+[node name="AcknowledgeButton" type="Button" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = ""

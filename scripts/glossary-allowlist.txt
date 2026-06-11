@@ -1,0 +1,20 @@
+README.md:8:Cubicraftia is not affiliated with, endorsed by, or sponsored by the LEGO Group or Mojang Studios.
+locale/en.po:
+locale/nl.po:
+scripts/glossary-check.sh:
+scripts/glossary-allowlist.txt:
+docs/CI.md:
+docs/IOS_MANUAL_EXPORT.md:
+docs/CI_KEYSTORE_SETUP.md:
+addons/godot_voxel/README.md:
+src/ui/about.tscn:
+src/ui/about.gd:
+src/ui/first_launch_disclaimer.tscn:
+src/ui/first_launch_disclaimer.gd:
+# Trademark/legal docs that MUST name LEGO/Mojang for non-affiliation disclaimers,
+# and the art brief whose whole purpose is specifying what to AVOID (negative prompts).
+docs/EULA.md:
+docs/art-direction-brief.md:
+docs/store-readiness/app-store-metadata.md:
+docs/store-readiness/play-store-metadata.md:
+docs/store-readiness/screenshot-checklist.md:

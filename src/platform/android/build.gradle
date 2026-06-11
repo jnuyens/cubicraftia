@@ -1,0 +1,78 @@
+// SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// build.gradle — Gradle build script for the CubicraftiaThermal Android plugin.
+//
+// Produces CubicraftiaThermal.aar for inclusion in the Godot Android export.
+//
+// Prerequisites (documented in docs/MOTOROLA_BENCHMARK.md §Prerequisites):
+//   - Android SDK + NDK installed (or use the barichello/godot-ci:4.6.3 Docker image)
+//   - Java JDK 17+ (required by Godot 4.6 Android toolchain)
+//
+// T-07-SC mitigation: Godot base is pinned to org.godotengine:godot:4.6.3.stable
+// (published by the Godot Foundation on Maven Central) — no floating version.
+//
+// Build:
+//   cd src/platform/android && gradle assembleRelease
+//   Output: build/outputs/aar/CubicraftiaThermal-release.aar → copy to
+//           android/plugins/CubicraftiaThermal.aar in the Godot project.
+//
+// Dev note: for the benchmark run, the .aar only needs debug signing.
+//   gradle assembleDebug  → build/outputs/aar/CubicraftiaThermal-debug.aar
+
+plugins {
+    id 'com.android.library' version '8.3.0'
+    id 'org.jetbrains.kotlin.android' version '1.9.24'
+}
+
+android {
+    namespace 'org.cubicraftia.android'
+
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 28          // Android 9 per DOCS.md §7.1 minimum supported version
+        targetSdk 34       // Android 14 (current stable target SDK)
+
+        // AAR name for the .gdap manifest
+        archivesName = 'CubicraftiaThermal'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    // Source set pointing at the plugin Kotlin source
+    sourceSets {
+        main {
+            java.srcDirs = ['']
+            manifest.srcFile 'AndroidManifest.xml'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    google()
+}
+
+dependencies {
+    // Godot Android plugin v2 base — pinned to exact Godot 4.6.3 release (T-07-SC).
+    // Published by the Godot Foundation at https://central.sonatype.com/artifact/org.godotengine/godot
+    compileOnly 'org.godotengine:godot:4.6.3.stable'
+}

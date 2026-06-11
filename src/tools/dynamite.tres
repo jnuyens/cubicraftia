@@ -1,0 +1,23 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; dynamite.tres — ToolDefinition for dynamite.
+; Single-use explosive (max_durability=1 means one blast consumes it).
+; dynamite_radius_m = 5.0 per DOCS §3.4 "~5 m radius".
+; Plan 11 wires the VFX; this plan ships the resource + ToolWear handler stub.
+
+[gd_resource type="Resource" script_class="ToolDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/tools/tool_definition.gd" id="1_tooldef"]
+
+[resource]
+script = ExtResource("1_tooldef")
+tool_id = "dynamite"
+display_name_key = "tools.dynamite.name"
+icon_path = "res://assets/textures/icons/dynamite_unlit.png"
+category = 2
+tier = 0
+max_durability = 1
+dynamite_radius_m = 5.0
+lantern_light_radius_m = 8.0
+mesh = null

@@ -1,0 +1,24 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; food_tom_yum.tres — Tom Yum spicy seafood soup ItemDefinition.
+; The signature dish (D-13): 3 HP heal + fire-breath VFX on consumption.
+; Per D-13: heal amount is UNCHANGED from standard cooked food heal levels —
+; the VFX is cosmetic flavour, not a gameplay advantage.
+; vfx_on_use = "fire_breath" triggers FireBreathVfx via Builder.eat_food dispatch table.
+
+[gd_resource type="Resource" script_class="ItemDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/item_definition.gd" id="1_itemdef"]
+
+[resource]
+script = ExtResource("1_itemdef")
+item_id = "food_tom_yum"
+display_name_key = "items.food_tom_yum.name"
+icon_path = "res://assets/textures/icons/food_tom_yum.png"
+category = "cooked_food"
+max_stack = 64
+tier = ""
+heal_amount = 3
+consumed_on_use = true
+vfx_on_use = "fire_breath"
