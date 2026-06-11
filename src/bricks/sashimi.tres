@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; sashimi.tres - BrickDefinition for the sashimi sea-creature drop (issue #17).
+; Dropped when the builder kills a passive WATER creature (fish/shark/whale/squid/...)
+; instead of raw_meat (land animals keep dropping raw_meat). See wildlife.gd
+; take_damage/_die/_drop_meat. Category 9 MOB_DROP, mirroring raw_meat.tres.
+; natural_colour_token=14 (pink #E6588F per palette.gd) so the placeholder/dropped-pool
+; tint reads as salmon/sashimi flesh, distinct from raw_meat's red (token 4). mesh +
+; icon_path are empty: no 2D icon ships in assets/textures/icons for sashimi, so the
+; inventory slot falls back to its placeholder name label (same as raw_meat/bone).
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "sashimi"
+display_name_key = "bricks.sashimi.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 3
+studs_top = []
+studs_bottom = []
+stud_profile = "concave_top"
+material_id = "plastic_solid"
+mesh = null
+icon_path = ""
+category = 9
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 14
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0)]

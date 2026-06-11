@@ -12,7 +12,7 @@
 # Category distribution contract (DOCS.md §3.1):
 #   RECTANGULAR (0)=7, PLATE (1)=5, SLOPE (2)=4, TILE (3)=3, ROUND (4)=4,
 #   FUNCTIONAL (5)=6, DECORATIVE (6)=5, MATERIAL_ORE (7)=9, ACCESSORY (8)=5, MOB_DROP (9)=3
-#   Total = 50 (+ raw_meat MOB_DROP from issue #17 + 16 art-furniture DECORATIVE)
+#   Total = 50 (+ raw_meat & sashimi MOB_DROP from issue #17 + 16 art-furniture DECORATIVE)
 #
 # fence_post intentionally dropped (per 02-04-PLAN.md DOCS §3.1 ±2-per-category clause).
 #
@@ -48,8 +48,8 @@ func test_all_50_load_and_validate() -> void:
 	var defs: Array = _load_all_from_manifest()
 
 	# Total count. Base 50 + 16 art-furniture decorative placeables (Meshy furniture set)
-	# + raw_meat (issue #17 wildlife drop) = 67.
-	assert_eq(defs.size(), 67, "BrickRegistry must have exactly 67 BrickDefinitions")
+	# + raw_meat + sashimi (issue #17 wildlife drops) = 68.
+	assert_eq(defs.size(), 68, "BrickRegistry must have exactly 68 BrickDefinitions")
 
 	# Uniqueness and basic validity.
 	var seen_ids: Dictionary = {}
@@ -66,13 +66,13 @@ func test_all_50_load_and_validate() -> void:
 			"brick_id '%s' must be unique across the 50-brick set" % bd.brick_id)
 		seen_ids[bd.brick_id] = true
 
-	assert_eq(seen_ids.size(), 67, "All 67 brick_ids must be unique")
+	assert_eq(seen_ids.size(), 68, "All 68 brick_ids must be unique")
 
 # ─── Test 2 ────────────────────────────────────────────────────────────────────
 
 func test_get_by_category_returns_correct_set() -> void:
 	var defs: Array = _load_all_from_manifest()
-	assert_eq(defs.size(), 67, "Must have 67 definitions to verify category distribution")
+	assert_eq(defs.size(), 68, "Must have 68 definitions to verify category distribution")
 
 	# Build per-category count map.
 	var counts: Dictionary = {}
@@ -90,4 +90,4 @@ func test_get_by_category_returns_correct_set() -> void:
 	assert_eq(counts.get(BrickDefinition.Category.DECORATIVE,   0), 21, "DECORATIVE must have 21 bricks (5 base + 16 art-furniture)")
 	assert_eq(counts.get(BrickDefinition.Category.MATERIAL_ORE, 0), 9, "MATERIAL_ORE must have 9 bricks")
 	assert_eq(counts.get(BrickDefinition.Category.ACCESSORY,    0), 5, "ACCESSORY must have 5 bricks")
-	assert_eq(counts.get(BrickDefinition.Category.MOB_DROP,     0), 3, "MOB_DROP must have 3 bricks (bone, slime_cube, raw_meat)")
+	assert_eq(counts.get(BrickDefinition.Category.MOB_DROP,     0), 4, "MOB_DROP must have 4 bricks (bone, slime_cube, raw_meat, sashimi)")

@@ -277,6 +277,9 @@ msgstr "Bone"
 msgid "bricks.raw_meat.name"
 msgstr "Raw meat"
 
+msgid "bricks.sashimi.name"
+msgstr "Sashimi"
+
 msgid "bricks.slime_cube.name"
 msgstr "Slime cube"
 
