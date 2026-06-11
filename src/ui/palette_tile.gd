@@ -249,8 +249,14 @@ func _build_tap_button() -> void:
 	_tap_button.mouse_exited.connect(_on_mouse_exited)
 	add_child(_tap_button)
 
-	# Screen-reader tooltip per UI-SPEC.md §PaletteTile spec
-	_tap_button.tooltip_text = tr("ui.palette.tile.sr_label")
+	# Screen-reader tooltip per UI-SPEC.md §PaletteTile spec.
+	# The i18n string is a format template ("{brick_name}, {colour_name}") and MUST be passed
+	# through .format() — otherwise the raw {brick_name}/{colour_name} placeholders render
+	# literally in the tooltip (v1.1 QA #6).
+	_tap_button.tooltip_text = tr("ui.palette.tile.sr_label").format({
+		"brick_name": _display_name(),
+		"colour_name": _colour_name(),
+	})
 
 
 # ─── Process ──────────────────────────────────────────────────────────────────
@@ -277,6 +283,14 @@ func _display_name() -> String:
 	if translated != key and not translated.is_empty():
 		return translated
 	return def_id.capitalize()
+
+
+## Human-readable colour name for the tile's tooltip. Resolves the palette colour key
+## (BrickPalette.NAMES) to a title-cased label; -1 (natural / all colours) reads as "Natural".
+func _colour_name() -> String:
+	if colour_index >= 0 and colour_index < BrickPalette.NAMES.size():
+		return String(BrickPalette.NAMES[colour_index]).capitalize()
+	return tr("ui.palette.colour.all")
 
 
 ## Set whether this tile is the currently selected/equipped tile.
