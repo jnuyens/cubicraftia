@@ -1,0 +1,24 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; compass.tscn — top-centre heading compass HUD node.
+;
+; Root: Control with compass.gd script. Anchored to the top-centre of the
+; parent CanvasLayer; the script paints a scrolling N/E/S/W strip in _draw().
+; Hides itself when there is no local builder (group "builder") yet.
+
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/ui/compass.gd" id="1_compass"]
+
+[node name="Compass" type="Control"]
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -110.0
+offset_top = 12.0
+offset_right = 110.0
+offset_bottom = 42.0
+mouse_filter = 2
+script = ExtResource("1_compass")
