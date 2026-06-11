@@ -98,6 +98,9 @@ const _CHEST_ENTITY_SCENE := preload("res://src/world/chest_entity.tscn")
 ## Registered in group "bed_entity" for Builder._try_sleep_interact() + Spawning.register_bed.
 const _BED_ENTITY_SCENE := preload("res://src/world/bed_entity.tscn")
 
+## WelcomeSign script (decorative "Welcome to Cubicraftia" sign at the starter-kit spawn).
+const _WelcomeSignScript := preload("res://src/world/welcome_sign.gd")
+
 ## D-15 verbatim starter chest contents — single source of truth.
 ## test_starter_chest_contents_match_D15_verbatim asserts exact equality against this constant.
 ## NOTE: def_id values must match brick_id in the corresponding .tres file in
@@ -1595,6 +1598,19 @@ func spawn_starter_chest_and_bed(world_spawn: Vector3) -> void:
 	var bed: Node = spawn_bed(Vector3(bed_x, _terrain_surface_at(bed_x, bed_z), bed_z))
 	if bed != null:
 		bed.add_to_group("starter_bed")
+
+	# Decorative "Welcome to Cubicraftia" sign a few metres in front of spawn (+Z), clear of
+	# the chest (+X) and bed (-X) footprints. Ground it at its OWN column surface like the
+	# chest/bed (world_spawn.y is only the origin's height). Face the board back toward spawn
+	# (-Z) so a player at the spawn point reads the text head-on: the sign's text faces local
+	# -Z, so a 180° yaw turns it to look down -Z in world space, i.e. back at the origin.
+	var sign_x: float = world_spawn.x
+	var sign_z: float = world_spawn.z + 3.0
+	var sign := _WelcomeSignScript.new() as Node3D
+	add_child(sign)
+	sign.global_position = Vector3(sign_x, _terrain_surface_at(sign_x, sign_z), sign_z)
+	sign.rotation.y = PI
+	sign.add_to_group("starter_welcome_sign")
 
 
 ## Sample the terrain surface height at the world origin for the starter-kit spawn.

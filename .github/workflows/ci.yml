@@ -1,26 +1,34 @@
 # SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# ci.yml — Main CI: scope-checks + 5-target export matrix
+# ci.yml — Main CI: scope-checks (always) + 5-target export matrix (gated)
 #
 # Platforms: macOS, Windows, Linux, Android, iOS (5 of 5 per DOCS §0)
 #
-# Runs on every push and pull_request.
-# Job 1 (scope-checks): glossary, REUSE/SPDX, feature-flags, i18n round-trip, GUT unit tests.
+# Job 1 (scope-checks): glossary, REUSE/SPDX, feature-flags, i18n round-trip, GUT unit
+#   tests. Runs on EVERY push + pull_request and must stay GREEN — these are cheap.
 # Job 2 (export): 4-target matrix — macOS, Windows Desktop, Linux/X11, Android.
-# Job 3 (export_ios): iOS export + TestFlight upload — Phase 5: closes Phase 1 D-04 deviation.
-#   Requires APPLE_CERTIFICATE_P12 secret; skips gracefully if absent.
+# Job 3 (export_ios): iOS export + TestFlight upload.
+#
+# Jobs 2 and 3 need CI signing infra / secrets that are NOT yet wired up, so they are
+# gated to tag pushes and manual workflow_dispatch ONLY. A normal push or PR runs just
+# scope-checks, so it is green and does not spam failure emails.
 #
 # Docker image: barichello/godot-ci:4.6.3 (pinned — NOT :latest, per Pitfall 12)
+#   NOTE: the image tag is hardcoded, NOT `${{ env.GODOT_VERSION }}`. GitHub does not
+#   expose the workflow `env` context inside `jobs.<id>.container.image`, so an
+#   expression there fails at startup ("workflow file issue", 0s, no log). Keep it literal.
 # Android keystore: decoded from GitHub Secret SECRET_RELEASE_KEYSTORE_BASE64
 
 name: ci
 
 on:
-  # Auto-runs disabled (v1.1 QA): this workflow failed at startup on every push and spammed
-  # failure emails, and its 5-target export matrix needs CI infra/secrets not yet wired up.
-  # Manual-only for now; re-add push/pull_request once the workflow is fixed and green (the
-  # planned self-hosted-runner build pipeline is the intended replacement).
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+  pull_request:
   workflow_dispatch:
 
 env:
@@ -28,37 +36,34 @@ env:
 
 jobs:
   # ── Job 1: scope-checks ─────────────────────────────────────────────────────
-  # Runs cheaply on ubuntu-latest; blocks the export matrix if anything fails.
+  # Runs cheaply in the godot-ci container on every push + PR.
   scope-checks:
     name: Scope checks (glossary · REUSE · feature-flags · i18n · unit tests)
     runs-on: ubuntu-latest
     container:
-      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+      image: barichello/godot-ci:4.6.3
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install system tools (ripgrep, gettext, pipx)
+      - name: Install system tools (ripgrep, gettext, file)
         run: |
           apt-get update -qq
-          apt-get install -y --no-install-recommends ripgrep gettext python3-pip python3-venv
-          python3 -m pip install --user pipx --quiet
-          python3 -m pipx ensurepath || true
+          apt-get install -y --no-install-recommends ripgrep gettext python3-pip python3-venv file git
 
       - name: Install REUSE tool
-        run: python3 -m pipx install reuse || python3 -m pip install --user reuse
+        # The godot-ci container is Debian 12 (Python 3.12, PEP 668 / externally-managed),
+        # so `pip install --user` is blocked. Install reuse into a dedicated venv instead.
+        run: |
+          python3 -m venv "$HOME/reuse-venv"
+          "$HOME/reuse-venv/bin/pip" install --quiet reuse
 
       - name: Glossary check — no forbidden terminology in player-facing surfaces
         run: bash scripts/glossary-check.sh
 
       - name: REUSE / SPDX header lint
         run: |
-          # Try pipx-installed reuse first, fall back to pip-installed
-          if command -v reuse &>/dev/null; then
-            reuse lint
-          else
-            python3 -m reuse lint
-          fi
+          "$HOME/reuse-venv/bin/reuse" lint
 
       - name: Feature-flag invariant — all §9 deferred flags must be false
         run: bash scripts/verify-feature-flags.sh
@@ -85,9 +90,15 @@ jobs:
   # ── Job 2: export matrix ──────────────────────────────────────────────────────
   # 4 targets: Linux/X11, Windows Desktop, macOS, Android.
   # iOS is intentionally NOT in this matrix (D-04 — see docs/CI.md for rationale).
+  #
+  # GATED: only on tag pushes (v*) or manual dispatch. These need export templates +
+  # signing secrets not yet wired up, so they must not run on normal pushes/PRs.
+  # continue-on-error keeps the overall run from going red while the pipeline is built out.
   export:
     name: Export — ${{ matrix.target.platform }}
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: scope-checks
+    continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
@@ -95,21 +106,27 @@ jobs:
           - os: ubuntu-latest
             platform: "Linux/X11"
             artifact_path: "build/Linux/"
+            container: "barichello/godot-ci:4.6.3"
           - os: ubuntu-latest
             platform: "Windows Desktop"
             artifact_path: "build/Windows/"
+            container: "barichello/godot-ci:4.6.3"
           - os: macos-latest
             platform: "macOS"
             artifact_path: "build/macOS/"
+            container: ""
           - os: ubuntu-latest
             platform: "Android"
             artifact_path: "build/Android/"
+            container: "barichello/godot-ci:4.6.3"
 
     runs-on: ${{ matrix.target.os }}
 
     # Use the godot-ci container for Linux/Windows/Android (ubuntu-latest runners).
     # macOS runner does NOT support Linux containers — Godot installed natively instead.
-    container: ${{ matrix.target.os == 'ubuntu-latest' && format('barichello/godot-ci:{0}', env.GODOT_VERSION) || '' }}
+    # The image comes from the matrix (a per-job constant), which IS a valid context for
+    # `container`, unlike the workflow `env` context.
+    container: ${{ matrix.target.container }}
 
     steps:
       - name: Checkout
@@ -155,18 +172,23 @@ jobs:
 
   # ── Job 3: iOS export + TestFlight upload ────────────────────────────────────
   # Phase 5: iOS CI — closes Phase 1 D-04 deviation (manual export → automated CI)
-  # Skips gracefully when APPLE_CERTIFICATE_P12 is not configured.
   # Runner: macos-15 (Xcode 16 pre-installed — required for Godot 4.6 iOS export templates)
   # Action: dulvui/godot-ios-upload@v4 (MIT, Godot 4.x compatible)
   # Required secrets: APPLE_CERTIFICATE_P12, APPLE_CERTIFICATE_PASSWORD,
   #   APPLE_PROVISIONING_PROFILE, APP_STORE_CONNECT_KEY_ID,
   #   APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_PRIVATE_KEY
   # See docs/store-readiness/code-signing-runbook.md for setup instructions.
+  #
+  # GATED: only on tag pushes (v*) or manual dispatch — needs Apple signing secrets that
+  # are not yet configured. NOTE: the `secrets` context is NOT allowed in a job-level
+  # `if:` (it is a startup error). The signing secrets are checked at runtime inside the
+  # "Setup Apple signing" step instead. continue-on-error keeps the run from going red.
   export_ios:
     name: "Export iOS (TestFlight)"
     runs-on: macos-15
-    if: ${{ secrets.APPLE_CERTIFICATE_P12 != '' }}
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: [scope-checks]
+    continue-on-error: true
 
     steps:
       - name: Checkout
@@ -196,6 +218,13 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_PROVISIONING_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
         run: |
+          # Guard: skip gracefully if the distribution certificate secret is absent.
+          if [ -z "$APPLE_CERTIFICATE_P12" ]; then
+            echo "APPLE_CERTIFICATE_P12 is not set — skipping iOS signing/export."
+            echo "IOS_SIGNING_AVAILABLE=false" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          echo "IOS_SIGNING_AVAILABLE=true" >> "$GITHUB_ENV"
           # Decode and install the distribution certificate into a dedicated keychain
           echo "$APPLE_CERTIFICATE_P12" | base64 --decode > /tmp/certificate.p12
           security create-keychain -p "" build.keychain
@@ -217,10 +246,12 @@ jobs:
           rm /tmp/certificate.p12
 
       - name: Export iOS IPA
+        if: env.IOS_SIGNING_AVAILABLE == 'true'
         run: |
           godot --headless --export-release "iOS" build/iOS/Cubicraftia.ipa
 
       - name: Upload IPA to TestFlight
+        if: env.IOS_SIGNING_AVAILABLE == 'true'
         uses: dulvui/godot-ios-upload@v4
         with:
           api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -229,6 +260,7 @@ jobs:
           ipa-path: build/iOS/Cubicraftia.ipa
 
       - name: Upload IPA artifact
+        if: env.IOS_SIGNING_AVAILABLE == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: build-iOS
