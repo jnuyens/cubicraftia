@@ -16,6 +16,18 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+msgid "ui.signin.error_network"
+msgstr ""
+
+msgid "ui.friends.limit_reached"
+msgstr ""
+
+msgid "ui.signin.error_invalid_credentials"
+msgstr ""
+
+msgid "ui.chat.under13_blocked"
+msgstr ""
+
 msgid "ui.about.title"
 msgstr ""
 
@@ -31,6 +43,18 @@ msgstr ""
 msgid "ui.common.back"
 msgstr ""
 
+msgid "ui.block.body"
+msgstr ""
+
+msgid "ui.block.cancel"
+msgstr ""
+
+msgid "ui.block.title"
+msgstr ""
+
+msgid "ui.block.confirm_action"
+msgstr ""
+
 msgid "ui.palette.search_placeholder"
 msgstr ""
 
@@ -43,7 +67,31 @@ msgstr ""
 msgid "ui.palette.search_empty_body"
 msgstr ""
 
+msgid "ui.chat.input_placeholder"
+msgstr ""
+
+msgid "ui.chat.send"
+msgstr ""
+
+msgid "ui.chat.rate_limit_wait"
+msgstr ""
+
+msgid "ui.chat.mute_user"
+msgstr ""
+
+msgid "ui.chat.report_context_menu_item"
+msgstr ""
+
+msgid "ui.chest.title"
+msgstr ""
+
 msgid "ui.chest.key_slot_label"
+msgstr ""
+
+msgid "ui.chest.your_inventory"
+msgstr ""
+
+msgid "ui.chest.title_suffix"
 msgstr ""
 
 msgid "ui.death.headline"
@@ -58,10 +106,97 @@ msgstr ""
 msgid "ui.death.subtitle_spawn"
 msgstr ""
 
+msgid "ui.legal.reack_title"
+msgstr ""
+
+msgid "ui.legal.reack_body"
+msgstr ""
+
+msgid "ui.legal.reack_review"
+msgstr ""
+
+msgid "ui.legal.reack_signout"
+msgstr ""
+
 msgid "ui.first_launch.disclaimer"
 msgstr ""
 
 msgid "ui.first_launch.acknowledge"
+msgstr ""
+
+msgid "ui.friends.title"
+msgstr ""
+
+msgid "ui.friends.search_placeholder"
+msgstr ""
+
+msgid "ui.friends.section_pending"
+msgstr ""
+
+msgid "ui.friends.section_list"
+msgstr ""
+
+msgid "ui.friends.empty_heading"
+msgstr ""
+
+msgid "ui.friends.empty_body"
+msgstr ""
+
+msgid "ui.friends.search_empty"
+msgstr ""
+
+msgid "ui.friends.status_online"
+msgstr ""
+
+msgid "ui.friends.status_in_world"
+msgstr ""
+
+msgid "ui.friends.status_offline"
+msgstr ""
+
+msgid "ui.friends.join"
+msgstr ""
+
+msgid "ui.friends.accept"
+msgstr ""
+
+msgid "ui.friends.decline"
+msgstr ""
+
+msgid "ui.friends.block"
+msgstr ""
+
+msgid "ui.friends.report"
+msgstr ""
+
+msgid "ui.friends.unfriend"
+msgstr ""
+
+msgid "ui.ftue.progress_label"
+msgstr ""
+
+msgid "ui.ftue.step_1"
+msgstr ""
+
+msgid "ui.ftue.step_2"
+msgstr ""
+
+msgid "ui.ftue.step_3"
+msgstr ""
+
+msgid "ui.ftue.complete"
+msgstr ""
+
+msgid "ui.ftue.night_hint"
+msgstr ""
+
+msgid "ui.handover.heading"
+msgstr ""
+
+msgid "ui.handover.subtitle"
+msgstr ""
+
+msgid "ui.handover.subtitle_slow"
 msgstr ""
 
 msgid "ui.hotbar.slot_empty"
@@ -82,6 +217,66 @@ msgstr ""
 msgid "ui.inventory.cell.empty"
 msgstr ""
 
+msgid "ui.invite.copy"
+msgstr ""
+
+msgid "ui.invite.share"
+msgstr ""
+
+msgid "ui.invite.close"
+msgstr ""
+
+msgid "ui.invite.error_not_signed_in"
+msgstr ""
+
+msgid "ui.invite.error_not_verified"
+msgstr ""
+
+msgid "ui.invite.ttl_countdown"
+msgstr ""
+
+msgid "ui.invite.copied"
+msgstr ""
+
+msgid "ui.invite.generating"
+msgstr ""
+
+msgid "ui.join.back"
+msgstr ""
+
+msgid "ui.join.status_connecting"
+msgstr ""
+
+msgid "ui.join.heading"
+msgstr ""
+
+msgid "ui.join.error_unverified_session_age"
+msgstr ""
+
+msgid "ui.join.status_loading"
+msgstr ""
+
+msgid "ui.join.error_connection"
+msgstr ""
+
+msgid "ui.join.new_friends_toast"
+msgstr ""
+
+msgid "ui.legal.privacy_link"
+msgstr ""
+
+msgid "ui.legal.terms_link"
+msgstr ""
+
+msgid "ui.legal.footer_version"
+msgstr ""
+
+msgid "ui.legal.viewer_close"
+msgstr ""
+
+msgid "ui.legal.agree_button"
+msgstr ""
+
 msgid "ui.palette.open"
 msgstr ""
 
@@ -91,7 +286,115 @@ msgstr ""
 msgid "ui.inventory.close"
 msgstr ""
 
+msgid "ui.netstatus.relay_badge"
+msgstr ""
+
 msgid "ui.palette.tile.sr_label"
+msgstr ""
+
+msgid "ui.consent.title"
+msgstr ""
+
+msgid "ui.consent.body"
+msgstr ""
+
+msgid "ui.consent.parent_email_placeholder"
+msgstr ""
+
+msgid "ui.consent.send_link"
+msgstr ""
+
+msgid "ui.consent.why_label"
+msgstr ""
+
+msgid "ui.consent.why_explanation"
+msgstr ""
+
+msgid "ui.consent.skip"
+msgstr ""
+
+msgid "ui.consent.success_heading"
+msgstr ""
+
+msgid "ui.consent.done"
+msgstr ""
+
+msgid "ui.consent.resend"
+msgstr ""
+
+msgid "ui.restricted.banner_label"
+msgstr ""
+
+msgid "ui.restricted.resend_link"
+msgstr ""
+
+msgid "ui.consent.sending"
+msgstr ""
+
+msgid "ui.consent.error_invalid_email"
+msgstr ""
+
+msgid "ui.consent.error_network"
+msgstr ""
+
+msgid "ui.consent.success_body"
+msgstr ""
+
+msgid "ui.restricted.join_blocked_title"
+msgstr ""
+
+msgid "ui.restricted.join_blocked_body"
+msgstr ""
+
+msgid "ui.restricted.join_blocked_resend"
+msgstr ""
+
+msgid "ui.restricted.join_blocked_cancel"
+msgstr ""
+
+msgid "ui.players.invite_action"
+msgstr ""
+
+msgid "ui.players.host_label"
+msgstr ""
+
+msgid "ui.players.laggy_label"
+msgstr ""
+
+msgid "ui.players.kick"
+msgstr ""
+
+msgid "ui.players.unfreeze"
+msgstr ""
+
+msgid "ui.players.freeze"
+msgstr ""
+
+msgid "ui.players.rollback_warning"
+msgstr ""
+
+msgid "ui.players.rollback_action"
+msgstr ""
+
+msgid "ui.players.kick_confirm"
+msgstr ""
+
+msgid "ui.players.kick_confirm_action"
+msgstr ""
+
+msgid "ui.players.kick_cancel"
+msgstr ""
+
+msgid "ui.players.rollback_confirm_title"
+msgstr ""
+
+msgid "ui.players.rollback_confirm_body"
+msgstr ""
+
+msgid "ui.players.rollback_confirm_action"
+msgstr ""
+
+msgid "ui.players.rollback_cancel"
 msgstr ""
 
 msgid "ui.recipes.fill_grid"
@@ -101,6 +404,33 @@ msgid "ui.recipes.empty.title"
 msgstr ""
 
 msgid "ui.recipes.empty.body"
+msgstr ""
+
+msgid "ui.report.subtitle_category"
+msgstr ""
+
+msgid "ui.report.next"
+msgstr ""
+
+msgid "ui.report.cancel"
+msgstr ""
+
+msgid "ui.report.reason_placeholder"
+msgstr ""
+
+msgid "ui.report.submit"
+msgstr ""
+
+msgid "ui.report.back"
+msgstr ""
+
+msgid "ui.report.title_message"
+msgstr ""
+
+msgid "ui.report.title_player"
+msgstr ""
+
+msgid "ui.report.char_counter"
 msgstr ""
 
 msgid "ui.settings.iap.title"
@@ -115,10 +445,175 @@ msgstr ""
 msgid "ui.settings.graphics.reset"
 msgstr ""
 
+msgid "ui.players.tab_label"
+msgstr ""
+
+msgid "ui.players.settings_tab_label"
+msgstr ""
+
+msgid "ui.settings.show_nameplates"
+msgstr ""
+
+msgid "ui.settings.language_label"
+msgstr ""
+
+msgid "ui.settings.locale_en"
+msgstr ""
+
+msgid "ui.settings.locale_nl"
+msgstr ""
+
+msgid "ui.settings.legal_section_title"
+msgstr ""
+
+msgid "ui.settings.terms_button"
+msgstr ""
+
+msgid "ui.settings.privacy_button"
+msgstr ""
+
+msgid "ui.settings.account_section_title"
+msgstr ""
+
+msgid "ui.settings.account_username_label"
+msgstr ""
+
+msgid "ui.settings.account_change_username"
+msgstr ""
+
+msgid "ui.settings.account_change_save"
+msgstr ""
+
+msgid "ui.settings.account_change_cancel"
+msgstr ""
+
+msgid "ui.settings.account_delete_cancel_action"
+msgstr ""
+
+msgid "ui.settings.account_delete_button"
+msgstr ""
+
+msgid "ui.username.error_taken"
+msgstr ""
+
+msgid "ui.username.error_reserved"
+msgstr ""
+
+msgid "ui.username.error_cooldown"
+msgstr ""
+
+msgid "ui.username.error_format"
+msgstr ""
+
+msgid "ui.settings.account_delete_title"
+msgstr ""
+
+msgid "ui.settings.account_delete_body"
+msgstr ""
+
+msgid "ui.settings.account_delete_confirm"
+msgstr ""
+
+msgid "ui.settings.account_delete_cancel"
+msgstr ""
+
+msgid "ui.settings.account_delete_pending"
+msgstr ""
+
 msgid "ui.settings.graphics.reset.confirm"
 msgstr ""
 
 msgid "ui.settings.graphics.reset.do"
+msgstr ""
+
+msgid "ui.signin.title"
+msgstr ""
+
+msgid "ui.signin.tab.signin"
+msgstr ""
+
+msgid "ui.signin.tab.create"
+msgstr ""
+
+msgid "ui.signin.email_placeholder"
+msgstr ""
+
+msgid "ui.signin.password_placeholder"
+msgstr ""
+
+msgid "ui.signin.submit_signin"
+msgstr ""
+
+msgid "ui.signin.apple"
+msgstr ""
+
+msgid "ui.signin.google"
+msgstr ""
+
+msgid "ui.signin.verification_notice"
+msgstr ""
+
+msgid "ui.signin.dob_day_placeholder"
+msgstr ""
+
+msgid "ui.signin.dob_month_placeholder"
+msgstr ""
+
+msgid "ui.signin.dob_year_placeholder"
+msgstr ""
+
+msgid "ui.signin.username_placeholder"
+msgstr ""
+
+msgid "ui.signin.submit_create"
+msgstr ""
+
+msgid "ui.signin.error_username_required"
+msgstr ""
+
+msgid "ui.signin.error_dob_incomplete"
+msgstr ""
+
+msgid "ui.signin.error_dob_invalid"
+msgstr ""
+
+msgid "ui.signin.back_to_title"
+msgstr ""
+
+msgid "ui.title.continue"
+msgstr ""
+
+msgid "ui.title.tagline"
+msgstr ""
+
+msgid "ui.title.sign_in"
+msgstr ""
+
+msgid "ui.title.create_account"
+msgstr ""
+
+msgid "ui.title.continue_offline"
+msgstr ""
+
+msgid "ui.title.settings"
+msgstr ""
+
+msgid "ui.title.customize"
+msgstr ""
+
+msgid "ui.title.joining"
+msgstr ""
+
+msgid "ui.title.eula"
+msgstr ""
+
+msgid "ui.title.privacy"
+msgstr ""
+
+msgid "ui.deeplink.connecting"
+msgstr ""
+
+msgid "ui.deeplink.joiner_tip"
 msgstr ""
 
 msgid "ui.tool.durability_sr"
@@ -169,6 +664,108 @@ msgstr ""
 msgid "bricks.brick_1x1.name"
 msgstr ""
 
+msgid "ui.world_select.title"
+msgstr ""
+
+msgid "ui.world_select.friends"
+msgstr ""
+
+msgid "ui.world_select.settings_tooltip"
+msgstr ""
+
+msgid "ui.world_select.new_world"
+msgstr ""
+
+msgid "ui.world_select.empty_heading"
+msgstr ""
+
+msgid "ui.world_select.empty_body"
+msgstr ""
+
+msgid "ui.new_world.title"
+msgstr ""
+
+msgid "ui.new_world.name_label"
+msgstr ""
+
+msgid "ui.new_world.name_placeholder"
+msgstr ""
+
+msgid "ui.new_world.name_error_profanity"
+msgstr ""
+
+msgid "ui.new_world.mode_label"
+msgstr ""
+
+msgid "ui.new_world.mode_survival"
+msgstr ""
+
+msgid "ui.new_world.mode_creative"
+msgstr ""
+
+msgid "ui.new_world.create"
+msgstr ""
+
+msgid "ui.new_world.cancel"
+msgstr ""
+
+msgid "ui.world_select.delete_title"
+msgstr ""
+
+msgid "ui.world_select.delete_body"
+msgstr ""
+
+msgid "ui.world_select.delete_confirm"
+msgstr ""
+
+msgid "ui.world_select.delete_cancel"
+msgstr ""
+
+msgid "ui.world_select.worlds_cap_error"
+msgstr ""
+
+msgid "ui.world_select.mode_creative"
+msgstr ""
+
+msgid "ui.world_select.mode_survival"
+msgstr ""
+
+msgid "ui.world_select.play"
+msgstr ""
+
+msgid "ui.world_select.last_played_today"
+msgstr ""
+
+msgid "ui.world_select.last_played_yesterday"
+msgstr ""
+
+msgid "ui.world_select.last_played_n_days_ago"
+msgstr ""
+
+msgid "ui.new_world.name_error_empty"
+msgstr ""
+
+msgid "ui.new_world.creating"
+msgstr ""
+
+msgid "ui.world_select.ctx_rename"
+msgstr ""
+
+msgid "ui.world_select.ctx_duplicate"
+msgstr ""
+
+msgid "ui.world_select.ctx_export"
+msgstr ""
+
+msgid "ui.world_select.ctx_delete"
+msgstr ""
+
+msgid "ui.bed.sleep_prompt"
+msgstr ""
+
+msgid "ui.bed.too_early_prompt"
+msgstr ""
+
 msgid "items.key_"
 msgstr ""
 
@@ -176,6 +773,18 @@ msgid "ui.chest.locked_prompt"
 msgstr ""
 
 msgid "ui.chest.open_prompt"
+msgstr ""
+
+msgid "ui.crop.harvest_prompt"
+msgstr ""
+
+msgid "ui.nameplate.report_action"
+msgstr ""
+
+msgid "ui.nameplate.block_action"
+msgstr ""
+
+msgid "ui.strawberry.pickup_prompt"
 msgstr ""
 
 msgid "ui.workbench.open_prompt"
