@@ -5,16 +5,17 @@
 #
 # Runs on pull_request events only. Executes the same scope-checks as ci.yml
 # (glossary, REUSE, feature-flags, i18n round-trip, GUT unit tests) but SKIPS
-# the 20-minute export matrix to give fast red/green signal on a PR.
+# the export matrix to give a fast red/green signal on a PR.
 #
-# The full export matrix runs separately via ci.yml (triggered on push to any branch
-# and on pull_request in parallel — PRs get both this cheap check and the matrix).
+# Container image is hardcoded (barichello/godot-ci:4.6.3), NOT `${{ env.GODOT_VERSION }}`:
+# GitHub does not expose the workflow `env` context inside `jobs.<id>.container.image`, so
+# an expression there fails at startup ("No jobs were run" / "workflow file issue", 0s, no
+# log). Keep the tag literal.
 
 name: pr-checks
 
 on:
-  # Auto-runs disabled (v1.1 QA): failed at startup and spammed failure emails. Manual-only
-  # until CI is rebuilt; re-add pull_request once the workflow is fixed and green.
+  pull_request:
   workflow_dispatch:
 
 env:
@@ -25,31 +26,29 @@ jobs:
     name: PR scope checks (glossary · REUSE · feature-flags · i18n · unit tests)
     runs-on: ubuntu-latest
     container:
-      image: barichello/godot-ci:${{ env.GODOT_VERSION }}
+      image: barichello/godot-ci:4.6.3
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install system tools (ripgrep, gettext, pipx)
+      - name: Install system tools (ripgrep, gettext, file)
         run: |
           apt-get update -qq
-          apt-get install -y --no-install-recommends ripgrep gettext python3-pip python3-venv
-          python3 -m pip install --user pipx --quiet
-          python3 -m pipx ensurepath || true
+          apt-get install -y --no-install-recommends ripgrep gettext python3-pip python3-venv file git
 
       - name: Install REUSE tool
-        run: python3 -m pipx install reuse || python3 -m pip install --user reuse
+        # The godot-ci container is Debian 12 (Python 3.12, PEP 668 / externally-managed),
+        # so `pip install --user` is blocked. Install reuse into a dedicated venv instead.
+        run: |
+          python3 -m venv "$HOME/reuse-venv"
+          "$HOME/reuse-venv/bin/pip" install --quiet reuse
 
       - name: Glossary check — no forbidden terminology in player-facing surfaces
         run: bash scripts/glossary-check.sh
 
       - name: REUSE / SPDX header lint
         run: |
-          if command -v reuse &>/dev/null; then
-            reuse lint
-          else
-            python3 -m reuse lint
-          fi
+          "$HOME/reuse-venv/bin/reuse" lint
 
       - name: Feature-flag invariant — all §9 deferred flags must be false
         run: bash scripts/verify-feature-flags.sh
