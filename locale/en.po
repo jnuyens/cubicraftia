@@ -499,6 +499,9 @@ msgstr "You can't sleep — too dangerous."
 msgid "ui.bed.too_early_prompt"
 msgstr "Sleep is for the night"
 
+msgid "ui.bed.picked_up"
+msgstr "Bed picked up"
+
 msgid "ui.hp.gained_tick"
 msgstr "+{n} HP"
 

@@ -1005,6 +1005,13 @@ func _try_place() -> void:
 		_try_place_dynamite()
 		return
 
+	# ── Bed re-placement: the bed is an entity (sleep-able), not a stud-grid brick, so
+	# when "builder_bed" is the active item we spawn a fresh BedEntity instead of a brick. ─
+	var active_def: BrickDefinition = _active_brick()["def"] as BrickDefinition
+	if active_def != null and active_def.brick_id == "builder_bed":
+		_try_place_bed()
+		return
+
 	if _stud_grid == null:
 		Toasts.show("ui.builder.no_tool", "info")
 		return
@@ -1026,6 +1033,38 @@ func _try_place() -> void:
 	_stud_grid.place_multi(anchor, footprint, def, colour_index, rotation)
 	# Visible confirmation that a brick was placed (and which one) — also a quick way to
 	# tell, in QA, whether the place input is reaching here at all.
+	Toasts.show("ui.builder.placed", "info")
+
+
+## Re-place a picked-up bed: consume one "builder_bed" from the inventory and spawn a
+## fresh BedEntity at the crosshair target (which re-registers the sleep group + bed-bubble).
+## Mirrors the brick-place flow but targets the entity spawner on main_scene instead of the
+## stud grid, because the bed is a sleep-able StaticBody3D, not a stud-grid brick.
+func _try_place_bed() -> void:
+	var prediction: Dictionary = predict_placement_target()
+	if not prediction["valid"]:
+		Toasts.show("ui.builder.cant_place_there", "info")
+		return
+	var ms: Node = get_tree().current_scene
+	if ms == null or not ms.has_method("spawn_bed"):
+		Toasts.show("ui.builder.cant_place_there", "info")
+		return
+	# Atomically consume one bed: _apply_remove returns false if the player has none, so a
+	# successful REMOVE both checks availability and decrements in one step (no double-spend).
+	var consumed: bool = Inventory.apply_event({
+		"kind": "REMOVE",
+		"builder_id": get_stable_builder_id(),
+		"def_id": "builder_bed",
+		"count": 1,
+	})
+	if not consumed:
+		Toasts.show("ui.builder.cant_place_there", "info")
+		return
+	# Stud-grid cells are world-metre aligned (see _update_brick_renderer), so the target
+	# cell maps straight to a world position for the bed's base.
+	var cell: Vector3i = prediction["target_cell"]
+	var world_pos := Vector3(float(cell.x), float(cell.y), float(cell.z))
+	ms.call("spawn_bed", world_pos)
 	Toasts.show("ui.builder.placed", "info")
 
 
@@ -1118,6 +1157,13 @@ func _try_break() -> void:
 	var origin: Vector3 = get_crosshair_position()
 	var direction: Vector3 = get_crosshair_direction()
 
+	# ── Try a placed entity (e.g. the bed) first ─────────────────────────────
+	# Beds are StaticBody3D nodes (not on the stud grid / voxel grid), so a physics ray
+	# is how we detect them. Breaking a bed returns a "builder_bed" item to the inventory
+	# so it can be repositioned (re-placement is handled in _try_place).
+	if _try_break_entity(origin, direction):
+		return
+
 	# ── Try stud-grid hit first ──────────────────────────────────────────────
 	var brick_hit: Variant = _raycast_stud_grid(origin, direction, raycast_distance)
 	if brick_hit != null and brick_hit is Dictionary:
@@ -1152,6 +1198,36 @@ func _try_break() -> void:
 	# Mining stone/sandstone has a depth-gated chance of yielding an ore on top of the block.
 	if vid in _ORE_BEARING_VOXELS:
 		_spawn_mined_pickup(_roll_ore_bonus(vpos.y), block_centre)
+
+
+## Break a placed entity under the crosshair (currently: the bed) and pick it up.
+## Casts a physics ray along the crosshair; if it hits a node with an on_break() method
+## that is in the "bed_entity" group, calls on_break(builder_id) — which returns the item
+## to the inventory and frees the node. Returns true if an entity was broken.
+##
+## Only beds are pickup-able for now; chests/workbenches have on_break() too but their
+## player-break flow is owned elsewhere, so we gate on the bed group to avoid surprises.
+func _try_break_entity(origin: Vector3, direction: Vector3) -> bool:
+	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	if space_state == null:
+		return false
+	var to: Vector3 = origin + direction * raycast_distance
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(origin, to)
+	query.exclude = [self.get_rid()]
+	var result: Dictionary = space_state.intersect_ray(query)
+	if result.is_empty():
+		return false
+	var collider: Object = result.get("collider")
+	# Walk up from the collider to find a node that is a breakable bed entity.
+	var node: Node = collider as Node
+	while node != null:
+		if node.is_in_group("bed_entity") and node.has_method("on_break"):
+			node.call("on_break", get_stable_builder_id())
+			_spawn_break_dust(result.get("position", origin))
+			Toasts.show("ui.bed.picked_up", "info")
+			return true
+		node = node.get_parent()
+	return false
 
 
 ## Award one of a mined item to the local builder's inventory (no-op for "" / unknown defs).

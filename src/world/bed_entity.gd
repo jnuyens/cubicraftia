@@ -20,6 +20,12 @@
 #   Spawning.unregister_bed(global_position) is called in _exit_tree to remove the
 #   entry on break or scene reload.
 #
+# Pickup / break (mirrors ChestEntity.on_break / WorkbenchEntity.on_break):
+#   on_break() awards one "builder_bed" item back to the inventory and frees the node so
+#   the bed can be repositioned. Builder._try_break detects a bed under the crosshair and
+#   calls this. Re-placement is handled by Builder._try_place when the active item is
+#   "builder_bed" (it spawns a fresh BedEntity instead of a stud-grid brick).
+#
 # Threat mitigations:
 #   T-03-11-BED-01: starter bed is placed by main_scene at world_spawn — always safe ground.
 #   Pitfall 9: Builder._try_sleep_interact polls hostiles_inside_bed_bubble() before allowing
@@ -166,3 +172,22 @@ func _update_prompt() -> void:
 ## on the first process frame.
 func refresh_prompt() -> void:
 	_update_prompt()
+
+
+## Break this bed and return it to the inventory as a "builder_bed" item so it can be
+## repositioned. Mirrors ChestEntity.on_break / WorkbenchEntity.on_break: award the item,
+## then free the node (the bed-bubble unregisters in _exit_tree). Re-placement is handled
+## by Builder._try_place when "builder_bed" is the active item.
+##
+## @param builder_id  Stable builder UUID the bed item is awarded to.
+func on_break(builder_id: String = "") -> void:
+	# Award the bed back to the inventory. Use the same ADD-event shape as mined items.
+	if BrickRegistry.get_definition("builder_bed") != null:
+		Inventory.apply_event({
+			"kind": "ADD",
+			"builder_id": builder_id,
+			"def_id": "builder_bed",
+			"count": 1,
+		})
+	# _exit_tree() unregisters the bed-bubble (Pitfall 5); queue_free triggers it.
+	queue_free()

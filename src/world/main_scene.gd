@@ -1453,6 +1453,17 @@ func spawn_chest(tier: String, position: Vector3, contents: Array,
 	return chest
 
 
+## Spawn a BedEntity at `position` (world space) and return it. Used both by the starter
+## kit and by the player re-placing a picked-up bed (Builder._try_place). BedEntity._ready
+## registers it into the "bed_entity" group + the Spawning bed-bubble, so sleep works
+## immediately. Mirrors spawn_chest's duck-typed Node3D shape.
+func spawn_bed(position: Vector3) -> Node:
+	var bed: Node3D = _BED_ENTITY_SCENE.instantiate() as Node3D
+	add_child(bed)
+	bed.global_position = position
+	return bed
+
+
 # ─── Plan 03-11: Starter kit spawning ───────────────────────────────────────
 
 ## Spawn the survival starter chest and builder-bed at the given world spawn position.
@@ -1484,10 +1495,9 @@ func spawn_starter_chest_and_bed(world_spawn: Vector3) -> void:
 	# the terrain height differs from the origin, which is why the bed floated before.
 	var bed_x: float = world_spawn.x - 6.0
 	var bed_z: float = world_spawn.z
-	var bed: Node = _BED_ENTITY_SCENE.instantiate()
-	add_child(bed)
-	(bed as Node3D).global_position = Vector3(bed_x, _terrain_surface_at(bed_x, bed_z), bed_z)
-	bed.add_to_group("starter_bed")
+	var bed: Node = spawn_bed(Vector3(bed_x, _terrain_surface_at(bed_x, bed_z), bed_z))
+	if bed != null:
+		bed.add_to_group("starter_bed")
 
 
 ## Sample the terrain surface height at the world origin for the starter-kit spawn.
