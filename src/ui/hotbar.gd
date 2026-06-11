@@ -94,6 +94,9 @@ func _build_slots() -> void:
 		panel.name = "Slot%d" % (i + 1)
 		panel.add_to_group("hotbar_slot")
 		panel.custom_minimum_size = Vector2(SLOT_SIZE, SLOT_SIZE)
+		# Clip children to the slot rect so a scaled icon can never spill a sliver past
+		# the slot border into the neighbouring slot (v1.1 QA #1).
+		panel.clip_contents = true
 
 		# Create inner TextureRect for the icon
 		var icon := TextureRect.new()
@@ -101,6 +104,11 @@ func _build_slots() -> void:
 		icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		# Clamp to edge (no wrap) so the scaled icon's linear-filtered border doesn't
+		# sample the opposite texture edge and bleed a thin sliver into the slot edge
+		# (v1.1 QA #1: hotbar slots showed an adjacent-icon edge sliver). DISABLED ==
+		# clamp-to-edge, independent of per-asset import flags.
+		icon.texture_repeat = CanvasItem.TEXTURE_REPEAT_DISABLED
 		# Load icon texture if available (may not be imported in headless/CI mode)
 		var icon_path := "res://assets/textures/icons/hotbar_slot_empty.png"
 		if ResourceLoader.exists(icon_path, "Texture2D"):
