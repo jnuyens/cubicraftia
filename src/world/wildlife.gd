@@ -496,14 +496,28 @@ func _setup_skinned_glb(host: Node3D) -> void:
 
 	# Scale + ground EXACTLY like the static mesh (_normalise_creature_mesh) so the rigged
 	# walk visual and the idle static mesh are the SAME size and sit at the SAME height (QA:
-	# the walking giraffe rendered much smaller than the static one). Use the MESH subtree
-	# bounds, NOT the skeleton bone-span — Meshy "Unreal Take" rigs carry a root bone at the
-	# armature origin that inflates the bone-span AABB and shrank the model.
+	# "the still giraffe is smaller than the moving one"). Use the MESH subtree bounds, NOT
+	# the skeleton bone-span — Meshy "Unreal Take" rigs carry a root bone at the armature
+	# origin that inflates the bone-span AABB and shrank the model.
 	var ab: AABB = _subtree_local_aabb(glb)
 	var target_h: float = _TARGET_HEIGHT.get(kind, _TARGET_HEIGHT_DEFAULT)
-	var span: float = maxf(ab.size.x, maxf(ab.size.y, ab.size.z))
-	span = maxf(span, 0.001)
-	var sc: float = target_h / span
+	# Match the idle static mesh's RENDERED HEIGHT, not the largest extent. The walk GLB and
+	# the static idle mesh are different source assets with different proportions, so scaling
+	# each by maxf(x,y,z) makes the "winning" axis differ (the walk rig's length vs the static
+	# mesh's height), which rendered the two at different sizes. _mesh_root is already
+	# normalised (_setup_land runs _normalise_creature_mesh before _setup_animator), so its
+	# upright-Y extent IS the idle rendered height; scale the walk GLB's height to equal it.
+	# Fallback (no static mesh): scale by the walk GLB's own upright height toward target_h —
+	# _TARGET_HEIGHT means HEIGHT (see its doc), which is still correct without maxf.
+	var idle_height: float = 0.0
+	if _mesh_root != null:
+		idle_height = _subtree_local_aabb(_mesh_root).size.y
+	var walk_height: float = maxf(ab.size.y, 0.001)
+	var sc: float
+	if idle_height > 0.001:
+		sc = idle_height / walk_height
+	else:
+		sc = target_h / walk_height
 	glb.scale = Vector3.ONE * sc
 
 	# Facing: Meshy meshes are authored +Z; yaw 180° makes the rig lead head-first (the body's

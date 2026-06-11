@@ -12,11 +12,13 @@
 // Actual .png assets are delivered by the art pass before phase-end (Plan 15 verifies).
 //
 // Cross-fade logic: smoothstep transitions between the four phase tints. The thresholds
-// mirror WorldClock.Phase boundaries:
+// mirror WorldClock.Phase boundaries (retuned in v1.1):
 //   [0.00, 0.05) DAWN
-//   [0.05, 0.65) DAY
-//   [0.65, 0.70) DUSK
-//   [0.70, 1.00) NIGHT
+//   [0.05, 0.73) DAY
+//   [0.73, 0.78) DUSK
+//   [0.78, 1.00) NIGHT
+// The dusk (red/sunset) coral is kept a BRIEF transition: it ramps in late and night
+// overtakes it almost at once, so the sky is never red for long (QA request).
 //
 // References:
 //   02-RESEARCH.md §"Pattern 6: Day/night clock" (sky shader integration)
@@ -88,10 +90,15 @@ void sky() {
 	vec3 day = mix(day_horizon, day_zenith, smoothstep(0.0, 0.55, h));
 
 	// Start with the dawn tint, then cross-fade through the phases.
+	// QA: the red/sunset sky lingered too long. The dusk coral now ramps in over a brief
+	// window late in the day and night overtakes it almost immediately after, so the red is
+	// a short transition (~0.04 of the day, ~35 s) rather than a long red plateau. The night
+	// fade-in (0.755 -> 0.79) also crowds the dusk peak so the coral never sits sustained.
+	// Windows are aligned to WorldClock's retuned DUSK [0.73, 0.78) / NIGHT 0.78 phases.
 	vec3 colour = dawn_tint.rgb;
 	colour = mix(colour, day, smoothstep(0.05, 0.10, day_progress));
-	colour = mix(colour, dusk_tint.rgb, smoothstep(0.65, 0.70, day_progress));
-	colour = mix(colour, night_tint.rgb, smoothstep(0.70, 0.80, day_progress));
+	colour = mix(colour, dusk_tint.rgb, smoothstep(0.72, 0.75, day_progress));
+	colour = mix(colour, night_tint.rgb, smoothstep(0.755, 0.79, day_progress));
 
 	// ── Cloud layer ──────────────────────────────────────────────────────────
 	// Project the view ray onto a high horizontal plane and sample drifting fbm.
@@ -102,7 +109,7 @@ void sky() {
 		float n = fbm(cuv);
 		float cover = smoothstep(cloud_coverage, cloud_coverage + 0.28, n);
 		float horizon_fade = smoothstep(0.03, 0.20, EYEDIR.y);
-		float day_amt = clamp(1.0 - smoothstep(0.62, 0.80, day_progress), 0.12, 1.0);
+		float day_amt = clamp(1.0 - smoothstep(0.72, 0.79, day_progress), 0.12, 1.0);
 		// Soft white clouds, slightly tinted by the underlying sky for cohesion.
 		vec3 cloud_col = mix(vec3(1.0), colour, 0.12);
 		colour = mix(colour, cloud_col, cover * horizon_fade * day_amt);
