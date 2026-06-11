@@ -274,6 +274,9 @@ msgstr "Handheld lantern"
 msgid "bricks.bone.name"
 msgstr "Bone"
 
+msgid "bricks.raw_meat.name"
+msgstr "Raw meat"
+
 msgid "bricks.slime_cube.name"
 msgstr "Slime cube"
 
