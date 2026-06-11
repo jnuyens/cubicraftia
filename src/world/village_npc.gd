@@ -87,6 +87,9 @@ var _skinned_anim: AnimationPlayer = null
 ## "Armature|clip0|baselayer"). Empty when no rigged figure / no clip.
 var _skinned_clip_name: String = ""
 
+## Rigged figure GLB awaiting the one-frame-deferred runtime size guard (see _apply_rigged_figure).
+var _rigged_glb_ref: Node3D = null
+
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 ## Set the patrol waypoints for this NPC.
@@ -257,7 +260,45 @@ func _apply_rigged_figure() -> bool:
 	var body: Node = get_node_or_null("Body")
 	if body is MeshInstance3D:
 		(body as MeshInstance3D).visible = false
+
+	# Runtime size guard (deferred one frame so the skeleton is posed): some Meshy rigs render
+	# much larger than their bind-pose mesh AABB, spawning giant villagers. Next frame, measure
+	# the real posed-skeleton height and shrink + re-ground any figure that comes out giant.
+	_rigged_glb_ref = glb
+	call_deferred("_correct_rigged_scale")
 	return true
+
+
+## Deferred runtime guard against giant rigged figures. Measures the posed skeleton's world-space
+## height; if the figure is more than ~1.18x _RIGGED_TARGET_HEIGHT, shrink it to target and re-ground
+## its feet to the NPC origin. Only ever SHRINKS (never grows) so a correctly-sized figure is left
+## untouched. Robust to the unknown skinning-scale cause because the skeleton reflects what renders.
+func _correct_rigged_scale() -> void:
+	var glb: Node3D = _rigged_glb_ref
+	if not is_instance_valid(glb):
+		return
+	var skel: Skeleton3D = glb.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skel == null or skel.get_bone_count() == 0:
+		return
+	var lo: float = INF
+	var hi: float = -INF
+	for i in skel.get_bone_count():
+		var wy: float = (skel.global_transform * skel.get_bone_global_pose(i).origin).y
+		lo = minf(lo, wy)
+		hi = maxf(hi, wy)
+	var h: float = hi - lo
+	if h <= 0.01:
+		return
+	var correction: float = _RIGGED_TARGET_HEIGHT / h
+	if correction > 0.85:
+		return  # within ~1.18x of target (or smaller) — leave it alone; never grow figures
+	glb.scale *= correction
+	# Re-ground: drop the figure so its lowest posed bone sits at the NPC origin (feet at y=0).
+	lo = INF
+	for i in skel.get_bone_count():
+		lo = minf(lo, (skel.global_transform * skel.get_bone_global_pose(i).origin).y)
+	if lo != INF:
+		glb.position.y += (global_position.y - lo)
 
 
 ## Load a STATIC (non-rigged) biome-themed figure GLB and stand it on the NPC origin (feet at
