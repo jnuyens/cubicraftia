@@ -13,7 +13,9 @@
 name: pr-checks
 
 on:
-  pull_request:
+  # Auto-runs disabled (v1.1 QA): failed at startup and spammed failure emails. Manual-only
+  # until CI is rebuilt; re-add pull_request once the workflow is fixed and green.
+  workflow_dispatch:
 
 env:
   GODOT_VERSION: "4.6.3"

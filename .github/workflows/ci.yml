@@ -17,8 +17,11 @@
 name: ci
 
 on:
-  push:
-  pull_request:
+  # Auto-runs disabled (v1.1 QA): this workflow failed at startup on every push and spammed
+  # failure emails, and its 5-target export matrix needs CI infra/secrets not yet wired up.
+  # Manual-only for now; re-add push/pull_request once the workflow is fixed and green (the
+  # planned self-hosted-runner build pipeline is the intended replacement).
+  workflow_dispatch:
 
 env:
   GODOT_VERSION: "4.6.3"
