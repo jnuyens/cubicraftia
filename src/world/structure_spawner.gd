@@ -9,7 +9,7 @@
 # Biome assignment (curated from the art-structures set):
 #   GRASSLAND_FOREST : cottages, windmill, blacksmith, wooden bridge
 #   DESERT           : desert ruins, mine entrance, treasure rubble
-#   SNOW             : stone keep + gatehouse, stone house
+#   SNOW             : stone keep + gatehouse, stone house, ice castle
 #   JUNGLE           : overgrown ruins, mossy arch, mossy rocks
 #   SAVANNAH         : market stall, watchtower, tent, lookout tower
 #   OCEAN            : lighthouse, shipwreck
@@ -33,7 +33,7 @@ const _MIN_DIST_FROM_ORIGIN: float = 40.0
 const _BIOME_STRUCTURES: Dictionary = {
 	0: ["structure_1_00", "structure_1_01", "structure_1_02", "structure_1_06", "structure_1_08"],  # GRASSLAND
 	1: ["structure_3_01", "structure_3_04", "structure_3_03"],                                       # DESERT
-	2: ["structure_1_04", "structure_2_04", "structure_2_06"],                                       # SNOW
+	2: ["structure_1_04", "structure_2_04", "structure_2_06", "structure_ice_castle"],               # SNOW (+ ice castle)
 	3: ["structure_2_03", "structure_2_05", "structure_3_00", "structure_2_02"],                     # JUNGLE
 	4: ["structure_1_05", "structure_2_00", "structure_2_01", "structure_1_07"],                     # SAVANNAH
 	5: ["structure_1_03", "structure_3_02"],                                                         # OCEAN

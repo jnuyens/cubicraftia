@@ -30,6 +30,12 @@ const _TOWER_COLOURS: Array[Color] = [
 	Color(0.45, 0.70, 0.55),  # teal-green
 ]
 
+## Floating hot-air balloons, drifting closer + lower than the island ring so they read from
+## the ground. Decorative only (no collision; a ride could be a future feature).
+const _BALLOON_PATH: String = "res://assets/meshes/sky/hot_air_balloon.glb"
+const _BALLOON_COUNT: int = 3
+const _BALLOON_SIZE: float = 12.0  # longest-axis metres
+
 var _islands: Array[Node3D] = []
 var _t: float = 0.0
 
@@ -51,6 +57,7 @@ func _ready() -> void:
 		island.set_meta("yaw_speed", rng.randf_range(-0.04, 0.04))
 		add_child(island)
 		_islands.append(island)
+	_spawn_balloons(rng)
 
 
 ## Build one floating island: grass slab + tapering dirt underside + brick city + tree.
@@ -101,6 +108,53 @@ func _box(size: Vector3, col: Color, pos: Vector3) -> MeshInstance3D:
 	m.roughness = 1.0
 	mi.material_override = m
 	return mi
+
+
+## Spawn a few drifting hot-air balloons (decorative). Silent no-op if the asset is absent
+## (headless/CI before import).
+func _spawn_balloons(rng: RandomNumberGenerator) -> void:
+	if not ResourceLoader.exists(_BALLOON_PATH):
+		return
+	var ps := load(_BALLOON_PATH) as PackedScene
+	if ps == null:
+		return
+	for _i in _BALLOON_COUNT:
+		var b := ps.instantiate() as Node3D
+		if b == null:
+			continue
+		add_child(b)
+		# Scale the longest axis to _BALLOON_SIZE.
+		var ab: AABB = _node_aabb(b)
+		var longest: float = maxf(ab.size.x, maxf(ab.size.y, ab.size.z))
+		b.scale = Vector3.ONE * (_BALLOON_SIZE / maxf(longest, 0.01))
+		# Closer + lower than the distant island ring so the balloon is visible from the ground.
+		var ang: float = rng.randf() * TAU
+		var radius: float = rng.randf_range(45.0, 95.0)
+		var height: float = rng.randf_range(28.0, 62.0)
+		b.position = Vector3(cos(ang) * radius, height, sin(ang) * radius)
+		b.rotation.y = rng.randf() * TAU
+		b.set_meta("base_y", height)
+		b.set_meta("bob_phase", rng.randf() * TAU)
+		b.set_meta("bob_amp", rng.randf_range(2.0, 4.5))
+		b.set_meta("yaw_speed", rng.randf_range(-0.06, 0.06))
+		_islands.append(b)
+
+
+## Merged local-space AABB of every MeshInstance3D under `root` (root must be in-tree).
+func _node_aabb(root: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	var inv: Transform3D = root.global_transform.affine_inverse()
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
+			var a: AABB = (inv * (n as MeshInstance3D).global_transform) * (n as MeshInstance3D).mesh.get_aabb()
+			out = a if first else out.merge(a)
+			first = false
+		for c: Node in n.get_children():
+			stack.push_back(c)
+	return out
 
 
 func _process(delta: float) -> void:
