@@ -123,9 +123,16 @@ const TREE_CELL: int = 7
 const STARTER_TREE_X: int = 8
 const STARTER_TREE_Z: int = 0
 
-## Trunk height range (inclusive). Picked deterministically per tree.
+## Grassland trunk height range (inclusive). Picked deterministically per tree.
 const TREE_TRUNK_MIN: int = 4
 const TREE_TRUNK_MAX: int = 6
+
+## Jungle trunk height range (inclusive). Jungle trees are noticeably taller than
+## grassland ones (v1.1 QA #9) so the JUNGLE biome reads as tall, dense rainforest
+## instead of a grassland clone. Canopy radius is unchanged (LEAF_RADIUS) so the
+## TREE_CELL spacing guarantee still holds — only the trunk towers higher.
+const TREE_TRUNK_MIN_JUNGLE: int = 7
+const TREE_TRUNK_MAX_JUNGLE: int = 10
 
 ## Leaf canopy half-radius in XZ (total width = 2*LEAF_RADIUS+1 = 5 voxels for radius=2).
 ## Canopy spans from trunk_top-1 to trunk_top+1 in Y (3 layers).
@@ -421,8 +428,14 @@ func _generate_trees_pass(voxel_tool: VoxelToolMultipassGenerator) -> void:
 			var noise_val: float = _noise.get_noise_2d(world_x, world_z)
 			var surface_y: int = int(noise_val * height_amplitude + float(sea_level))
 
-			# Trunk height: TREE_TRUNK_MIN..TREE_TRUNK_MAX, determined from hash.
-			var trunk_h: int = TREE_TRUNK_MIN + int((h >> 8) & 0xFF) % (TREE_TRUNK_MAX - TREE_TRUNK_MIN + 1)
+			# Trunk height: biome-specific range, determined deterministically from hash.
+			# Jungle trees tower over grassland trees so the JUNGLE biome reads distinctly.
+			var trunk_min: int = TREE_TRUNK_MIN
+			var trunk_max: int = TREE_TRUNK_MAX
+			if biome == BiomeMap.Biome.JUNGLE:
+				trunk_min = TREE_TRUNK_MIN_JUNGLE
+				trunk_max = TREE_TRUNK_MAX_JUNGLE
+			var trunk_h: int = trunk_min + int((h >> 8) & 0xFF) % (trunk_max - trunk_min + 1)
 
 			_place_tree(x, surface_y, z, trunk_h, editable_min, editable_max, voxel_tool)
 
