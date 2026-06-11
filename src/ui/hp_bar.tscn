@@ -1,19 +1,20 @@
 ; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 ; SPDX-License-Identifier: GPL-3.0-or-later
 ;
-; hp_bar.tscn — 10-heart HP bar HUD node.
+; hp_bar.tscn — heart HP bar HUD node.
 ;
-; Root: HBoxContainer with hp_bar.gd script.
+; Root: PanelContainer with hp_bar.gd script (framed panel behind the hearts).
 ; Anchored top-left of the parent CanvasLayer.
 ; Added to group "hp_bar" for external lookup.
 ;
-; Node tree built procedurally in hp_bar.gd _build_hearts().
+; The inner HBoxContainer of heart sprites is built procedurally in
+; hp_bar.gd _build_hearts().
 
 [gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://src/ui/hp_bar.gd" id="1_hp_bar"]
 
-[node name="HpBar" type="HBoxContainer"]
+[node name="HpBar" type="PanelContainer"]
 script = ExtResource("1_hp_bar")
 anchor_left = 0.0
 anchor_top = 0.0
