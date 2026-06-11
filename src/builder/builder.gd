@@ -204,6 +204,30 @@ const DAMAGE_VIGNETTE_DURATION_S: float = 0.2
 ## Duration of mobile haptic on damage in milliseconds (D-08).
 const HAPTIC_MS: int = 50
 
+# ─── Swimming constants (water buoyancy) ──────────────────────────────────────
+# Tapping jump/Space in water is a swim-stroke. To make swimming practical (not
+# twitchy) the builder rises a bit HIGHER per stroke than a land jump and sinks
+# SLOWLY (reduced gravity) so it descends gently. These values are deliberately
+# named for by-feel tuning by the owner; land jump/gravity are untouched.
+# The WATER voxel id (7) is already declared once below as _WATER_VOXEL_ID and is
+# reused by _is_in_water() — it matches FluidSim.WATER_ID / main_scene._WATER_VOXEL_ID.
+
+## Height above the builder's feet (global_position is at the feet) at which we
+## sample the voxel grid for water. ~mid-capsule (capsule centre is Y=0.9) so the
+## builder counts as "in water" once its torso is submerged — wading through a
+## shallow shoreline does not flip on swim physics, which would feel twitchy.
+const _WATER_SAMPLE_HEIGHT_M: float = 0.9
+
+## Gravity multiplier while in water. < 1.0 so the builder sinks gently rather than
+## dropping like a stone. ~0.35 reads as buoyant; raise toward 1.0 for a heavier
+## feel, lower toward 0 for near-neutral float.
+const _WATER_GRAVITY_SCALE: float = 0.35
+
+## Upward velocity (m/s) of a single swim-stroke. Modestly higher than the land
+## jump_velocity (4.5) so each Space tap lifts the builder a bit more, and because
+## strokes can repeat while submerged this gives controllable buoyant ascent.
+const _WATER_STROKE_VELOCITY: float = 5.0
+
 # ─── Camera state ─────────────────────────────────────────────────────────────
 
 ## Active camera mode. Defaults to CHASE per user decision 2026-05-26.
@@ -647,16 +671,30 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		return
 
-	# Apply gravity when not on the floor.
+	# Swimming: when the builder's body is in a water voxel, gravity is reduced so
+	# it sinks gently (buoyant) and each Space tap is a swim-stroke that lifts it a
+	# bit higher than a land jump. Out of water this is false and land physics are
+	# unchanged. Sampled once per frame so the same state drives gravity + stroke.
+	var in_water: bool = _is_in_water()
+
+	# Apply gravity when not on the floor. In water it is scaled down so the builder
+	# descends slowly instead of dropping like a stone.
 	if not is_on_floor():
-		velocity += get_gravity() * delta
+		var gravity_scale: float = _WATER_GRAVITY_SCALE if in_water else 1.0
+		velocity += get_gravity() * gravity_scale * delta
 
 	# ─── Plan 03-04: track fall velocity for lethal-fall detection ─────────
 	# Record the absolute downward speed each frame (positive value = falling).
 	_last_fall_velocity = abs(velocity.y) if velocity.y < 0.0 else 0.0
 
-	# Jump when on floor and jump action just pressed.
-	if is_on_floor() and Input.is_action_just_pressed("jump"):
+	# Jump / swim-stroke when the jump action is just pressed.
+	# In water: stroke upward from anywhere (re-stroking while submerged works via
+	# repeated Space taps), with a modestly higher impulse than the land jump.
+	# On land: unchanged — jump only when standing on the floor.
+	if in_water:
+		if Input.is_action_just_pressed("jump"):
+			velocity.y = _WATER_STROKE_VELOCITY
+	elif is_on_floor() and Input.is_action_just_pressed("jump"):
 		velocity.y = jump_velocity
 
 	# WoW-style yaw turning: Q rotates left, E rotates right. Smooth, framerate-
@@ -740,6 +778,29 @@ func _physics_process(delta: float) -> void:
 	# new spawns nearby — so we do NOT cancel an in-progress sleep on hostile presence.
 	# (The old mid-sleep cancel fired "too dangerous" right after lying down whenever a
 	# straggler lingered, making it impossible to sleep next to the bed at night.)
+
+
+# ─── Swimming (water buoyancy) ────────────────────────────────────────────────
+
+## True when the builder's body is inside a WATER voxel.
+##
+## Mirrors main_scene._voxel_is_water_at(): we query the Terrain VoxelTool (the
+## authoritative voxel grid, which the FluidSim writes its water levels into) for
+## the voxel id at the builder's mid-body. WATER is id 7 (see FluidSim.WATER_ID /
+## main_scene._WATER_VOXEL_ID). We sample mid-capsule (feet + _WATER_SAMPLE_HEIGHT_M)
+## rather than at the feet so wading through ankle-deep shoreline does not flip on
+## swim physics — only genuine submersion does. Returns false (= land physics) when
+## no terrain / VoxelTool is available (headless tests, terrain not yet streamed).
+func _is_in_water() -> bool:
+	if _terrain == null or not _terrain.has_method("get_voxel_tool"):
+		return false
+	var voxel_tool = _terrain.get_voxel_tool()
+	if voxel_tool == null:
+		return false
+	voxel_tool.channel = VoxelBuffer.CHANNEL_TYPE
+	var sample: Vector3 = global_position + Vector3(0.0, _WATER_SAMPLE_HEIGHT_M, 0.0)
+	var cell := Vector3i(floori(sample.x), floori(sample.y), floori(sample.z))
+	return voxel_tool.get_voxel(cell) == _WATER_VOXEL_ID
 
 
 # ─── Camera API (Plan 08.5) ───────────────────────────────────────────────────
