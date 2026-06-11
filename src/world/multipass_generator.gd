@@ -277,25 +277,11 @@ func _generate_base_terrain(voxel_tool: VoxelToolMultipassGenerator) -> void:
 					voxel_id = _underground_block_for(biome, depth_below_surface)
 				voxel_tool.set_voxel(Vector3i(x, y, z), voxel_id)
 
-			# Sea-level water fill: flood EVERY below-sea-level air cell with water,
-			# regardless of biome — not just OCEAN columns. Any depression whose
-			# surface sits below sea_level becomes water bounded by terrain or more
-			# water, so it can never be a dry pit beside an exposed water wall.
-			#
-			# Why not biome-gated: the height-map noise (freq 0.01) and the biome
-			# noise (freq 0.0005) are decorrelated, so non-ocean biomes routinely dip
-			# below sea_level right next to an OCEAN column. Filling only OCEAN left
-			# those dips dry, and the neighbouring ocean water then had a sheer
-			# vertical face dropping to dry land — the "wall of water" artefact.
-			# Flooding every below-sea cell turns those boundaries into natural
-			# shorelines (terrain rising out of water). terrain.tscn culls
-			# water-vs-water faces, so only the water shell (top + land contact)
-			# renders. The fill is per-column and O(sea_level - surface_y) — cheap on
-			# mobile, deterministic per seed (no flood-fill, pure height comparison).
-			# When surface_y >= sea_level the range is empty, so hilltops stay dry.
-			for wy: int in range(surface_y + 1, sea_level + 1):
-				if wy >= area_min.y and wy < area_max.y:
-					voxel_tool.set_voxel(Vector3i(x, wy, z), WATER_ID)
+			# Ocean water column: fill from surface+1 to sea_level with water.
+			if biome == BiomeMap.Biome.OCEAN:
+				for wy: int in range(surface_y + 1, sea_level + 1):
+					if wy >= area_min.y and wy < area_max.y:
+						voxel_tool.set_voxel(Vector3i(x, wy, z), WATER_ID)
 
 
 # ─── Pass 1: mineshaft carving ────────────────────────────────────────────────
