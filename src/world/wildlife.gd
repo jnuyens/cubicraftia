@@ -267,6 +267,38 @@ const _QUADRUPED_SETS: Dictionary = {
 ## clip; idle swaps back to the non-rigged static mesh + procedural bob (QA request).
 const _ANIMATED_GLB: Dictionary = {
 	"giraffe": "res://assets/meshes/avatars/giraffe/giraffe_walking.glb",
+	# GAME-READY scripted-Rigify animal rigs (rigify-test batch). Each is a skinned,
+	# textured mesh with ONE looping "Walk" clip and embedded textures — wired exactly
+	# like the giraffe (scale by mesh-subtree AABB, ground feet, PI-yaw facing, play
+	# Walk while moving / pause + static idle bob otherwise). Quadrupeds (horse metarig),
+	# birds (spine+wings+legs), orca (fish spine), rattlesnake/scorpion (serpent spine).
+	"arctic_fox":    "res://assets/meshes/avatars/arctic_fox/arctic_fox.glb",
+	"arctic_wolf":   "res://assets/meshes/avatars/arctic_wolf/arctic_wolf.glb",
+	"camel":         "res://assets/meshes/avatars/camel/camel.glb",
+	"caribou":       "res://assets/meshes/avatars/caribou/caribou.glb",
+	"dog":           "res://assets/meshes/avatars/dog/dog.glb",
+	"elephant":      "res://assets/meshes/avatars/elephant/elephant.glb",
+	"fennec_fox":    "res://assets/meshes/avatars/fennec_fox/fennec_fox.glb",
+	"gnu":           "res://assets/meshes/avatars/gnu/gnu.glb",
+	"husky_dog":     "res://assets/meshes/avatars/husky_dog/husky_dog.glb",
+	"meerkat":       "res://assets/meshes/avatars/meerkat/meerkat.glb",
+	"monkey":        "res://assets/meshes/avatars/monkey/monkey.glb",
+	"pig":           "res://assets/meshes/avatars/pig/pig.glb",
+	"polar_bear":    "res://assets/meshes/avatars/polar_bear/polar_bear.glb",
+	"reindeer":      "res://assets/meshes/avatars/reindeer/reindeer.glb",
+	"sheep":         "res://assets/meshes/avatars/sheep/sheep.glb",
+	"snow_rabbit":   "res://assets/meshes/avatars/snow_rabbit/snow_rabbit.glb",
+	"desert_lizard": "res://assets/meshes/avatars/desert_lizard/desert_lizard.glb",
+	"desert_mouse":  "res://assets/meshes/avatars/desert_mouse/desert_mouse.glb",
+	"vulture":       "res://assets/meshes/avatars/vulture/vulture.glb",
+	"toucan":        "res://assets/meshes/avatars/toucan/toucan.glb",
+	"snowy_owl":     "res://assets/meshes/avatars/snowy_owl/snowy_owl.glb",
+	"flamingo":      "res://assets/meshes/avatars/flamingo/flamingo.glb",
+	"seagull":       "res://assets/meshes/avatars/seagull/seagull.glb",
+	"penguin":       "res://assets/meshes/avatars/penguin/penguin.glb",
+	"orca":          "res://assets/meshes/avatars/orca/orca.glb",
+	"rattlesnake":   "res://assets/meshes/avatars/rattlesnake/rattlesnake.glb",
+	"scorpion":      "res://assets/meshes/avatars/scorpion/scorpion.glb",
 }
 
 ## Fish kinds that use the GPU wobble shader (BodyType.FISH) with a per-kind tint.

@@ -121,6 +121,16 @@ const _RIGGED_GLB: Dictionary = {
 	"goblin":  "res://assets/meshes/avatars/goblin/goblin_rigged.glb",
 	"vampire": "res://assets/meshes/avatars/vampire/vampire_rigged.glb",
 	"zombie":  "res://assets/meshes/avatars/zombie/zombie_rigged.glb",
+	# GAME-READY scripted-Rigify NON-humanoid hostiles (rigify-test batch). Skinned,
+	# textured meshes with ONE looping "Walk" clip (resolved via the clips[0] fallback
+	# in _setup_skinned_rig — there is no baselayer/clip0 name). Wired exactly like the
+	# goblin: scale by mesh-subtree AABB, ground feet at the body origin, PI-yaw facing,
+	# play Walk while the mob is active (SEEK/ATTACK/FLEE) and pause (rest pose) on IDLE.
+	# Keyed by _art_kind(): bat's vampire variant returns "vampire_bat" (NOT keyed here —
+	# its rig failed and is excluded — so vampire-bats keep the procedural fallback).
+	"bat":           "res://assets/meshes/avatars/bat/bat.glb",
+	"laser_penguin": "res://assets/meshes/avatars/laser_penguin/laser_penguin.glb",
+	"wolf":          "res://assets/meshes/avatars/wolf/wolf.glb",
 }
 
 ## Typed animator (MinifigureAnimator / ShaderWobbleAnimator) when this mob has a
