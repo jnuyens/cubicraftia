@@ -325,3 +325,47 @@ func test_apply_avatar_config_head_shape_tall() -> void:
 		return
 	assert_almost_eq(head_mesh.scale.y, 1.2, 0.01,
 		"tall head shape must have scale.y = 1.2")
+
+
+# ─── #16: held tool is shown in the hand when a right-hand bone exists ─────────
+# Re-enables tool-in-hand: when the avatar exposes a right-hand bone the HandItem is
+# bone-attached and SHOWN (no longer force-hidden), so the default wood pickaxe reads as
+# carried in the fist rather than as a block on the builder's back.
+
+func test_held_tool_visible_when_hand_bone_present() -> void:
+	# Requires the textured avatar GLB (which has a "RightHand" bone) to be imported.
+	var skel: Skeleton3D = _builder.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skel == null:
+		pending("avatar skeleton not present (GLB not imported in this environment)")
+		return
+	_builder.apply_avatar_config(_make_cfg({"hand_accessory": "pickaxe"}))
+	var hand_root: Node = _builder.find_child("HandItem", true, false)
+	assert_not_null(hand_root, "Builder must have a HandItem node")
+	if hand_root == null:
+		return
+	# With a real hand bone, the whole HandItem must be shown (the #16 fix), and it must be
+	# parented under a BoneAttachment3D rather than parked at the fixed upper-back offset.
+	assert_true((hand_root as Node3D).visible,
+		"#16: HandItem must be visible when a right-hand bone exists")
+	var parent: Node = hand_root.get_parent()
+	assert_true(parent is BoneAttachment3D,
+		"#16: HandItem must ride a BoneAttachment3D (the right-hand bone), not the back offset")
+
+
+func test_held_tool_attached_to_right_hand_bone_name() -> void:
+	var skel: Skeleton3D = _builder.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skel == null:
+		pending("avatar skeleton not present (GLB not imported in this environment)")
+		return
+	var hand_root: Node = _builder.find_child("HandItem", true, false)
+	if hand_root == null:
+		return
+	var attach: BoneAttachment3D = hand_root.get_parent() as BoneAttachment3D
+	assert_not_null(attach, "HandItem parent must be a BoneAttachment3D")
+	if attach == null:
+		return
+	# The probed avatars expose a bone literally named "RightHand"; verify it resolved.
+	assert_true(Builder._RIGHT_HAND_BONE_NAMES.has(attach.bone_name),
+		"bone_name '%s' must be one of the known right-hand candidates" % attach.bone_name)
+	assert_ne(skel.find_bone(attach.bone_name), -1,
+		"the chosen bone '%s' must exist on the skeleton" % attach.bone_name)
