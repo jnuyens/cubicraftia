@@ -30,11 +30,14 @@ const _TOWER_COLOURS: Array[Color] = [
 	Color(0.45, 0.70, 0.55),  # teal-green
 ]
 
-## Floating hot-air balloons, drifting closer + lower than the island ring so they read from
-## the ground. Decorative only (no collision; a ride could be a future feature).
+## A single hot-air balloon drifting slowly across the sky in a fixed direction (so it is only
+## occasionally overhead), bobbing gently up and down. Decorative (a ride could be a future
+## feature). It wraps to the far side when it leaves the drift span so it crosses now and then.
 const _BALLOON_PATH: String = "res://assets/meshes/sky/hot_air_balloon.glb"
-const _BALLOON_COUNT: int = 3
+const _BALLOON_COUNT: int = 1
 const _BALLOON_SIZE: float = 12.0  # longest-axis metres
+const _BALLOON_DRIFT_SPEED: float = 1.5  # m/s, a slow glide
+const _BALLOON_DRIFT_SPAN: float = 220.0  # horizontal distance from origin before it wraps
 
 var _islands: Array[Node3D] = []
 var _t: float = 0.0
@@ -123,20 +126,21 @@ func _spawn_balloons(rng: RandomNumberGenerator) -> void:
 		if b == null:
 			continue
 		add_child(b)
-		# Scale the longest axis to _BALLOON_SIZE.
 		var ab: AABB = _node_aabb(b)
 		var longest: float = maxf(ab.size.x, maxf(ab.size.y, ab.size.z))
 		b.scale = Vector3.ONE * (_BALLOON_SIZE / maxf(longest, 0.01))
-		# Closer + lower than the distant island ring so the balloon is visible from the ground.
-		var ang: float = rng.randf() * TAU
-		var radius: float = rng.randf_range(45.0, 95.0)
-		var height: float = rng.randf_range(28.0, 62.0)
-		b.position = Vector3(cos(ang) * radius, height, sin(ang) * radius)
+		# Fixed slow drift direction; height in the visible-from-the-ground band. Start on the far
+		# side so it drifts INTO view, then wraps across the sky (handled in _process).
+		var dir: float = rng.randf() * TAU
+		var drift := Vector3(cos(dir), 0.0, sin(dir)) * _BALLOON_DRIFT_SPEED
+		var height: float = rng.randf_range(34.0, 58.0)
+		b.position = -drift.normalized() * _BALLOON_DRIFT_SPAN + Vector3(0.0, height, 0.0)
 		b.rotation.y = rng.randf() * TAU
 		b.set_meta("base_y", height)
 		b.set_meta("bob_phase", rng.randf() * TAU)
-		b.set_meta("bob_amp", rng.randf_range(2.0, 4.5))
-		b.set_meta("yaw_speed", rng.randf_range(-0.06, 0.06))
+		b.set_meta("bob_amp", rng.randf_range(1.5, 3.0))
+		b.set_meta("yaw_speed", rng.randf_range(-0.03, 0.03))
+		b.set_meta("drift", drift)
 		_islands.append(b)
 
 
@@ -165,3 +169,12 @@ func _process(delta: float) -> void:
 		var amp: float = isl.get_meta("bob_amp")
 		isl.position.y = base_y + sin(_t * 0.25 + phase) * amp
 		isl.rotation.y += float(isl.get_meta("yaw_speed")) * delta
+		# Drifting balloon: glide slowly in its fixed direction; wrap to the far side when it
+		# leaves the span so the single balloon crosses the sky now and then.
+		if isl.has_meta("drift"):
+			var drift: Vector3 = isl.get_meta("drift")
+			isl.position.x += drift.x * delta
+			isl.position.z += drift.z * delta
+			if Vector2(isl.position.x, isl.position.z).length() > _BALLOON_DRIFT_SPAN:
+				isl.position.x = -isl.position.x
+				isl.position.z = -isl.position.z
