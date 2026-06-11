@@ -148,6 +148,18 @@ const _FLOWER_MESH := preload("res://assets/meshes/flower.glb")
 ## Prevents double-spawn when the chunk-load signal fires multiple times for the same chunk.
 var _processed_foliage_chunks: Dictionary = {}
 
+## OceanDecorSpawner helper — static methods only; scatters static coral/kelp/shell decor on
+## the OCEAN seabed (art-ocean set), batched into per-kind MultiMesh draw calls per chunk.
+const _OceanDecorSpawnerScript := preload("res://src/world/ocean_decor_spawner.gd")
+
+## Cache of chunks already processed for ocean-floor decor this session (own dedup, like foliage).
+var _processed_ocean_decor_chunks: Dictionary = {}
+
+## Lazily-extracted decor meshes (kind → Mesh), pulled once from res://assets/meshes/decor/*.glb
+## for MultiMesh batching. Keyed by kind; a null value caches a missing/failed extraction so we
+## don't retry every chunk. Mirrors _flower_mesh_cache but multi-kind.
+var _ocean_decor_mesh_cache: Dictionary = {}
+
 ## WildlifeSpawner helper — static methods only; no instantiation needed.
 const _WildlifeSpawnerScript := preload("res://src/world/wildlife_spawner.gd")
 
@@ -1733,6 +1745,97 @@ func _dispatch_decorations_deferred(chunk_coord: Vector3i, biome: int) -> void:
 		return
 	_dispatch_foliage(chunk_coord, biome)
 	_dispatch_grass(chunk_coord, biome)
+	_dispatch_ocean_decor(chunk_coord, biome)
+
+
+## Ocean-floor decor dispatch (own dedup + gates). Scatters static coral/kelp/shell meshes on
+## the submerged seabed of OCEAN chunks, batched into one MultiMeshInstance3D per kind (mobile-
+## cheap, like _dispatch_foliage). Decor is purely visual: no physics, no persistence; it is
+## re-created from the deterministic seed on each chunk-load. Only seabed cells that are
+## actually below the water surface get decor, so nothing decorates dry "ocean" cells.
+func _dispatch_ocean_decor(chunk_coord: Vector3i, biome: int) -> void:
+	if _processed_ocean_decor_chunks.has(chunk_coord):
+		return
+	_processed_ocean_decor_chunks[chunk_coord] = true
+	if not _OceanDecorSpawnerScript.should_spawn_in_chunk(chunk_coord, biome, _world_seed):
+		return
+	var count: int = _OceanDecorSpawnerScript.spawn_count_for_chunk(chunk_coord, _world_seed)
+	if count <= 0:
+		return
+	var entries: Array = _OceanDecorSpawnerScript.pick_spawn_entries(chunk_coord, count, _world_seed)
+	if entries.is_empty():
+		return
+
+	const _SEA_LEVEL: float = 12.0  # sea_level in multipass_generator (same value structures use).
+	# Group surface-corrected, below-water placements by kind so each kind batches into ONE
+	# MultiMeshInstance3D (1 draw call per kind per chunk) instead of N individual nodes.
+	var by_kind: Dictionary = {}
+	var rng := RandomNumberGenerator.new()
+	rng.seed = (_world_seed ^ ((chunk_coord.x * 73856093) ^ (chunk_coord.z * 19349663)) \
+		^ "ocean_decor_scatter".hash()) & 0x7FFFFFFFFFFFFFFF
+	for entry: Dictionary in entries:
+		var kind: String = entry.get("kind", "")
+		var raw_pos: Vector3 = entry.get("pos", Vector3.ZERO)
+		var seabed_y: float = _terrain_surface_at(raw_pos.x, raw_pos.z)
+		# Only decorate cells whose seabed is actually under water — skip "ocean" cells that
+		# happen to poke above the waterline so we never strand coral on a dry sandbar.
+		if seabed_y >= _SEA_LEVEL:
+			continue
+		var yaw: float = rng.randf() * TAU
+		var basis := Basis(Vector3.UP, yaw)
+		var pos := Vector3(raw_pos.x, seabed_y, raw_pos.z)
+		if not by_kind.has(kind):
+			by_kind[kind] = []
+		(by_kind[kind] as Array).append(Transform3D(basis, pos))
+
+	for kind: String in by_kind.keys():
+		var xforms: Array = by_kind[kind]
+		var mesh: Mesh = _get_ocean_decor_mesh(kind)
+		if mesh == null or xforms.is_empty():
+			continue
+		var centre := Vector3(float(chunk_coord.x) * 16.0 + 8.0, 0.0, float(chunk_coord.z) * 16.0 + 8.0)
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = mesh
+		mm.instance_count = xforms.size()
+		var placed: int = 0
+		for xf: Transform3D in xforms:
+			var local := Transform3D(xf.basis, xf.origin - centre)
+			mm.set_instance_transform(placed, local)
+			placed += 1
+		mm.instance_count = placed
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		mmi.add_to_group("ocean_decor")
+		mmi.set_meta("origin_chunk", chunk_coord)
+		add_child(mmi)
+		mmi.global_position = centre
+
+
+## Lazily extract + cache the decor Mesh for `kind` from res://assets/meshes/decor/<kind>.glb.
+## Returns null (and caches the miss) when the asset or its mesh is unavailable. Mirrors
+## _get_flower_mesh but keyed per decor kind for the MultiMesh batcher above.
+func _get_ocean_decor_mesh(kind: String) -> Mesh:
+	if _ocean_decor_mesh_cache.has(kind):
+		return _ocean_decor_mesh_cache[kind]
+	var path: String = "res://assets/meshes/decor/%s.glb" % kind
+	if not ResourceLoader.exists(path):
+		_ocean_decor_mesh_cache[kind] = null
+		return null
+	var scene: PackedScene = load(path) as PackedScene
+	if scene == null:
+		_ocean_decor_mesh_cache[kind] = null
+		return null
+	var inst: Node3D = scene.instantiate() as Node3D
+	var mesh: Mesh = null
+	if inst != null:
+		for n: Node in inst.find_children("*", "MeshInstance3D", true, false):
+			if (n as MeshInstance3D).mesh != null:
+				mesh = (n as MeshInstance3D).mesh
+				break
+		inst.queue_free()
+	_ocean_decor_mesh_cache[kind] = mesh
+	return mesh
 
 
 ## Rare biome-landmark structure dispatch (own dedup + gates). At most one building per

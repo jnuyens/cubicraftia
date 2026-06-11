@@ -86,6 +86,18 @@ const _KIND_TYPE: Dictionary = {
 	"seagull":     _TYPE_AIR,
 	"crab_red":    _TYPE_LAND,
 	"crab_hermit": _TYPE_LAND,
+	# Deep-ocean wildlife (art-ocean set). All free-swimming WATER drifters: they inherit
+	# the water-bound drift + shoreline containment in _process_water, so they never beach.
+	"shark_great_white": _TYPE_WATER,
+	"whale_blue":        _TYPE_WATER,
+	"whale_sperm":       _TYPE_WATER,
+	"squid":             _TYPE_WATER,
+	"octopus_red":       _TYPE_WATER,
+	"seahorse":          _TYPE_WATER,
+	"pufferfish":        _TYPE_WATER,
+	"hammerhead":        _TYPE_WATER,
+	"eel":               _TYPE_WATER,
+	"stingray":          _TYPE_WATER,
 }
 
 ## Target in-world HEIGHT (metres) per creature, against a ~1.8 m builder. The mesh
@@ -134,6 +146,19 @@ const _TARGET_HEIGHT: Dictionary = {
 	"seagull":      0.55,
 	"crab_red":     0.5,
 	"crab_hermit":  0.5,
+	# Deep-ocean wildlife (art-ocean set). _TARGET_HEIGHT scales the LARGEST extent to this,
+	# so the long whales/shark/stingray read big relative to the ~1.8 m builder, and the
+	# seahorse/pufferfish stay small. Tuned per creature against the brick-built reference.
+	"shark_great_white": 2.5,
+	"whale_blue":        5.0,
+	"whale_sperm":       4.5,
+	"squid":             1.8,
+	"octopus_red":       1.4,
+	"seahorse":          0.7,
+	"pufferfish":        0.6,
+	"hammerhead":        2.2,
+	"eel":               1.3,
+	"stingray":          1.8,
 }
 
 ## Fallback target height when a kind isn't in the map above.

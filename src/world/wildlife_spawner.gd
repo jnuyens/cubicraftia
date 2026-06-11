@@ -23,7 +23,10 @@
 #                      meerkat, rattlesnake, vulture
 #   SNOW             : polar_bear, caribou, husky_dog, arctic_wolf, arctic_fox,
 #                      snow_rabbit, penguin, snowy_owl, reindeer, snowman
-#   OCEAN            : fish_blue, fish_orange, fish_yellow, orca, manta, jellyfish
+#   OCEAN            : fish_blue, fish_orange, fish_yellow, orca, manta, jellyfish,
+#                      dolphin, turtle_sea, flamingo, seagull, + art-ocean deep-sea set
+#                      (shark_great_white, whale_blue, whale_sperm, squid, octopus_red,
+#                      seahorse, pufferfish, hammerhead, eel, stingray)
 #
 # Thread safety: static methods only; no global state. Deterministic RNG via
 # RandomNumberGenerator seeded from chunk_coord + world_seed (Knuth mix).
@@ -91,7 +94,10 @@ const _BIOME_ROSTER: Dictionary = {
 	3: ["monkey", "toucan", "panda"],                              # JUNGLE
 	4: ["elephant", "giraffe", "gnu"],                             # SAVANNAH
 	5: ["fish_blue", "fish_orange", "fish_yellow", "orca", "manta", "jellyfish",
-		"dolphin", "turtle_sea", "flamingo", "seagull"],  # OCEAN (+ art-wildlife-beach)
+		"dolphin", "turtle_sea", "flamingo", "seagull",          # OCEAN (+ art-wildlife-beach)
+		"shark_great_white", "whale_blue", "whale_sperm", "squid",  # + art-ocean deep-sea set
+		"octopus_red", "seahorse", "pufferfish", "hammerhead",
+		"eel", "stingray"],
 }
 
 # ─── Public static API ────────────────────────────────────────────────────────
