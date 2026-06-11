@@ -1,14 +1,17 @@
 # SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# weather.gd — Weather autoload: Clear ↔ Rain Markov state machine with rain-dance quota.
+# weather.gd — Weather autoload: infrequent short rain bursts with a rain-dance quota.
 #
 # Registered as autoload "Weather" in project.godot (after WorldClock, before BrickRegistry
 # per the Plan 02-05 load-order contract).
 #
-# Weather state transitions are driven by WorldClock.day_boundary — one Markov roll per
-# Cubicraftia day. The RNG is seeded from the world's world_seed XOR'd with a salt so the
-# weather stream is decorrelated from terrain generation (02-RESEARCH.md §Pattern 1 line 473).
+# Rain model (QA-tuned): each Cubicraftia day boundary rolls whether a dry day turns rainy
+# (_RAIN_CHANCE_PER_DAY ~1/7 → roughly once per in-game week, with long dry spells). When
+# rain starts it is a SHORT bounded burst (_RAIN_MIN/MAX_SECONDS, 2-5 min) that _process
+# auto-clears off WorldClock game-time — NOT a multi-day downpour. The RNG is seeded from
+# the world's world_seed XOR'd with a salt so the weather stream is decorrelated from
+# terrain generation (02-RESEARCH.md §Pattern 1 line 473) and stays deterministic per seed.
 #
 # Rain-dance API (DOCS §2.4):
 #   A builder (identified by stable UUID — Pitfall 8) can trigger rain at most once per
@@ -61,12 +64,47 @@ var _rain_dance_used: Dictionary = {}
 ## (02-RESEARCH.md §Pattern 1 line 473 names this pattern.)
 const _WEATHER_SEED_SALT: int = 0x7EA7E5
 
+## WorldClock.elapsed_seconds at which the current rain burst auto-clears.
+## -1.0 means no active rain burst. Rain is a SHORT, bounded sub-day event (a few
+## minutes), NOT a multi-day Markov state — so the day-boundary roll only decides
+## WHETHER it rains that day; this timestamp ends the burst within the day.
+## Persisted to WorldSave so a reload mid-rain resumes the same end time.
+var _rain_until_elapsed: float = -1.0
+
+## Chance, per Cubicraftia day boundary, that a dry day turns rainy. A Cubicraftia
+## day is 15 real minutes (WorldClock.SECONDS_PER_DAY), so ~1/7 makes rain begin
+## roughly once per in-game week, with long dry spells in between (QA: "rain at most
+## a few minutes at a time, infrequently, with dry spells").
+const _RAIN_CHANCE_PER_DAY: float = 1.0 / 7.0
+
+## Bounded rain-burst duration in real seconds (2-5 min). Capped well under one
+## Cubicraftia day (900 s) so a burst never stretches into a multi-day downpour.
+const _RAIN_MIN_SECONDS: float = 120.0
+const _RAIN_MAX_SECONDS: float = 300.0
+
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 ## Autoload _ready: RNG is created but not seeded yet — seed is applied lazily in
 ## attach_world() because the world is not open at autoload _ready time.
 func _ready() -> void:
 	_rng = RandomNumberGenerator.new()
+
+
+## Per-frame: end the current rain burst once WorldClock has passed its scheduled end
+## time. Rain is a short bounded event (a few minutes), so this is what actually stops
+## it — the day-boundary roll only ever STARTS rain. Driven by WorldClock.elapsed_seconds
+## (game time, sleep-lapse aware) rather than wall-clock or frame delta so it stays
+## consistent with the day/night clock and survives mobile backgrounding.
+func _process(_delta: float) -> void:
+	if state != State.RAIN:
+		return
+	if _rain_until_elapsed < 0.0:
+		return
+	if WorldClock.elapsed_seconds >= _rain_until_elapsed:
+		state = State.CLEAR
+		_rain_until_elapsed = -1.0
+		state_changed.emit(state)
+		_persist_to_world_save()
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
@@ -114,9 +152,9 @@ func trigger_rain_dance(builder_id: String) -> Dictionary:
 			"message_key": "ui.weather.sky_wont_listen_again_today"
 		}
 
-	# Accept: switch to rain immediately.
-	state = State.RAIN
-	state_changed.emit(state)
+	# Accept: start a bounded rain burst immediately (same short duration as a natural
+	# burst, so a summoned rain still clears after a few minutes rather than lasting forever).
+	_start_rain()
 
 	# Record quota usage for this builder today.
 	record_rain_dance(builder_id)
@@ -146,6 +184,9 @@ func load_from_world_save() -> void:
 		var d: Dictionary = weather_variant as Dictionary
 		if d.has("state"):
 			state = d.get("state", State.CLEAR) as State
+		# Resume the in-progress rain burst's end time (so a mid-rain reload clears on
+		# schedule rather than raining forever). Older saves lack this key → default -1.
+		_rain_until_elapsed = float(d.get("rain_until_elapsed", -1.0))
 
 	var quota_variant: Variant = WorldSave.get_world_meta("rain_dance_quota")
 	if quota_variant != null and quota_variant is Dictionary:
@@ -154,18 +195,28 @@ func load_from_world_save() -> void:
 
 # ─── Private helpers ──────────────────────────────────────────────────────────
 
-## WorldClock.day_boundary handler: roll the Markov state machine.
-## CLEAR → RAIN with probability 0.30.
-## RAIN → CLEAR with probability 0.50.
-## (Values from DOCS §2.4 "rain alternates over Cubicraftia days".)
+## WorldClock.day_boundary handler: decide whether a NEW rain burst starts today.
+## Rain is infrequent and short (QA: "at most a few minutes at a time, infrequently,
+## with dry spells"): a dry day turns rainy with probability _RAIN_CHANCE_PER_DAY
+## (~1/7, i.e. roughly once per in-game week). When rain starts, _start_rain schedules
+## a bounded 2-5 minute burst that _process auto-clears; the burst is NOT re-rolled or
+## extended on later day boundaries, so it never becomes a multi-day downpour.
 func _on_day_boundary(_new_day_index: int) -> void:
 	var roll: float = _rng.randf()
-	if state == State.CLEAR and roll < 0.30:
-		state = State.RAIN
-	elif state == State.RAIN and roll < 0.50:
-		state = State.CLEAR
-	state_changed.emit(state)
+	if state == State.CLEAR and roll < _RAIN_CHANCE_PER_DAY:
+		_start_rain()
+	# A burst already in progress is left alone — _process ends it on schedule.
 	_persist_to_world_save()
+
+
+## Begin a bounded rain burst: switch to RAIN and schedule its end a few minutes out
+## (via WorldClock game-time so it stays in sync with the day/night clock). Shared by
+## the day-boundary roll and the rain-dance trigger so summoned rain is also bounded.
+func _start_rain() -> void:
+	state = State.RAIN
+	var duration: float = _rng.randf_range(_RAIN_MIN_SECONDS, _RAIN_MAX_SECONDS)
+	_rain_until_elapsed = WorldClock.elapsed_seconds + duration
+	state_changed.emit(state)
 
 
 ## Persist weather state and rain-dance quota to WorldSave.
@@ -174,5 +225,6 @@ func _persist_to_world_save() -> void:
 		return
 	WorldSave.set_world_meta("weather_state", {
 		"state": state,
+		"rain_until_elapsed": _rain_until_elapsed,
 	})
 	WorldSave.set_world_meta("rain_dance_quota", _rain_dance_used.duplicate())
