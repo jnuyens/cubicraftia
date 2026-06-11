@@ -230,10 +230,63 @@ const _DRIFT_SPEED: float = 0.35
 ## Air hover height above spawn Y (metres).
 const _AIR_HOVER_HEIGHT: float = 2.0
 
+# ─── Combat (issue #17: animals are killable for meat) ────────────────────────
+# Passive wildlife is harmless but no longer invulnerable: the builder's LMB attack
+# (builder._try_break → _try_attack_wildlife) calls take_damage() on the animal's body.
+# Mirrors the hostile_mob damage/health/die pipeline (take_damage → hp → drop loot →
+# free), kept deliberately small so the combat FEEL is consistent across creature types.
+# Owner-tunable: bump MAX_HP for tougher animals, MEAT_DROP_COUNT for fatter prey.
+
+## Hit-points a passive animal starts with. A few builder hits (attack_damage 1) kill a
+## small animal — fast enough to read as "kill for meat", not a chore. Tune per the owner's
+## difficulty taste; all wildlife shares this for now (small roaming animals).
+const MAX_HP: int = 3
+
+## Number of raw_meat items dropped on death. Each becomes a collectable mined-style pickup
+## (mirrors the terrain-mining drop flow) so the player gathers them into the inventory.
+const MEAT_DROP_COUNT: int = 1
+
+## def_id of the meat brick-drop (registered in BrickRegistry via manifest.json). Awarded
+## through the same Inventory ADD path as mined materials.
+const _MEAT_DEF_ID: String = "raw_meat"
+
+## Physics layer the attack-hurtbox sits on (bit value, layer 3). DELIBERATELY separate from
+## the land body's movement collider (layer 0, so animals never block the player/hostiles) and
+## from terrain (layer 1) / player (1) / hostiles (2): the builder's attack ray queries THIS
+## layer alone, so it hits animals without snagging on them during normal movement/camera rays.
+const _HURTBOX_LAYER_BIT: int = 4
+
+## Group every wildlife hurtbox joins; the builder walks up from a hurtbox collider to the
+## Wildlife node via this group + the take_damage() method (mirrors the bed-entity group hop).
+const HURTBOX_GROUP: String = "wildlife_hurtbox"
+
+# ─── Signals ──────────────────────────────────────────────────────────────────
+
+## Emitted when this animal is killed (hp reaches 0), just before it frees itself.
+## Mirrors HostileMob.died so listeners (tests / future quest hooks) get a consistent API.
+signal died()
+
 # ─── State ────────────────────────────────────────────────────────────────────
 
 ## Creature kind string (set by main_scene before add_child).
 var kind: String = ""
+
+## Current hit-points. Initialised to MAX_HP in _ready(); decremented by take_damage().
+var hp: int = MAX_HP
+
+## True once hp has hit 0 and the death/drop path has run — guards against a second
+## take_damage() in the same frame double-dropping meat or double-freeing the node.
+var _dead: bool = false
+
+## MainScene reference, injected via set_main_scene() (mirrors HostileMob). Used by the
+## death drop to spawn the meat pickup; null-safe (drop falls back to a direct inventory
+## award when absent, e.g. detached test node).
+var _main_scene: Node = null
+
+## Attack-hurtbox Area3D (issue #17). On _HURTBOX_LAYER_BIT so the builder's attack ray can hit
+## the animal without it ever blocking movement; child of _body for land animals (follows the
+## walk) or self for water/air. Carries take_damage via a back-reference to this Wildlife node.
+var _hurtbox: Area3D = null
 
 ## Resolved behaviour type (_TYPE_LAND / _TYPE_WATER / _TYPE_AIR).
 var _behaviour_type: String = _TYPE_LAND
@@ -410,6 +463,10 @@ func _ready() -> void:
 	else:
 		_setup_floating(mesh_scene)
 
+	# Issue #17: build the attack-hurtbox so the builder's LMB attack can damage this animal.
+	# Sized roughly to the creature and attached to the moving body (land) or the root (float).
+	_setup_hurtbox()
+
 	# Start in idle phase so not all animals lurch forward simultaneously.
 	_phase_timer = randf_range(_IDLE_DURATION_MIN, _IDLE_DURATION_MAX)
 	_is_walking = false
@@ -468,6 +525,38 @@ func _setup_floating(mesh_scene: PackedScene) -> void:
 		ProceduralCreatureAnimator.Motion.WATER if _behaviour_type == _TYPE_WATER
 		else ProceduralCreatureAnimator.Motion.AIR)
 	_setup_animator(self, proc_motion)
+
+
+## Issue #17: build the attack-hurtbox so the builder's LMB attack ray can register hits.
+## A single Area3D on _HURTBOX_LAYER_BIT (mask 0 — it never SCANS, only gets hit by rays),
+## with a capsule sized to the creature's target height. Parented to _body for land animals
+## so it tracks the walk; to self for water/air floaters. Joins HURTBOX_GROUP and stores a
+## back-reference so the builder can walk up to this Wildlife node and call take_damage().
+func _setup_hurtbox() -> void:
+	var host: Node3D = _body if _body != null else self
+	if host == null or not is_instance_valid(host):
+		return
+	var target_h: float = _TARGET_HEIGHT.get(kind, _TARGET_HEIGHT_DEFAULT)
+	var area := Area3D.new()
+	area.collision_layer = _HURTBOX_LAYER_BIT  # hittable by the attack ray's mask
+	area.collision_mask = 0                    # never detects anything itself (cheap)
+	area.monitoring = false                    # no overlap scanning — mobile-cheap
+	area.monitorable = true                    # but rays/overlap queries can still find it
+	area.input_ray_pickable = false
+	area.add_to_group(HURTBOX_GROUP)
+	# Back-reference so _try_attack_wildlife (which hits this Area) can resolve the owner.
+	area.set_meta("wildlife", self)
+	var shape_node := CollisionShape3D.new()
+	var capsule := CapsuleShape3D.new()
+	# Wrap the visible creature: radius ~a third of its height, capped so tiny animals are
+	# still clickable and giants don't get an absurd hitbox; centred on the body's vertical mid.
+	capsule.radius = clampf(target_h * 0.35, 0.3, 1.2)
+	capsule.height = maxf(target_h, 0.6)
+	shape_node.shape = capsule
+	shape_node.position.y = target_h * 0.5
+	area.add_child(shape_node)
+	host.add_child(area)
+	_hurtbox = area
 
 
 ## Phase 8: pick + attach the right animator for this creature kind.
@@ -965,6 +1054,70 @@ func _process_air(delta: float) -> void:
 	# Phase 8: procedural rock for single-mesh air creatures (toucan).
 	if _proc_anim != null and not _anim_lod_should_skip():
 		_proc_anim.update(_mesh_root, delta)
+
+
+# ─── Combat (issue #17: attack an animal, kill it, drop meat) ─────────────────
+# Mirrors the HostileMob damage/health/die pipeline so the combat feel is consistent:
+# take_damage() decrements hp; at 0 the animal drops meat and frees itself. Wildlife stays
+# passive — it never retaliates — but it is no longer invulnerable.
+
+## Inject the MainScene reference so the death drop can call spawn_dropped_item().
+## Mirrors HostileMob.set_main_scene(); main_scene.spawn_wildlife() calls this after add_child.
+func set_main_scene(scene: Node) -> void:
+	_main_scene = scene
+
+
+## Apply `amount` damage to this animal from a hit originating at `from_pos`.
+## Clamps hp at 0, and on reaching 0 runs the death/drop path exactly once. `from_pos` is the
+## hit origin (kept for parity with HostileMob.take_damage and future knockback/VFX); unused
+## for now beyond marking the drop position toward the attacker is unnecessary for passive prey.
+func take_damage(amount: int, _from_pos: Vector3 = Vector3.ZERO) -> void:
+	if _dead:
+		return
+	hp = maxi(0, hp - amount)
+	if hp == 0:
+		_die()
+
+
+## Death: drop the meat, emit `died`, and free the animal. Guarded by _dead so a second
+## same-frame hit can't double-drop or double-free.
+func _die() -> void:
+	if _dead:
+		return
+	_dead = true
+	_drop_meat()
+	died.emit()
+	queue_free()
+
+
+## Drop MEAT_DROP_COUNT raw_meat at the animal's position so the builder collects it.
+## Preferred path: main_scene.spawn_dropped_item() (the same collectable-pickup flow mined
+## materials and hostile-mob loot use). Fallback: a direct Inventory ADD to the local builder
+## when no main_scene is wired (detached test node) so meat is never silently lost.
+func _drop_meat() -> void:
+	if BrickRegistry.get_definition(_MEAT_DEF_ID) == null:
+		return  # meat brick not registered (shouldn't happen — manifest entry) → drop nothing
+	var drop_pos: Vector3 = global_position + Vector3(0.0, 0.4, 0.0)
+	if _main_scene != null and is_instance_valid(_main_scene) \
+			and _main_scene.has_method("spawn_dropped_item"):
+		for _i: int in range(MEAT_DROP_COUNT):
+			# colour_index -1 = use the brick's natural colour (red, per raw_meat.tres). Physics
+			# spawn so it pops out and settles like other loot the player walks over to collect.
+			_main_scene.spawn_dropped_item(_MEAT_DEF_ID, -1, drop_pos, true)
+		return
+	# Fallback: no main_scene → award straight to the local builder's inventory.
+	var builder: Node = get_tree().get_first_node_in_group("builder") if is_inside_tree() else null
+	var builder_id: String = ""
+	if builder != null and builder.has_method("get_stable_builder_id"):
+		builder_id = str(builder.get_stable_builder_id())
+	if builder_id.is_empty():
+		return
+	Inventory.apply_event({
+		"kind": "ADD",
+		"builder_id": builder_id,
+		"def_id": _MEAT_DEF_ID,
+		"count": MEAT_DROP_COUNT,
+	})
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────

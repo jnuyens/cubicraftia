@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="BrickDefinition" load_steps=2 format=3]
+
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; raw_meat.tres — BrickDefinition for the raw-meat wildlife drop (issue #17).
+; Dropped when the builder kills a passive animal (see wildlife.gd take_damage/die).
+; Category 9 MOB_DROP, mirroring bone.tres. natural_colour_token=4 (red #D63828 per
+; BrickPalette) so the placeholder/dropped-pool tint reads as meat. mesh + icon_path are
+; empty: no 2D icon ships in assets/textures/icons for meat, so the inventory slot falls
+; back to its placeholder name label (same as bone/slime_cube).
+
+[ext_resource type="Script" path="res://src/bricks/brick_definition.gd" id="1_brickdef"]
+
+[resource]
+script = ExtResource("1_brickdef")
+brick_id = "raw_meat"
+display_name_key = "bricks.raw_meat.name"
+dimensions = Vector3i(1, 1, 1)
+height_plates = 3
+studs_top = []
+studs_bottom = []
+stud_profile = "concave_top"
+material_id = "plastic_solid"
+mesh = null
+icon_path = ""
+category = 9
+palette_colour_index = -1
+colour_swappable = false
+natural_colour_token = 4
+iap_pack_origin = ""
+footprint_cells = [Vector3i(0, 0, 0)]

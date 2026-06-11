@@ -2053,6 +2053,10 @@ func spawn_wildlife(kind: String, world_pos: Vector3, origin_chunk: Vector3i = V
 	# Set position before add_child so _ready() sees the correct global_position
 	# when it stores _spawn_origin.
 	wildlife.position = world_pos
+	# Issue #17: inject the scene ref so the animal's death drop (raw_meat) can spawn a
+	# collectable pickup via spawn_dropped_item — the same flow mined materials use.
+	if wildlife.has_method("set_main_scene"):
+		wildlife.set_main_scene(self)
 	add_child(wildlife)
 	# Group + origin-chunk meta let _cull_distant_wildlife() find roaming animals and
 	# free the chunk's dedup entry so it can repopulate when the player returns.

@@ -1225,6 +1225,13 @@ func _try_break() -> void:
 	if _try_break_entity(origin, direction):
 		return
 
+	# ── Attack a passive animal under the crosshair (issue #17) ──────────────
+	# Wildlife carries an Area3D hurtbox on its own physics layer; a hit damages the animal
+	# (kill → meat drop) instead of mining through it. Checked after the bed but before the
+	# brick/terrain break so clicking an animal attacks it; clicking past one mines as before.
+	if _try_attack_wildlife(origin, direction):
+		return
+
 	# ── Try stud-grid hit first ──────────────────────────────────────────────
 	var brick_hit: Variant = _raycast_stud_grid(origin, direction, raycast_distance)
 	if brick_hit != null and brick_hit is Dictionary:
@@ -1308,6 +1315,54 @@ func _try_break_entity(origin: Vector3, direction: Vector3) -> bool:
 			return true
 		node = node.get_parent()
 	return false
+
+
+## Damage dealt to a passive animal per LMB hit (issue #17). Matches the hostiles' baseline
+## attack_damage of 1, so Wildlife.MAX_HP (3) maps to a few hits to fell a small animal.
+const _WILDLIFE_ATTACK_DAMAGE: int = 1
+
+## Physics layer (bit value) the wildlife hurtbox sits on — kept in sync with
+## Wildlife._HURTBOX_LAYER_BIT. The attack ray queries ONLY this layer so it hits animals
+## without snagging on terrain (layer 1) or the bed; areas-only so it ignores the move colliders.
+const _WILDLIFE_HURTBOX_MASK: int = 4
+
+## Attack a passive animal under the crosshair (issue #17). Casts a physics ray restricted to
+## the wildlife hurtbox layer (areas only); on a hit, walks up to the Wildlife node (via the
+## hurtbox group + a back-reference meta) and calls take_damage(). Returns true if an animal was
+## hit (so _try_break stops before mining), false otherwise (normal break/terrain path resumes).
+## NOTE: this is one more case in the existing LMB break/attack path — it does NOT touch the
+## break-terrain, break-bed, or attack(stub) behaviour; it just runs between bed and brick.
+func _try_attack_wildlife(origin: Vector3, direction: Vector3) -> bool:
+	var space_state: PhysicsDirectSpaceState3D = get_world_3d().direct_space_state
+	if space_state == null:
+		return false
+	var to: Vector3 = origin + direction * raycast_distance
+	var query: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(origin, to)
+	query.exclude = [self.get_rid()]
+	query.collision_mask = _WILDLIFE_HURTBOX_MASK
+	query.collide_with_areas = true    # the hurtbox is an Area3D
+	query.collide_with_bodies = false  # only the hurtbox lives on this layer
+	var result: Dictionary = space_state.intersect_ray(query)
+	if result.is_empty():
+		return false
+	var collider: Object = result.get("collider")
+	# Resolve the Wildlife owner: prefer the back-reference meta the hurtbox stored, else walk
+	# up the tree to a node in the hurtbox group that exposes take_damage().
+	var animal: Node = null
+	if collider is Node and (collider as Node).has_meta("wildlife"):
+		animal = (collider as Node).get_meta("wildlife") as Node
+	if animal == null:
+		var node: Node = collider as Node
+		while node != null:
+			if node.is_in_group("wildlife") and node.has_method("take_damage"):
+				animal = node
+				break
+			node = node.get_parent()
+	if animal == null or not is_instance_valid(animal) or not animal.has_method("take_damage"):
+		return false
+	animal.call("take_damage", _WILDLIFE_ATTACK_DAMAGE, global_position)
+	_spawn_break_dust(result.get("position", origin))
+	return true
 
 
 ## Award one of a mined item to the local builder's inventory (no-op for "" / unknown defs).
