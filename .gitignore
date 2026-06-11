@@ -8,6 +8,8 @@
 export_presets.cfg.local
 export.cfg
 build/
+# Textures Godot extracts from embedded-image .glb files on import (regenerated; source is the tracked .glb)
+assets/meshes/npcs/*_texture_*.png
 
 # Android signing — never commit keystores
 release.keystore
