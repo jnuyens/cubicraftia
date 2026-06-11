@@ -74,10 +74,19 @@ color = Color(0.749, 0.918, 0.961, 1)
 ; ─── ID 7: Water — OCEAN water column (#2A7BBC at 0.25α; non-collidable) ──────
 ; transparency_mode = 1 = TRANSPARENT; collision disabled (no collidable geometry)
 ; QA: 0.6α read too opaque — dropped to 0.25 so water is clearly see-through.
+; WATER overhaul (behaviour 3 — see-through water): culls_neighbors = true so that
+; water-water internal faces cull against each other (a neighbour water cell shares
+; transparency_index 1, which is <= 1, so the shared face is dropped). Previously
+; this was false, forcing EVERY water face to render; looking through a column of
+; water stacked dozens of 0.25α faces and accumulated to near-opaque ("can't see
+; through water"). With culls_neighbors=true only the water SHELL renders, so the
+; surface and any terrain behind it read as genuinely see-through. Terrain faces
+; touching water still render (terrain transparency_index 0 is NOT <= the water's 1),
+; so the seabed/cliff seen through the water stays visible.
 [sub_resource type="VoxelBlockyModelCube" id="9_water"]
 color = Color(0.165, 0.471, 0.737, 0.25)
 transparency_index = 1
-culls_neighbors = false
+culls_neighbors = true
 collision_enabled_0 = false
 collision_mask = 0
 
