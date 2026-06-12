@@ -167,6 +167,15 @@ const PIECE_PATHS: Array[String] = [
 ## Sea level in voxels (centre of the height range).
 @export var sea_level: int = 12
 
+## OCEAN seabed depth below sea_level (voxels). The OCEAN biome's floor is dropped this far
+## under the waterline so oceans read as deep, divable water rather than a shallow puddle
+## (QA #7). At sea_level=12 a depth of 9 puts the typical seabed at y≈3, giving ~9 m of water.
+const OCEAN_FLOOR_DEPTH: int = 9
+
+## Extra OCEAN seabed relief (voxels). The noise (±1) modulates the seabed by ±this many
+## voxels so the floor undulates (deeper troughs, shallower banks) instead of being a flat slab.
+const OCEAN_FLOOR_RELIEF: int = 4
+
 ## Noise frequency for the base terrain layer.
 @export var noise_frequency: float = 0.01:
 	set(v):
@@ -264,6 +273,14 @@ func _generate_base_terrain(voxel_tool: VoxelToolMultipassGenerator) -> void:
 			var surface_y: int = int(noise_val * height_amplitude + float(sea_level))
 
 			var biome: BiomeMap.Biome = _biome_map.biome_at(world_x, world_z)
+
+			# OCEAN floor deepening (QA #7 — oceans must read as deep water, not a shallow
+			# puddle). The OCEAN biome's seabed is dropped well below sea_level so there is a
+			# real water volume to dive into. The drop scales the deeper the noise dips, so the
+			# floor is bowl-shaped rather than a flat slab. Non-ocean columns are unchanged.
+			if biome == BiomeMap.Biome.OCEAN:
+				surface_y = sea_level - OCEAN_FLOOR_DEPTH + int(noise_val * OCEAN_FLOOR_RELIEF)
+
 			var surface_id: int = _surface_block_for(biome)
 
 			for y: int in range(area_min.y, area_max.y):
@@ -277,8 +294,15 @@ func _generate_base_terrain(voxel_tool: VoxelToolMultipassGenerator) -> void:
 					voxel_id = _underground_block_for(biome, depth_below_surface)
 				voxel_tool.set_voxel(Vector3i(x, y, z), voxel_id)
 
-			# Ocean water column: fill from surface+1 to sea_level with water.
-			if biome == BiomeMap.Biome.OCEAN:
+			# Sea-level flood (QA #6 — eliminate free-standing water "walls"). ANY column whose
+			# solid surface is below sea_level is flooded with water up to sea_level, regardless
+			# of biome — not just OCEAN columns. Two adjacent sub-sea-level columns therefore
+			# share the SAME water top (sea_level), so there is never a vertical step between two
+			# water columns: the only vertical water faces left are where water meets a HIGHER
+			# land column (a natural shoreline, not a free-standing wall). This also lets a
+			# low-lying land basin that dips below sea_level hold a pond, keeping terrain
+			# floodable while killing the exposed mid-air water faces at biome boundaries.
+			if surface_y < sea_level:
 				for wy: int in range(surface_y + 1, sea_level + 1):
 					if wy >= area_min.y and wy < area_max.y:
 						voxel_tool.set_voxel(Vector3i(x, wy, z), WATER_ID)
