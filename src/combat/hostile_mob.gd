@@ -113,6 +113,11 @@ const _ANIM_LOD_DIST_SQ: float = 40.0 * 40.0
 ## _ANIMATED_GLB giraffe path). Maps _art_kind() → rigged .glb path. Each asset is a
 ## single-skin, textured humanoid carrying ONE baked motion clip named
 ## "Armature|clip0|baselayer" (no separate idle/walk — clip0 IS the creature's motion).
+## That clip now carries a REAL in-place walk cycle: the limb/spine rotations from the
+## builder "Walking" mocap were transplanted onto these rigs (identical 24-bone skeleton),
+## with the Hips root translation frozen so the rig walks in place while AI velocity drives
+## forward travel. _clip_has_motion() therefore returns true and the degenerate-clip bob
+## overlay is skipped (see _setup_skinned_rig / _update_animator).
 ## When _setup_procedural_anim() finds the kind here, it instantiates the rigged GLB as
 ## the visual, scales/grounds/faces it, hides the static _art_mesh_root, and plays clip0
 ## while the mob is active (SEEK/ATTACK/FLEE) — pausing it (rest pose) on IDLE. The
@@ -151,11 +156,12 @@ var _skinned_clip_name: String = ""
 var _rigged_root: Node3D = null
 
 ## Procedural body-motion overlay for a rigged mob whose baked clip carries NO real motion.
-## The Meshy "clip0" exports for the humanoid hostiles (goblin/vampire/zombie) bake a STATIC
-## pose — every translation/rotation/scale channel is flat (verified: 72 channels, all
-## zero-spread). The AnimationPlayer "plays" but no bone moves, so the mob slides rigidly.
-## When that degeneracy is detected at setup, this animator gives the rig a visible alive-bob +
-## sway so it reads as walking instead of gliding. Null when the clip has real motion.
+## Historically the Meshy "clip0" exports for the humanoid hostiles (goblin/vampire/zombie)
+## baked a STATIC pose (72 channels, all zero-spread) — the AnimationPlayer "played" but no
+## bone moved, so the mob slid rigidly, and this overlay gave it a visible alive-bob + sway.
+## The shipped clips now carry a real transplanted walk cycle, so _clip_has_motion() returns
+## true and this overlay stays null for them. It remains as a self-adapting fallback: any
+## future rigged asset that still ships a degenerate (motionless) clip gets the bob overlay.
 var _rigged_proc_anim: ProceduralCreatureAnimator = null
 
 ## Grounded baseline Y of the rigged root (set by _ground_rigged_to_target). The procedural
@@ -383,9 +389,11 @@ func _setup_skinned_rig() -> void:
 			var clip: Animation = _skinned_anim.get_animation(_skinned_clip_name)
 			if clip != null:
 				clip.loop_mode = Animation.LOOP_LINEAR
-				# The Meshy humanoid clip0 exports bake a STATIC pose (all channels flat), so
-				# the AnimationPlayer plays but no bone moves and the mob slides rigidly. Detect
-				# that and attach a procedural body bob/sway overlay so it reads as walking.
+				# The shipped humanoid clip0 now carries a real transplanted walk cycle, so
+				# _clip_has_motion() returns true and no overlay is attached: the real walk
+				# plays. Fallback: if a rigged asset ever ships a degenerate STATIC clip (all
+				# channels flat, no bone moves so the mob would slide rigidly), attach a
+				# procedural body bob/sway overlay so it still reads as walking.
 				if not _clip_has_motion(clip):
 					_rigged_proc_anim = ProceduralCreatureAnimator.new(
 						ProceduralCreatureAnimator.Motion.LAND)
@@ -430,10 +438,10 @@ func _ground_rigged_to_target() -> void:
 	_rigged_base_y = -min_y
 
 
-## True when `clip` carries real motion: any rotation/scale track, or any track whose
-## keyframe values vary beyond a tiny epsilon. The Meshy humanoid clip0 exports bake a static
-## pose (all channels flat), so this returns false for them and the caller attaches a procedural
-## body-motion overlay. A normal walk clip returns true and the overlay is skipped.
+## True when `clip` carries real motion: any track whose keyframe values vary beyond a tiny
+## epsilon (rotation or translation). The shipped humanoid clip0 now carries a real transplanted
+## walk cycle, so this returns true for them and the procedural bob overlay is skipped. A
+## degenerate STATIC clip (all channels flat) returns false and the caller attaches the overlay.
 func _clip_has_motion(clip: Animation) -> bool:
 	const EPS: float = 0.0001
 	for ti: int in range(clip.get_track_count()):

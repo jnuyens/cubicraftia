@@ -146,7 +146,10 @@ const _WANDERER_CHANCE: float = 0.22
 
 ## Directory of the 28 rigged + animated humanoid figure GLBs. Each is a skinned mesh with
 ## ONE baked motion clip "Armature|clip0|baselayer" (no separate idle/walk — clip0 IS the
-## figure's motion). When a villager's deterministically-chosen figure index has a rigged
+## figure's motion). That clip now carries a REAL in-place walk cycle: the builder "Walking"
+## mocap limb/spine rotations were transplanted onto these rigs (identical 24-bone skeleton),
+## Hips root translation frozen so the figure walks in place while patrol velocity drives
+## forward travel. When a villager's deterministically-chosen figure index has a rigged
 ## variant here, _apply_figure_model() loads THIS instead of the static figures/ mesh and
 ## drives clip0 from the NPC's walk/idle state (mirrors hostile_mob._setup_skinned_rig and
 ## wildlife._setup_skinned_glb).
