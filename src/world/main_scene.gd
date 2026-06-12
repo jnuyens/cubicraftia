@@ -138,6 +138,21 @@ const _StructureSpawnerScript := preload("res://src/world/structure_spawner.gd")
 const _WorldStructureScript := preload("res://src/world/world_structure.gd")
 var _processed_structure_chunks: Dictionary = {}
 
+## Per-chunk dedup for LAZY village-NPC streaming (QA #8 — villagers never appeared because the
+## only NPC spawn was a ±64 m pre-stamp around origin, where seed 1234 has no village biome).
+## The chunk-load dispatcher spawns the deterministic village NPCs wherever the player roams into
+## a village-biome chunk, so walking villagers actually show up in the overworld.
+var _processed_village_chunks: Dictionary = {}
+
+## Live village-NPC count and global cap. Each villager renders a real ~7-8k-vert rigged figure,
+## so the cap keeps the active set within the mobile frame budget; distant ones are culled in
+## _process (see _cull_distant_village_npcs) to free the cap as the player moves on.
+var _village_npc_count: int = 0
+const _VILLAGE_NPC_GLOBAL_CAP: int = 14
+## Villagers beyond this distance (m) from the builder are culled (their chunk is re-armed so
+## they respawn if the player returns). Comfortably past the streaming radius.
+const _VILLAGE_NPC_DESPAWN_DIST_M: float = 120.0
+
 ## FoliageSpawner helper — static methods only; no instantiation needed.
 const _FoliageSpawnerScript := preload("res://src/world/foliage_spawner.gd")
 
@@ -822,6 +837,11 @@ func _process(delta: float) -> void:
 	if _wildlife_cull_accum >= _WILDLIFE_CULL_INTERVAL_S:
 		_wildlife_cull_accum = 0.0
 		_cull_distant_wildlife()
+		# Cull distant village NPCs on the same cadence (QA #8 — frees the villager cap as the
+		# player roams so new villages they reach can populate).
+		var _b: Node3D = get_node_or_null("Builder") as Node3D
+		if _b != null:
+			_cull_distant_village_npcs(_b.global_position)
 
 	# ─── WATER overhaul (behaviour 4): underwater fog/tint ────────────────────
 	# Sample whether the active camera is submerged (throttled). On a transition
@@ -1742,6 +1762,7 @@ func _on_chunk_loaded(chunk_coord: Vector3i) -> void:
 	# it is dispatched immediately.
 	_dispatch_decorations_deferred(chunk_coord, biome)
 	_dispatch_wildlife(chunk_coord, biome)
+	_dispatch_village_npcs(chunk_coord)
 
 
 ## Defer grass/flower decoration spawning by one frame so the chunk's terrain mesh exists before
@@ -2633,27 +2654,18 @@ func _pre_stamp_structures_near_spawn() -> void:
 	# Village templates carry npc_spawns slots (populated by Plan 02-13). For each
 	# stamped village template, instantiate one VillageNpc per slot.
 	#
-	# NPCs use a TIGHTER radius than the structure pre-stamp + a hard count cap.
-	# The structure-placement loop above pre-stamps bricks across the full
-	# _PRE_STAMP_RADIUS_M (256 m) so the world is visually complete, but
-	# instantiating an NPC CharacterBody3D across that whole area would spawn
-	# >1500 NPCs (≈57 villages × 3 slots) — far more than can be visible at
-	# once and very expensive per-frame for AI + collision.
-	# Proper streaming (lazy per-chunk NPC spawn on block_loaded) is tracked
-	# as a follow-up phase.
-	const _NPC_PRESTAMP_RADIUS_M: float = 64.0
-	# Capped low: each village NPC now renders a real ~7-8k-vert figure with an 11 MB texture
-	# (was a tinted capsule), so far fewer can be on-screen within the mobile frame budget.
-	const _NPC_SPAWN_CAP: int = 12
-	var npc_radius_chunks: int = int(_NPC_PRESTAMP_RADIUS_M / chunk_size_m)
-	var total_npcs: int = 0
-	var npc_cap_reached: bool = false
+	# Pre-stamp NPCs across the SAME radius as the village BRICKS (so any village near spawn gets
+	# its villagers up-front), and mark every scanned chunk as processed so the lazy chunk-load
+	# streamer (_dispatch_village_npcs, QA #8) does not double-spawn them when those chunks load.
+	# Villages farther out are populated lazily as the player roams into them. Shares the global
+	# live cap (_VILLAGE_NPC_GLOBAL_CAP) with the lazy streamer via _village_npc_count.
+	var npc_radius_chunks: int = int(_PRE_STAMP_RADIUS_M / chunk_size_m)
 	for cx_npc: int in range(-npc_radius_chunks, npc_radius_chunks + 1):
-		if npc_cap_reached:
-			break
 		for cz_npc: int in range(-npc_radius_chunks, npc_radius_chunks + 1):
-			if npc_cap_reached:
-				break
+			# Mark this chunk handled so the lazy streamer skips it (no double villagers).
+			_processed_village_chunks[Vector3i(cx_npc, 0, cz_npc)] = true
+			if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+				continue
 			var hits_npc: Array = _structure_placer.structures_intersecting_chunk(cx_npc, cz_npc)
 			for hit_npc: Variant in hits_npc:
 				var hit_dict_npc: Dictionary = hit_npc as Dictionary
@@ -2664,20 +2676,13 @@ func _pre_stamp_structures_near_spawn() -> void:
 				if npc_template == null:
 					continue
 				# Only village templates carry npc_spawns; other templates have empty arrays.
-				# Access npc_spawns directly as @export var (BrickTemplate) — Object.get()
-				# does not accept a default argument in GDScript 4; use property access.
 				var _npc_spawns_arr: Array = npc_template.npc_spawns if "npc_spawns" in npc_template else []
-				if not _npc_spawns_arr.is_empty():
-					for slot_idx: int in range(npc_template.npc_spawns.size()):
-						if total_npcs >= _NPC_SPAWN_CAP:
-							npc_cap_reached = true
-							break
-						spawn_village_npc(npc_template, npc_anchor, slot_idx)
-						total_npcs += 1
-					if npc_cap_reached:
+				for slot_idx: int in range(_npc_spawns_arr.size()):
+					if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
 						break
-	if total_npcs > 0:
-		print_debug("VillageNpc: spawned %d NPCs (cap %d, radius %dm) — lazy chunk-load streaming TBD." % [total_npcs, _NPC_SPAWN_CAP, int(_NPC_PRESTAMP_RADIUS_M)])
+					spawn_village_npc(npc_template, npc_anchor, slot_idx)
+	if _village_npc_count > 0:
+		print_debug("VillageNpc: pre-stamped %d NPCs near spawn (cap %d); rest stream lazily on chunk-load." % [_village_npc_count, _VILLAGE_NPC_GLOBAL_CAP])
 
 	# Pre-stamp complete — allow the loading splash to fade once terrain has streamed AND the
 	# builder has ground under it (else it would reveal a floating builder).
@@ -2720,12 +2725,24 @@ func spawn_village_npc(template: Resource, world_anchor: Vector3i, slot_index: i
 		# Slot has no patrol path — NPC will stand idle at anchor. Still spawn for atmosphere.
 		pass
 
+	# Build world-space patrol path, GROUNDING each waypoint's Y to the actual terrain surface.
+	# The template anchor's Y is a placeholder (StructurePlacer.SURFACE_Y = 16), so adding the
+	# local waypoint Y verbatim left villagers floating at Y≈16 over real terrain that sits at
+	# Y≈4..20 (QA #8). Sample the column under each waypoint so villagers walk ON the ground.
 	var path_world: PackedVector3Array = PackedVector3Array()
 	for local_wp: Vector3 in local_path:
-		path_world.append(Vector3(world_anchor) + local_wp)
+		var wx: float = float(world_anchor.x) + local_wp.x
+		var wz: float = float(world_anchor.z) + local_wp.z
+		path_world.append(Vector3(wx, _terrain_surface_at(wx, wz), wz))
 
-	# Determine NPC spawn position: first waypoint if available, else anchor.
-	var spawn_pos: Vector3 = path_world[0] if path_world.size() > 0 else Vector3(world_anchor)
+	# Determine NPC spawn position: first waypoint if available, else the anchor (grounded).
+	var spawn_pos: Vector3
+	if path_world.size() > 0:
+		spawn_pos = path_world[0]
+	else:
+		spawn_pos = Vector3(float(world_anchor.x),
+			_terrain_surface_at(float(world_anchor.x), float(world_anchor.z)),
+			float(world_anchor.z))
 
 	# Instantiate and configure the NPC. add_child() FIRST so the node is in the tree before
 	# we touch global_position — setting it off-tree spammed "is_inside_tree() is false"
@@ -2736,6 +2753,61 @@ func spawn_village_npc(template: Resource, world_anchor: Vector3i, slot_index: i
 	npc.global_position = spawn_pos
 	npc.set_skin_variant(slot.get("skin_variant", "desert"))
 	npc.set_patrol_path(path_world)
+	npc.add_to_group("village_npc")
+	_village_npc_count += 1
+
+
+## QA #8 — LAZY per-chunk village-NPC streaming. For each village template that deterministically
+## intersects this loaded chunk, spawn its VillageNpc slots (grounded, walking patrol paths). This
+## is what makes friendly villagers actually appear in the overworld: previously NPCs were ONLY
+## pre-stamped within ±64 m of origin, and seed 1234 has no village biome there — so the player
+## met zero villagers. Streaming per-chunk (like wildlife/crops) populates every village the player
+## walks into, in any village biome, anywhere in the world.
+##
+## Gated by a per-chunk dedup cache + a global live cap (_VILLAGE_NPC_GLOBAL_CAP). The same
+## structures_intersecting_chunk() the pre-stamp uses keeps placement deterministic and biome-gated
+## (a desert village only resolves in a desert chunk), so this never invents villages.
+func _dispatch_village_npcs(chunk_coord: Vector3i) -> void:
+	if _processed_village_chunks.has(chunk_coord):
+		return
+	_processed_village_chunks[chunk_coord] = true
+	if _structure_placer == null:
+		return
+	if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+		return
+	var hits: Array = _structure_placer.structures_intersecting_chunk(chunk_coord.x, chunk_coord.z)
+	for hit: Variant in hits:
+		var hit_dict: Dictionary = hit as Dictionary
+		if hit_dict.is_empty():
+			continue
+		var template: Resource = hit_dict.get("template", null)
+		var anchor: Vector3i = hit_dict.get("anchor", Vector3i.ZERO)
+		if template == null:
+			continue
+		# Only village templates carry npc_spawns; temples/shipwrecks/dungeons have none.
+		var npc_spawns_arr: Array = template.npc_spawns if "npc_spawns" in template else []
+		if npc_spawns_arr.is_empty():
+			continue
+		for slot_idx: int in range(npc_spawns_arr.size()):
+			if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+				return
+			spawn_village_npc(template, anchor, slot_idx)
+
+
+## Throttled cull of village NPCs that have wandered far from the builder, freeing the global cap
+## as the player explores (mirrors _cull_distant_wildlife). The NPC's origin chunk is re-armed so
+## the village repopulates if the player returns.
+func _cull_distant_village_npcs(bpos: Vector3) -> void:
+	for n: Node in get_tree().get_nodes_in_group("village_npc"):
+		var npc: Node3D = n as Node3D
+		if npc == null:
+			continue
+		if npc.global_position.distance_to(bpos) <= _VILLAGE_NPC_DESPAWN_DIST_M:
+			continue
+		var ck := Vector3i(floori(npc.global_position.x / 16.0), 0, floori(npc.global_position.z / 16.0))
+		_processed_village_chunks.erase(ck)
+		_village_npc_count = maxi(0, _village_npc_count - 1)
+		npc.queue_free()
 
 
 # ─── Plan 03-10: Hostile mob spawning ────────────────────────────────────────
