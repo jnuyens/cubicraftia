@@ -269,17 +269,16 @@ func _generate_base_terrain(voxel_tool: VoxelToolMultipassGenerator) -> void:
 			var world_x: float = float(x)
 			var world_z: float = float(z)
 
-			var noise_val: float = _noise.get_noise_2d(world_x, world_z)
-			var surface_y: int = int(noise_val * height_amplitude + float(sea_level))
-
 			var biome: BiomeMap.Biome = _biome_map.biome_at(world_x, world_z)
 
-			# OCEAN floor deepening (QA #7 — oceans must read as deep water, not a shallow
-			# puddle). The OCEAN biome's seabed is dropped well below sea_level so there is a
-			# real water volume to dive into. The drop scales the deeper the noise dips, so the
-			# floor is bowl-shaped rather than a flat slab. Non-ocean columns are unchanged.
-			if biome == BiomeMap.Biome.OCEAN:
-				surface_y = sea_level - OCEAN_FLOOR_DEPTH + int(noise_val * OCEAN_FLOOR_RELIEF)
+			# Solid terrain top for this column (ocean seabed is dropped, see _surface_top_for).
+			var surface_y: int = _surface_top_for(x, z, biome)
+
+			# Does this column hold OCEAN water? Only OCEAN-biome columns flood to sea_level
+			# (Property B is then guaranteed by the land-rim berm below). Non-ocean depressions
+			# that dip below sea_level stay DRY (Property A): the player can dig a channel into
+			# them and let the FluidSim flood them for fun. We do NOT fill them with water here.
+			var is_water: bool = (biome == BiomeMap.Biome.OCEAN) and (surface_y < sea_level)
 
 			var surface_id: int = _surface_block_for(biome)
 
@@ -294,18 +293,58 @@ func _generate_base_terrain(voxel_tool: VoxelToolMultipassGenerator) -> void:
 					voxel_id = _underground_block_for(biome, depth_below_surface)
 				voxel_tool.set_voxel(Vector3i(x, y, z), voxel_id)
 
-			# Sea-level flood (QA #6 — eliminate free-standing water "walls"). ANY column whose
-			# solid surface is below sea_level is flooded with water up to sea_level, regardless
-			# of biome — not just OCEAN columns. Two adjacent sub-sea-level columns therefore
-			# share the SAME water top (sea_level), so there is never a vertical step between two
-			# water columns: the only vertical water faces left are where water meets a HIGHER
-			# land column (a natural shoreline, not a free-standing wall). This also lets a
-			# low-lying land basin that dips below sea_level hold a pond, keeping terrain
-			# floodable while killing the exposed mid-air water faces at biome boundaries.
-			if surface_y < sea_level:
+			if is_water:
+				# Flood this OCEAN column with water from just above the seabed up to sea_level.
 				for wy: int in range(surface_y + 1, sea_level + 1):
 					if wy >= area_min.y and wy < area_max.y:
 						voxel_tool.set_voxel(Vector3i(x, wy, z), WATER_ID)
+			else:
+				# LAND-RIM containment (Property B — no exposed vertical water faces). This
+				# column is NOT water. If any of its 4 horizontal neighbours IS an OCEAN water
+				# column AND this column's solid top is BELOW sea_level, then the neighbour's
+				# water would otherwise show a naked vertical face into this lower/dry column.
+				# Raise this boundary column with breakable biome-appropriate LAND up to
+				# sea_level, forming a 1-column berm that contains the water. The berm is the
+				# column's normal surface material (sand on beaches, biome terrain elsewhere) —
+				# a mineable brick, NOT bedrock — so the player can dig through it and let the
+				# ocean flood the dry land behind it (the FluidSim handles flow-on-mine). The dry
+				# low land BEYOND the berm is untouched here, so it stays dry and floodable.
+				if surface_y < sea_level and _has_ocean_water_neighbour(x, z):
+					for ry: int in range(surface_y + 1, sea_level + 1):
+						if ry >= area_min.y and ry < area_max.y:
+							voxel_tool.set_voxel(Vector3i(x, ry, z), surface_id)
+
+
+## Solid terrain top (surface Y) for the column at world (x, z) with the given biome.
+## Pure function of noise + biome — same value from any thread / any chunk, so it can be
+## evaluated for a column's own coords OR for its neighbours' coords (the rim check).
+## OCEAN columns drop the seabed OCEAN_FLOOR_DEPTH below sea_level with OCEAN_FLOOR_RELIEF
+## noise undulation (QA #7 — deep divable oceans); all other biomes use the plain height-map.
+func _surface_top_for(x: int, z: int, biome: BiomeMap.Biome) -> int:
+	var noise_val: float = _noise.get_noise_2d(float(x), float(z))
+	if biome == BiomeMap.Biome.OCEAN:
+		return sea_level - OCEAN_FLOOR_DEPTH + int(noise_val * OCEAN_FLOOR_RELIEF)
+	return int(noise_val * height_amplitude + float(sea_level))
+
+
+## True if the column at world (x, z) is an OCEAN water column — i.e. OCEAN biome whose
+## seabed sits below sea_level (so it is flooded to sea_level in _generate_base_terrain).
+## Pure function of noise + biome; safe to evaluate for neighbour columns.
+func _is_ocean_water_column(x: int, z: int) -> bool:
+	var biome: BiomeMap.Biome = _biome_map.biome_at(float(x), float(z))
+	if biome != BiomeMap.Biome.OCEAN:
+		return false
+	return _surface_top_for(x, z, biome) < sea_level
+
+
+## True if any of the 4 horizontal neighbours (N/S/E/W) of column (x, z) is an OCEAN water
+## column. Used to decide whether a sub-sea-level NON-water column needs a containment berm.
+## Local per-column neighbour lookups only — no cross-chunk voxel reads, fully deterministic.
+func _has_ocean_water_neighbour(x: int, z: int) -> bool:
+	return _is_ocean_water_column(x + 1, z) \
+		or _is_ocean_water_column(x - 1, z) \
+		or _is_ocean_water_column(x, z + 1) \
+		or _is_ocean_water_column(x, z - 1)
 
 
 # ─── Pass 1: mineshaft carving ────────────────────────────────────────────────
