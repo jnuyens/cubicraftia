@@ -42,9 +42,23 @@ const PREFERRED_HEIGHT_M: float = 3.0
 # ─── Default stat constants ───────────────────────────────────────────────────
 # Set in _ready() before super._ready(). Inspector overrides respected if changed.
 const _DEFAULT_MAX_HP: int = 1
-const _DEFAULT_MOVE_SPEED: float = 3.5
+## Cruise/seek speed. Builder run speed is 4.5 m/s (builder.gd move_speed); the bat must be
+## escapable, so its cruise sits BELOW the builder so a running player pulls away over distance.
+## (v1.1 QA: bat cruised at 3.5 but dived at move_speed*1.5 = 5.25 > builder, so it was
+## impossible to outrun. Cruise lowered to 3.0 and the dive multiplier cut — see ATTACK_DIVE_MULT.)
+const _DEFAULT_MOVE_SPEED: float = 3.0
 const _DEFAULT_ATTACK_DAMAGE: int = 1
 const _DEFAULT_DETECT_RADIUS: float = 10.0
+
+## Vampire-variant cruise speed (faster + tougher per DOCS §5.2), still under builder run
+## speed so the player can break line and escape. (Was 5.0 = uncatchable.)
+const _VAMPIRE_MOVE_SPEED: float = 3.8
+
+## Swoop-dive speed multiplier applied to move_speed in ATTACK. Kept low enough that the
+## brief dive peak stays at/under builder run speed (3.0*1.2=3.6 regular, 3.8*1.2=4.56
+## vampire) so the dive can graze the player but a sustained run still escapes — especially
+## with the post-hit recoil pause that follows every landed swoop.
+const ATTACK_DIVE_MULT: float = 1.2
 
 ## Variant: "regular" | "vampire". Set by main_scene.spawn_hostile_mob when kind="bat_vampire".
 @export var variant: String = "regular"
@@ -81,7 +95,7 @@ func _ready() -> void:
 	# Apply variant overrides.
 	if variant == "vampire":
 		max_hp = 2
-		move_speed = 5.0
+		move_speed = _VAMPIRE_MOVE_SPEED
 	super._ready()
 	# Apply HP carry-over from vampire transform if set before _ready().
 	if _hp_override > 0:
@@ -198,7 +212,7 @@ func _process_attack(_delta: float) -> void:
 
 	# Dive toward the target.
 	var to_target: Vector3 = (_swoop_target - global_position).normalized()
-	velocity = to_target * move_speed * 1.5
+	velocity = to_target * move_speed * ATTACK_DIVE_MULT
 
 	# On contact (or close enough): damage builder + reset to SEEK.
 	var dist: float = global_position.distance_to(builder.global_position)
