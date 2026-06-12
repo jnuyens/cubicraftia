@@ -26,7 +26,7 @@
 ;   - StudGrid (Plan 05): sparse stud-grid for placed bricks
 ;   - BrickRenderer (Plan 05): MultiMeshInstance3D for GPU-batched brick rendering
 
-[gd_scene load_steps=24 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="PackedScene" path="res://src/world/terrain.tscn" id="1_terrain"]
 [ext_resource type="PackedScene" path="res://src/builder/builder.tscn" id="2_builder"]
@@ -42,6 +42,7 @@
 [ext_resource type="PackedScene" path="res://src/ui/hp_bar.tscn" id="12_hp_bar"]
 [ext_resource type="PackedScene" path="res://src/ui/death_screen.tscn" id="13_death_screen"]
 [ext_resource type="PackedScene" path="res://src/ui/inventory_slide_in_sidebar.tscn" id="14_inventory_slide_in"]
+[ext_resource type="PackedScene" path="res://src/ui/compass.tscn" id="15_compass"]
 
 ; ─── Sky shader material (procedural sky bound to sky_procedural.gdshader) ────
 ; day_progress = 0.5 initial (mid-day). main_scene.gd updates per-frame.
@@ -218,6 +219,10 @@ offset_bottom = -160.0
 ; Crosshair (Plan 02-09): 12×12px + cross at screen centre, #F1F0EA with navy drop-shadow.
 ; Hidden on mobile when palette bottom sheet expands (mobile_overlay.gd manages visibility).
 [node name="Crosshair" parent="UI" instance=ExtResource("11_crosshair")]
+
+; Compass (top-centre): scrolling N/E/S/W heading strip. compass.gd reads the
+; local builder's yaw each frame and hides itself when no builder exists yet.
+[node name="Compass" parent="UI" instance=ExtResource("15_compass")]
 
 ; ─── RainVignette (Plan 02-14): subtle full-screen overlay when raining ───────
 ; Colour = #1B2C56 at 0.08α per UI-SPEC.md "Surface (rain overlay)".
