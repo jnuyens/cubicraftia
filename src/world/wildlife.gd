@@ -798,6 +798,14 @@ func _anim_lod_should_skip() -> bool:
 ## (the TripoSR art is stored in vertex colours but hidden behind a white albedo) and
 ## scale it to a believable per-creature height regardless of the mesh's native size.
 func _normalise_creature_mesh(root: Node3D) -> void:
+	# Underwater shark/whale/etc. "flickering dark halo" fix: EVERY creature .glb imports with a
+	# DOUBLE-SIDED material (cull_mode == CULL_DISABLED). On a closed solid mesh that renders the
+	# back-faces too, so at thin features (shark fins/tail) and silhouette edges the front and back
+	# faces z-fight — a flicker that the underwater fog tints into a dark halo around the creature.
+	# Force single-sided (CULL_BACK) on every surface so only the outward faces draw. Applied to
+	# all creatures (they are all closed solids) before any per-branch material work below.
+	_force_backface_culling(root)
+
 	var mi: MeshInstance3D = _find_mesh_instance(root)
 	if mi == null or mi.mesh == null:
 		return
@@ -811,6 +819,7 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 			var mat := StandardMaterial3D.new()
 			mat.vertex_color_use_as_albedo = true
 			mat.roughness = 1.0
+			mat.cull_mode = BaseMaterial3D.CULL_BACK  # single-sided (see _force_backface_culling)
 			mi.set_surface_override_material(s, mat)
 	# Scale by the LARGEST extent so size is correct regardless of orientation.
 	var sz: Vector3 = mesh.get_aabb().size
@@ -872,6 +881,34 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 	mi.transform = Transform3D(basis, off)
 	root.rotation = Vector3.ZERO
 	root.scale = Vector3.ONE
+
+
+## Force single-sided (CULL_BACK) rendering on every surface of a creature mesh subtree, fixing
+## the underwater "flickering dark halo" z-fight. The creature .glb assets all import with a
+## DOUBLE-SIDED material (cull_mode == CULL_DISABLED): on a closed solid that also draws the
+## inward-facing back-faces, which z-fight with the front-faces at thin/silhouette features and
+## read as a dark, flickering edge once the underwater fog tints them. We DUPLICATE each imported
+## material (so we never mutate the shared, cached resource that other instances share) and flip
+## only its cull_mode, preserving the texture / normal map / all other properties. Surfaces whose
+## material this script later overrides (the vertex-colour art branch) set CULL_BACK themselves.
+func _force_backface_culling(root: Node3D) -> void:
+	var stack: Array = [root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+			var mi := node as MeshInstance3D
+			var mesh: Mesh = mi.mesh
+			for s: int in mesh.get_surface_count():
+				# Prefer an already-set override; else the mesh's own surface material.
+				var src: Material = mi.get_surface_override_material(s)
+				if src == null:
+					src = mesh.surface_get_material(s)
+				if src is BaseMaterial3D:
+					var bm := (src as BaseMaterial3D).duplicate() as BaseMaterial3D
+					bm.cull_mode = BaseMaterial3D.CULL_BACK
+					mi.set_surface_override_material(s, bm)
+		for child: Node in node.get_children():
+			stack.append(child)
 
 
 ## Merged AABB (in `root`'s local space) of every MeshInstance3D in the subtree —
