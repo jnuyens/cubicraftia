@@ -270,6 +270,15 @@ const _BOB_SPEED: float = 0.8
 ## Drift cycle speed (radians/second).
 const _DRIFT_SPEED: float = 0.35
 
+## Always-on swim-yaw wiggle for non-rigged WATER creatures (dolphin, manta, turtle, whales,
+## squid, ...): a gentle side-to-side sweep of the nose ADDED on top of the look_at facing, so
+## the creature reads as actively swimming even when its horizontal drift is slow or fully
+## shoreline-blocked. Rigged/GPU water creatures (orca skinned clip, fish wobble shader) animate
+## themselves and skip this. Amplitude in radians (~6.9°), speed in rad/s — small + slow so it's
+## a lifelike tail-led sway, never a spin.
+const _SWIM_YAW_AMPLITUDE_RAD: float = 0.12
+const _SWIM_YAW_SPEED: float = 1.3
+
 ## Air hover height above spawn Y (metres).
 const _AIR_HOVER_HEIGHT: float = 2.0
 
@@ -1188,12 +1197,20 @@ func _process_water(delta: float) -> void:
 			blocked = true
 
 	if blocked:
-		# Reverse along the loop and stay put this frame (hold the last confirmed water spot if
-		# we have one, else the current position). Next frames swim back the way we came.
+		# Reverse along the loop and stay put HORIZONTALLY this frame (hold the last confirmed
+		# water spot if we have one, else the current XZ). Next frames swim back the way we came.
+		# CRITICAL (dolphin "frozen" fix): always re-apply the vertical bob around whatever XZ we
+		# hold — even when _last_water_pos is still INF (a creature whose every drift candidate is
+		# non-water, e.g. a dolphin penned in a small cove). The old code did NOTHING in that case,
+		# leaving the dolphin/manta/turtle perfectly static. Bobbing on the held XZ keeps it visibly
+		# alive (swimming-in-place) while still respecting shoreline containment. _phase is advanced
+		# every frame in _process(), so this oscillates without any extra state.
 		_drift_dir = -_drift_dir
-		if _last_water_pos.x != INF:
-			global_position = Vector3(_last_water_pos.x,
-				_spawn_origin.y + sin(_phase) * _BOB_AMPLITUDE, _last_water_pos.z)
+		var hold_xz: Vector3 = (
+			_last_water_pos if _last_water_pos.x != INF
+			else Vector3(global_position.x, 0.0, global_position.z))
+		global_position = Vector3(hold_xz.x,
+			_spawn_origin.y + sin(_phase) * _BOB_AMPLITUDE, hold_xz.z)
 	else:
 		_drift_phase = candidate_phase
 		global_position = Vector3(candidate.x,
@@ -1213,6 +1230,16 @@ func _process_water(delta: float) -> void:
 		var look_target: Vector3 = global_position + motion_dir.normalized()
 		look_target.y = global_position.y
 		look_at(look_target, Vector3.UP)
+
+	# Always-on swim-yaw wiggle (dolphin "clearly alive" fix): for non-rigged water creatures
+	# (those driven by the procedural fallback — dolphin/manta/turtle/whales/squid/...), add a
+	# gentle side-to-side nose sweep ON TOP of the look_at facing. This guarantees visible motion
+	# even when the horizontal drift is slow or shoreline-blocked (where look_at barely changes).
+	# Rigged/GPU water creatures (orca skinned clip, fish wobble shader) have _proc_anim == null,
+	# so they keep their own animation untouched. _phase is the shared, per-frame-advanced bob
+	# accumulator; offsetting by _drift_phase decorrelates the wiggle from the bob.
+	if _proc_anim != null:
+		rotation.y += sin(_phase * (_SWIM_YAW_SPEED / _BOB_SPEED) + _drift_phase) * _SWIM_YAW_AMPLITUDE_RAD
 
 	# Phase 8: procedural rock (typed wobble fish animate on the GPU — no work here).
 	if _proc_anim != null and not _anim_lod_should_skip():
