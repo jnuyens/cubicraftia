@@ -92,8 +92,12 @@ func _load_base_pack() -> void:
 			continue
 		var glb_path := "res://assets/meshes/" + def.brick_id + ".glb"
 		if not ResourceLoader.exists(glb_path):
-			push_warning("BrickRegistry: no .glb for '%s' at '%s' — mesh stays null." % [
-				def.brick_id, glb_path])
+			# Item/drop bricks (tools, food, mob drops) intentionally ship no companion
+			# mesh; they render from a 2D icon or a palette-tint placeholder. Only flag a
+			# brick with NO visual fallback at all (no icon AND no natural-colour tint).
+			if def.icon_path == "" and def.natural_colour_token < 0:
+				push_warning("BrickRegistry: '%s' has no .glb (%s), no icon, and no colour tint; it will be invisible." % [
+					def.brick_id, glb_path])
 			continue
 		var packed := load(glb_path)
 		if not packed is PackedScene:
