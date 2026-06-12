@@ -150,8 +150,14 @@ var _processed_village_chunks: Dictionary = {}
 var _village_npc_count: int = 0
 const _VILLAGE_NPC_GLOBAL_CAP: int = 14
 ## Villagers beyond this distance (m) from the builder are culled (their chunk is re-armed so
-## they respawn if the player returns). Comfortably past the streaming radius.
-const _VILLAGE_NPC_DESPAWN_DIST_M: float = 120.0
+## they respawn if the player returns). MUST exceed the pre-stamp radius (_PRE_STAMP_RADIUS_M
+## = 160 m), because a village whose 128 m blueprint cell intersects a pre-stamped chunk can
+## anchor its villagers anywhere in that cell — up to ~240 m from the spawn point. At the old
+## 120 m the FIRST cull pass immediately freed every pre-stamped villager (the village near
+## seed-1234 spawn anchors at ~244 m), so the player saw the "14 pre-stamped" villagers vanish
+## before reaching them — net zero people in the world (BUG 4). 260 m comfortably covers the
+## pre-stamp radius plus a full village footprint; the global cap (14) still bounds the live set.
+const _VILLAGE_NPC_DESPAWN_DIST_M: float = 260.0
 
 ## FoliageSpawner helper — static methods only; no instantiation needed.
 const _FoliageSpawnerScript := preload("res://src/world/foliage_spawner.gd")
