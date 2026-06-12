@@ -493,6 +493,10 @@ var _proc_anim: ProceduralCreatureAnimator = null
 ## When set, the rigged walk clip plays while moving; idle swaps to the non-rigged mesh.
 var _skinned_anim: AnimationPlayer = null
 
+## Skinned walk GLB awaiting the one-frame-deferred posed-skeleton scale+ground
+## (see _setup_skinned_glb / _ground_skinned_to_target). Null for non-skinned creatures.
+var _rigged_glb_ref: Node3D = null
+
 ## Name of the looping walk clip on _skinned_anim (resolved at setup).
 var _skinned_walk_name: String = ""
 
@@ -707,41 +711,19 @@ func _setup_skinned_glb(host: Node3D) -> void:
 		return
 	host.add_child(glb)
 
-	# Scale + ground EXACTLY like the static mesh (_normalise_creature_mesh) so the rigged
-	# walk visual and the idle static mesh are the SAME size and sit at the SAME height (QA:
-	# "the still giraffe is smaller than the moving one"). Use the MESH subtree bounds, NOT
-	# the skeleton bone-span — Meshy "Unreal Take" rigs carry a root bone at the armature
-	# origin that inflates the bone-span AABB and shrank the model.
-	var ab: AABB = _subtree_local_aabb(glb)
-	var target_h: float = _TARGET_HEIGHT.get(kind, _TARGET_HEIGHT_DEFAULT)
-	# Match the idle static mesh's RENDERED HEIGHT, not the largest extent. The walk GLB and
-	# the static idle mesh are different source assets with different proportions, so scaling
-	# each by maxf(x,y,z) makes the "winning" axis differ (the walk rig's length vs the static
-	# mesh's height), which rendered the two at different sizes. _mesh_root is already
-	# normalised (_setup_land runs _normalise_creature_mesh before _setup_animator), so its
-	# upright-Y extent IS the idle rendered height; scale the walk GLB's height to equal it.
-	# Fallback (no static mesh): scale by the walk GLB's own upright height toward target_h —
-	# _TARGET_HEIGHT means HEIGHT (see its doc), which is still correct without maxf.
-	var idle_height: float = 0.0
-	if _mesh_root != null:
-		idle_height = _subtree_local_aabb(_mesh_root).size.y
-	var walk_height: float = maxf(ab.size.y, 0.001)
-	var sc: float
-	if idle_height > 0.001:
-		sc = idle_height / walk_height
-	else:
-		sc = target_h / walk_height
-	glb.scale = Vector3.ONE * sc
-
 	# Facing: Meshy meshes are authored +Z; yaw 180° makes the rig lead head-first (the body's
 	# look_at points -Z at the walk dir), matching _normalise_creature_mesh's flip.
 	glb.rotation.y = PI
 
-	# Ground feet at the spawn surface (entity origin y=0), NOT a -0.45 capsule sink — mirrors
-	# the static land path so walk and idle align vertically. 180° yaw maps centre to +center.
-	var center: Vector3 = ab.get_center() * sc
-	var min_y: float = ab.position.y * sc
-	glb.position = Vector3(center.x, -min_y - _GROUND_SETTLE, center.z)
+	# Scale + ground are DEFERRED one frame to _ground_skinned_to_target(): these skinned rigs
+	# render at a height that the pre-skin mesh.get_aabb() does NOT reflect (it is the tiny
+	# bind-pose envelope — giraffe is literally ~0.003 m, sheep ~0.48 m), so scaling by it made
+	# the walk visual a fraction of the idle mesh's size ("creatures shrink when moving", BUG 1).
+	# The robust signal is the POSED-skeleton bounds (the same measure hostile_mob / village_npc
+	# use for their rigged GLBs): it captures the armature import-scale and the rig's authored
+	# up-axis, so the rendered size is correct for every rig. Deferred so the Skeleton3D is
+	# in-tree and posed before we measure it. _rigged_glb_ref carries the node to the deferred fn.
+	_rigged_glb_ref = glb
 
 	# Wire the AnimationPlayer + walk clip. Loop the clip so it cycles while moving; start
 	# PAUSED so idle shows the rest pose (the asset ships no separate idle clip).
@@ -766,6 +748,77 @@ func _setup_skinned_glb(host: Node3D) -> void:
 	glb.visible = false                                                      # spawn idle → static shows
 	if _mesh_root != null:
 		_mesh_root.visible = true
+
+	# Scale + ground from the POSED skeleton, deferred one frame so the Skeleton3D is in-tree
+	# and posed (its rest pose suffices — the posed span is constant across the walk clip).
+	call_deferred("_ground_skinned_to_target")
+
+
+## Deferred (one frame) scale + ground for the skinned walk GLB (BUG 1 fix). Measures the
+## posed-skeleton bounds in the rig-root's local frame (the bbox of every bone origin — this
+## reflects what the rig actually RENDERS at, unlike the degenerate pre-skin mesh.get_aabb(),
+## which is ~0.003 m for the giraffe and an inconsistent fraction of the true size for the rest).
+##
+## Scale so the rig's posed HEIGHT (Y span) equals the idle static mesh's rendered height. The
+## idle _mesh_root is already normalised to _TARGET_HEIGHT by _normalise_creature_mesh, so its
+## rendered Y is the on-screen height we must match — equalising the two heights is exactly what
+## kills the "creatures shrink when moving" pop (BUG 1). Matching HEIGHT-to-HEIGHT (not max-extent
+## or a raw target) is robust to each rig's authored up-axis and proportions: a long flat scorpion
+## or a tall giraffe both end up the same rendered height as their idle mesh. Fallback (no static
+## mesh): scale the posed Y toward _TARGET_HEIGHT directly. Then ground the lowest posed bone at
+## the spawn surface (entity origin y=0). Mirrors hostile_mob / village_npc rigged-grounding shape.
+func _ground_skinned_to_target() -> void:
+	var glb: Node3D = _rigged_glb_ref
+	if glb == null or not is_instance_valid(glb):
+		return
+	var skel := glb.find_child("Skeleton3D", true, false) as Skeleton3D
+	var target_h: float = _TARGET_HEIGHT.get(kind, _TARGET_HEIGHT_DEFAULT)
+	# Reset prior scale so the posed-bounds measurement is in the rig's native units.
+	glb.scale = Vector3.ONE
+	# Apply the WALK clip's pose before measuring: a rig's bind/rest pose can span a very
+	# different height than its animated walk pose (the giraffe's bind pose stretches the neck
+	# fully up, but the walk clip holds it forward — so a rest-pose measurement scaled the
+	# walking giraffe to ~half height). Seeking the clip to frame 0 deforms the skeleton into
+	# the pose the player actually sees while it walks, so the scale matches the on-screen size.
+	if _skinned_anim != null and _skinned_walk_name != "":
+		_skinned_anim.play(_skinned_walk_name)
+		_skinned_anim.seek(0.0, true)
+		_skinned_anim.pause()
+	var ab: AABB
+	if skel != null and skel.get_bone_count() > 0:
+		ab = _posed_skeleton_aabb(glb, skel)
+	else:
+		# No skeleton (shouldn't happen for these rigs) — fall back to the mesh subtree bounds.
+		ab = _subtree_local_aabb(glb)
+	# Target on-screen HEIGHT = the idle static mesh's rendered Y (already scaled to _TARGET_HEIGHT
+	# by _normalise_creature_mesh); fall back to _TARGET_HEIGHT when no static idle mesh exists.
+	var idle_rendered_h: float = 0.0
+	if _mesh_root != null and is_instance_valid(_mesh_root):
+		idle_rendered_h = _subtree_local_aabb(_mesh_root).size.y * _mesh_root.scale.y
+	var want_h: float = idle_rendered_h if idle_rendered_h > 0.001 else target_h
+	var posed_y: float = maxf(ab.size.y, 0.0001)
+	var sc: float = want_h / posed_y
+	glb.scale = Vector3.ONE * sc
+	# Ground feet at the spawn surface (entity origin y=0), settled a hair so they rest ON the
+	# surface. 180° yaw (set in _setup_skinned_glb) negates x,z, so the posed centre maps to +center.
+	var center: Vector3 = ab.get_center() * sc
+	var min_y: float = ab.position.y * sc
+	glb.position = Vector3(center.x, -min_y - _GROUND_SETTLE + float(_GROUND_LIFT.get(kind, 0.0)), center.z)
+
+
+## Posed-skeleton AABB (in `rig_root`'s local frame): the bbox of every bone's global-pose
+## origin, transformed back into the rig root. Unlike the pre-skin mesh.get_aabb(), this reflects
+## the size the rig actually RENDERS at (the armature import-scale is baked into the bone poses).
+## Mirrors hostile_mob._posed_skeleton_aabb / village_npc._posed_skeleton_aabb.
+func _posed_skeleton_aabb(rig_root: Node3D, skel: Skeleton3D) -> AABB:
+	var inv: Transform3D = rig_root.global_transform.affine_inverse()
+	var lo := Vector3(INF, INF, INF)
+	var hi := -lo
+	for i: int in range(skel.get_bone_count()):
+		var p: Vector3 = inv * (skel.global_transform * skel.get_bone_global_pose(i).origin)
+		lo = lo.min(p)
+		hi = hi.max(p)
+	return AABB(lo, hi - lo)
 
 
 ## Merged SKELETON-bone-span AABB (in `root`'s local space) for a skinned mesh, mirroring
