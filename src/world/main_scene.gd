@@ -2382,19 +2382,50 @@ func _eval_structure_chunk(key: Vector2i, cx: int, cz: int, ccx: float, ccz: flo
 
 ## The VoxelTerrain's VoxelTool (duck-typed; null when the voxel module/terrain is absent, e.g.
 ## headless tests). Used to gate structure spawning on terrain readiness.
+##
+## QA #2 fix: the terrain node in this project is named "Terrain" (terrain.tscn root), NOT
+## "VoxelTerrain" — the old lookup returned null every time, so _terrain_ready_at degenerated to
+## "always true" and structures spawned over not-yet-generated ground (the floating bug). Look up
+## "Terrain" first, keep "VoxelTerrain" as a fallback for any scene that does use that name.
 func _structure_voxel_tool() -> Object:
-	var vterrain: Node = get_node_or_null("VoxelTerrain")
+	var vterrain: Node = get_node_or_null("Terrain")
+	if vterrain == null:
+		vterrain = get_node_or_null("VoxelTerrain")
 	if vterrain == null or not vterrain.has_method("get_voxel_tool"):
 		return null
 	return vterrain.get_voxel_tool()
 
 
-## True if the terrain voxels around `pos` are loaded (so a structure placed there won't float over
-## not-yet-streamed ground). Defaults to true when no VoxelTool is available (no spawn regression).
+## True only when the terrain under `pos` is BOTH (a) generated as voxel data AND (b) meshed with
+## baked collision at this location — so a structure is never revealed floating over ground that
+## has not streamed/meshed yet, even at far LOD (QA #2).
+##
+## Two independent checks, both required:
+##   1. is_area_editable() — the voxel DATA for the footprint column exists (generation done).
+##   2. a downward raycast from above the footprint hits terrain collision (layer 1) — collision
+##      is only baked AFTER the chunk meshes, so a hit is a reliable "meshed at this LOD" proxy.
+##      At far LOD the data can be present long before the mesh bakes; check (1) alone passed too
+##      early and let structures pop in over flat/empty ground. The ray closes that gap.
+##
+## Defaults to permissive (true) only when neither a VoxelTool nor a physics space is available
+## (headless tests / no terrain) so the spawn path has no regression there.
 func _terrain_ready_at(vt: Object, pos: Vector3) -> bool:
-	if vt == null or not vt.has_method("is_area_editable"):
+	# (1) Voxel data present for the footprint.
+	if vt != null and vt.has_method("is_area_editable"):
+		if not vt.is_area_editable(AABB(pos - Vector3(2.0, 4.0, 2.0), Vector3(4.0, 8.0, 4.0))):
+			return false
+	# (2) Collision baked under the footprint (mesh exists). Skip if no physics space (tests).
+	if not is_inside_tree():
 		return true
-	return vt.is_area_editable(AABB(pos - Vector3(2.0, 4.0, 2.0), Vector3(4.0, 8.0, 4.0)))
+	var space := get_world_3d().direct_space_state if get_world_3d() != null else null
+	if space == null:
+		return true
+	# Ray from well above the structure base down through it — a hit means the chunk meshed and
+	# baked collision here. `pos.y` is the (slightly embedded) base, so start a few m higher.
+	var q := PhysicsRayQueryParameters3D.create(
+		pos + Vector3(0.0, 6.0, 0.0), pos - Vector3(0.0, 3.0, 0.0))
+	q.collision_mask = 1
+	return not space.intersect_ray(q).is_empty()
 
 
 ## Get the current world session ID.
