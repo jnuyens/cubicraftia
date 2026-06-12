@@ -1003,11 +1003,17 @@ func _find_mesh_instance(node: Node) -> MeshInstance3D:
 
 # ─── Collision-based grounding ────────────────────────────────────────────────
 
-## World-space minimum-Y of every CURRENTLY-VISIBLE MeshInstance3D under `root` — i.e.
-## the true foot level of whatever the player actually sees this frame (the rigged walk
-## GLB while moving, or the static idle mesh while idling). Uses each mesh's global
-## transform so it is correct regardless of the mesh's own origin, proportions or scale.
-## Returns INF when no visible mesh is found (nothing to ground against).
+## World-space minimum-Y of whatever the player actually sees this frame (the rigged walk
+## GLB while moving, or the static idle mesh while idling) — i.e. its true foot level. Used
+## by _ground_to_collision to drop the body so the feet rest on the meshed terrain.
+##
+## SKINNED rigs get special handling: their MeshInstance3D carries the PRE-SKIN bind-pose
+## mesh.get_aabb() (~0.003 m for the giraffe; an arbitrary fraction of the true size for the
+## rest), so using that box's min-Y gave a wildly wrong foot level WHILE WALKING and buried /
+## floated the moving creature (BUG 2). For any visible Skeleton3D we instead use the posed
+## bone envelope's world-min-Y, which tracks the real rendered feet. A static (un-skinned)
+## MeshInstance3D — the idle _mesh_root — keeps the reliable mesh-AABB min-Y.
+## Returns INF when nothing visible is found (nothing to ground against).
 func _visible_mesh_min_world_y(root: Node3D) -> float:
 	if root == null:
 		return INF
@@ -1018,6 +1024,16 @@ func _visible_mesh_min_world_y(root: Node3D) -> float:
 		# Skip subtrees hidden via a hidden ancestor (idle/walk visibility swap) so we
 		# ground against the visual that is actually on screen, not the hidden twin.
 		if node is Node3D and not (node as Node3D).visible:
+			continue
+		if node is Skeleton3D:
+			# Skinned rig: the bone-pose envelope is the trustworthy foot level (the child
+			# MeshInstance3D's bind-pose AABB is degenerate for these Meshy rigs).
+			var sk := node as Skeleton3D
+			for i: int in range(sk.get_bone_count()):
+				var bw: Vector3 = sk.global_transform * sk.get_bone_global_pose(i).origin
+				lowest = minf(lowest, bw.y)
+			# Don't descend into the skeleton's MeshInstance3D children — their degenerate
+			# AABB would re-raise the floor. The bone envelope already covers the rig.
 			continue
 		if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
 			var mi := node as MeshInstance3D
