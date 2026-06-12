@@ -2360,22 +2360,49 @@ func _eval_structure_chunk(key: Vector2i, cx: int, cz: int, ccx: float, ccz: flo
 		_ss[key] = {"state": "empty"}
 		return
 	var raw: Vector3 = pick.get("pos", Vector3.ZERO)
-	# Ground to the LOWEST terrain under the structure's footprint (sample centre + corners)
-	# so no edge floats over a slope; embed a little so the base sits in the ground, not on it.
-	const _FOOT: float = 5.0  # ~half a structure footprint
-	var sy: float = _terrain_surface_at(raw.x, raw.z)
-	for off: Vector2 in [Vector2(-_FOOT, -_FOOT), Vector2(_FOOT, -_FOOT), Vector2(-_FOOT, _FOOT), Vector2(_FOOT, _FOOT)]:
-		sy = minf(sy, _terrain_surface_at(raw.x + off.x, raw.z + off.y))
-	# Never place a structure underwater / half-submerged: if the lowest ground here is below
-	# sea level, skip it (this is what put lighthouses + igloos sticking out of the ocean).
-	const _SEA_LEVEL: float = 12.0
-	if sy < _SEA_LEVEL:
-		_ss[key] = {"state": "empty"}
-		return
-	sy -= 0.6  # small embed so footprint edges rest in the terrain rather than floating
 	var id: String = pick.get("id", "")
+	var placement: String = _StructureSpawnerScript.placement_for(id)
+	const _SEA_LEVEL: float = 12.0
+	const _FOOT: float = 5.0  # ~half a structure footprint
+
+	# Ground to the LOWEST SOLID surface under the structure's footprint (centre + corners) so no
+	# edge floats over a slope. _seabed_surface_at is OCEAN-aware (deepened seabed) so underwater
+	# structures land on the real seabed (QA #7), not the old shallow height.
+	var sy: float = _seabed_surface_at(raw.x, raw.z)
+	for off: Vector2 in [Vector2(-_FOOT, -_FOOT), Vector2(_FOOT, -_FOOT), Vector2(-_FOOT, _FOOT), Vector2(_FOOT, _FOOT)]:
+		sy = minf(sy, _seabed_surface_at(raw.x + off.x, raw.z + off.y))
+
+	# Per-placement grounding (QA #3/#4):
+	var base_y: float
+	match placement:
+		"underwater":
+			# Shipwreck / underwater ruin: REQUIRE the seabed to be below sea level (truly
+			# submerged), then rest the base ON the seabed. Skip if the spot is actually dry land.
+			if sy >= _SEA_LEVEL:
+				_ss[key] = {"state": "empty"}
+				return
+			base_y = sy  # sits on the seabed; the water column above hides the join
+		"beach":
+			# Sandcastle: only at the sand/water EDGE — the lowest footprint ground must sit in a
+			# narrow coastal band around the waterline (a beach), not deep underwater nor high
+			# inland. Place its base just above the waterline so it stands on wet sand.
+			if sy < _SEA_LEVEL - 3.0 or sy > _SEA_LEVEL + 2.0:
+				_ss[key] = {"state": "empty"}
+				return
+			base_y = maxf(sy, _SEA_LEVEL)
+		_:  # "land"
+			# Never strand a land structure underwater / half-submerged (this is what put
+			# lighthouses + igloos sticking out of the ocean before).
+			if sy < _SEA_LEVEL:
+				_ss[key] = {"state": "empty"}
+				return
+			# Big landmarks (castles, large ruins) sit cleanly ON the surface — no embed, so the
+			# castle is not half-buried (QA #3). Generic props keep the small embed so their
+			# footprint edges rest in the terrain instead of floating.
+			base_y = sy if _WorldStructureScript.is_no_embed(id) else sy - 0.6
+
 	_ss[key] = {
-		"state": "want", "id": id, "pos": Vector3(raw.x, sy, raw.z),
+		"state": "want", "id": id, "pos": Vector3(raw.x, base_y, raw.z),
 		"path": "res://assets/meshes/structures/" + id + ".glb", "node": null,
 	}
 
@@ -2483,6 +2510,25 @@ func _terrain_surface_at(x: float, z: float) -> float:
 	var noise_val: float = _surface_noise.get_noise_2d(float(floori(x)), float(floori(z)))
 	var surface_y: int = int(noise_val * 8.0 + 12.0)  # height_amplitude 8, sea_level 12
 	return float(surface_y) + 1.0
+
+
+## SOLID-ground (seabed) surface height at (x, z), accounting for the OCEAN floor deepening that
+## multipass_generator applies to OCEAN-biome columns (QA #7). For land columns this equals
+## _terrain_surface_at; for OCEAN columns it returns the DEEPENED seabed top, so underwater
+## structures rest on the real seabed rather than floating at the old shallow height. Mirrors
+## multipass_generator._generate_base_terrain's ocean branch exactly.
+func _seabed_surface_at(x: float, z: float) -> float:
+	if _biome_map == null or not _biome_map.has_method("biome_at"):
+		return _terrain_surface_at(x, z)
+	if int(_biome_map.biome_at(x, z)) != int(BiomeMap.Biome.OCEAN):
+		return _terrain_surface_at(x, z)
+	# Ensure the noise instance exists (built lazily by _terrain_surface_at).
+	if _surface_noise == null:
+		_terrain_surface_at(x, z)
+	# OCEAN seabed: sea_level - OCEAN_FLOOR_DEPTH(9) + noise*OCEAN_FLOOR_RELIEF(4); top face +1.
+	var noise_val: float = _surface_noise.get_noise_2d(float(floori(x)), float(floori(z)))
+	var seabed_y: int = 12 - 9 + int(noise_val * 4.0)  # sea_level - OCEAN_FLOOR_DEPTH + relief
+	return float(seabed_y) + 1.0
 
 
 # ─── Plan 02-07: Structure pre-stamp (do not modify from 02-08.5) ─────────────

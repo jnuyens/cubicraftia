@@ -27,9 +27,40 @@ const TARGET_SIZE_M: float = 10.0
 ## model id (file name without .glb).
 const SIZE_OVERRIDE: Dictionary = {
 	"structure_1_03": 28.0,  # OCEAN lighthouse — big + walkable to the top (v1.1 QA #18)
-	"structure_3_02": 16.0,  # OCEAN landmark
 	"structure_ice_castle": 22.0,  # SNOW ice castle landmark (wired in v1.1)
+	# QA #3 — grey castles read too small + half-buried at base 10 m. Bump them to big
+	# landmark size; the ground-snap fix (no embed for "big" landmarks, see _ready) lifts
+	# them onto the surface instead of sinking them.
+	"structure_2_03": 20.0,  # JUNGLE grey twin-tower castle
+	"structure_2_05": 22.0,  # JUNGLE grey castle complex
+	"structure_2_02": 14.0,  # JUNGLE overgrown pyramid ruin
+	# QA #4 — new individual landmarks split from the multi-object 3_xx sources, each bigger.
+	"structure_sandcastle":      12.0,  # BEACH sandcastle (bigger, QA #4)
+	"structure_underwater_ruin": 14.0,  # UNDERWATER ruin (bigger, QA #4)
+	"structure_shipwreck":       18.0,  # UNDERWATER shipwreck — big landmark (QA #4)
+	"structure_igloo":           11.0,  # SNOW igloo (QA #4)
+	# QA #5 — houses ~20% bigger (base 10 -> 12). Grassland cottages + the snow stone house.
+	"structure_1_00": 12.0,
+	"structure_1_01": 12.0,
+	"structure_1_02": 12.0,
+	"structure_1_04": 12.0,
+	"structure_1_06": 12.0,
+	"structure_1_08": 12.0,
 }
+
+## Structures that are BIG landmarks (castles, shipwreck, large ruins) whose footprint must
+## sit cleanly ON the surface — they must NOT get the small downward embed the streamer applies
+## to generic props (QA #3: the castle was half-buried). main_scene reads this to skip the
+## embed and ground the base at the true surface for these ids.
+const NO_EMBED: Dictionary = {
+	"structure_2_03": true, "structure_2_05": true, "structure_2_02": true,
+	"structure_ice_castle": true, "structure_sandcastle": true, "structure_igloo": true,
+}
+
+
+## True if `id` is a big landmark that should sit ON the surface with no downward embed (QA #3).
+static func is_no_embed(id: String) -> bool:
+	return NO_EMBED.get(id, false)
 
 ## Structure that the builder can climb (#18). The ocean lighthouse ships with no interior
 ## stairs, so it is tagged "climbable" in _ready and the builder slides up its outer surface
