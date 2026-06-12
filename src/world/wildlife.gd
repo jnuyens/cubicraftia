@@ -270,6 +270,15 @@ const _BOB_SPEED: float = 0.8
 ## Drift cycle speed (radians/second).
 const _DRIFT_SPEED: float = 0.35
 
+## Always-on swim-yaw wiggle for non-rigged WATER creatures (dolphin, manta, turtle, whales,
+## squid, ...): a gentle side-to-side sweep of the nose ADDED on top of the look_at facing, so
+## the creature reads as actively swimming even when its horizontal drift is slow or fully
+## shoreline-blocked. Rigged/GPU water creatures (orca skinned clip, fish wobble shader) animate
+## themselves and skip this. Amplitude in radians (~6.9°), speed in rad/s — small + slow so it's
+## a lifelike tail-led sway, never a spin.
+const _SWIM_YAW_AMPLITUDE_RAD: float = 0.12
+const _SWIM_YAW_SPEED: float = 1.3
+
 ## Air hover height above spawn Y (metres).
 const _AIR_HOVER_HEIGHT: float = 2.0
 
@@ -789,6 +798,14 @@ func _anim_lod_should_skip() -> bool:
 ## (the TripoSR art is stored in vertex colours but hidden behind a white albedo) and
 ## scale it to a believable per-creature height regardless of the mesh's native size.
 func _normalise_creature_mesh(root: Node3D) -> void:
+	# Underwater shark/whale/etc. "flickering dark halo" fix: EVERY creature .glb imports with a
+	# DOUBLE-SIDED material (cull_mode == CULL_DISABLED). On a closed solid mesh that renders the
+	# back-faces too, so at thin features (shark fins/tail) and silhouette edges the front and back
+	# faces z-fight — a flicker that the underwater fog tints into a dark halo around the creature.
+	# Force single-sided (CULL_BACK) on every surface so only the outward faces draw. Applied to
+	# all creatures (they are all closed solids) before any per-branch material work below.
+	_force_backface_culling(root)
+
 	var mi: MeshInstance3D = _find_mesh_instance(root)
 	if mi == null or mi.mesh == null:
 		return
@@ -802,6 +819,7 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 			var mat := StandardMaterial3D.new()
 			mat.vertex_color_use_as_albedo = true
 			mat.roughness = 1.0
+			mat.cull_mode = BaseMaterial3D.CULL_BACK  # single-sided (see _force_backface_culling)
 			mi.set_surface_override_material(s, mat)
 	# Scale by the LARGEST extent so size is correct regardless of orientation.
 	var sz: Vector3 = mesh.get_aabb().size
@@ -863,6 +881,34 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 	mi.transform = Transform3D(basis, off)
 	root.rotation = Vector3.ZERO
 	root.scale = Vector3.ONE
+
+
+## Force single-sided (CULL_BACK) rendering on every surface of a creature mesh subtree, fixing
+## the underwater "flickering dark halo" z-fight. The creature .glb assets all import with a
+## DOUBLE-SIDED material (cull_mode == CULL_DISABLED): on a closed solid that also draws the
+## inward-facing back-faces, which z-fight with the front-faces at thin/silhouette features and
+## read as a dark, flickering edge once the underwater fog tints them. We DUPLICATE each imported
+## material (so we never mutate the shared, cached resource that other instances share) and flip
+## only its cull_mode, preserving the texture / normal map / all other properties. Surfaces whose
+## material this script later overrides (the vertex-colour art branch) set CULL_BACK themselves.
+func _force_backface_culling(root: Node3D) -> void:
+	var stack: Array = [root]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+			var mi := node as MeshInstance3D
+			var mesh: Mesh = mi.mesh
+			for s: int in mesh.get_surface_count():
+				# Prefer an already-set override; else the mesh's own surface material.
+				var src: Material = mi.get_surface_override_material(s)
+				if src == null:
+					src = mesh.surface_get_material(s)
+				if src is BaseMaterial3D:
+					var bm := (src as BaseMaterial3D).duplicate() as BaseMaterial3D
+					bm.cull_mode = BaseMaterial3D.CULL_BACK
+					mi.set_surface_override_material(s, bm)
+		for child: Node in node.get_children():
+			stack.append(child)
 
 
 ## Merged AABB (in `root`'s local space) of every MeshInstance3D in the subtree —
@@ -1188,12 +1234,20 @@ func _process_water(delta: float) -> void:
 			blocked = true
 
 	if blocked:
-		# Reverse along the loop and stay put this frame (hold the last confirmed water spot if
-		# we have one, else the current position). Next frames swim back the way we came.
+		# Reverse along the loop and stay put HORIZONTALLY this frame (hold the last confirmed
+		# water spot if we have one, else the current XZ). Next frames swim back the way we came.
+		# CRITICAL (dolphin "frozen" fix): always re-apply the vertical bob around whatever XZ we
+		# hold — even when _last_water_pos is still INF (a creature whose every drift candidate is
+		# non-water, e.g. a dolphin penned in a small cove). The old code did NOTHING in that case,
+		# leaving the dolphin/manta/turtle perfectly static. Bobbing on the held XZ keeps it visibly
+		# alive (swimming-in-place) while still respecting shoreline containment. _phase is advanced
+		# every frame in _process(), so this oscillates without any extra state.
 		_drift_dir = -_drift_dir
-		if _last_water_pos.x != INF:
-			global_position = Vector3(_last_water_pos.x,
-				_spawn_origin.y + sin(_phase) * _BOB_AMPLITUDE, _last_water_pos.z)
+		var hold_xz: Vector3 = (
+			_last_water_pos if _last_water_pos.x != INF
+			else Vector3(global_position.x, 0.0, global_position.z))
+		global_position = Vector3(hold_xz.x,
+			_spawn_origin.y + sin(_phase) * _BOB_AMPLITUDE, hold_xz.z)
 	else:
 		_drift_phase = candidate_phase
 		global_position = Vector3(candidate.x,
@@ -1213,6 +1267,16 @@ func _process_water(delta: float) -> void:
 		var look_target: Vector3 = global_position + motion_dir.normalized()
 		look_target.y = global_position.y
 		look_at(look_target, Vector3.UP)
+
+	# Always-on swim-yaw wiggle (dolphin "clearly alive" fix): for non-rigged water creatures
+	# (those driven by the procedural fallback — dolphin/manta/turtle/whales/squid/...), add a
+	# gentle side-to-side nose sweep ON TOP of the look_at facing. This guarantees visible motion
+	# even when the horizontal drift is slow or shoreline-blocked (where look_at barely changes).
+	# Rigged/GPU water creatures (orca skinned clip, fish wobble shader) have _proc_anim == null,
+	# so they keep their own animation untouched. _phase is the shared, per-frame-advanced bob
+	# accumulator; offsetting by _drift_phase decorrelates the wiggle from the bob.
+	if _proc_anim != null:
+		rotation.y += sin(_phase * (_SWIM_YAW_SPEED / _BOB_SPEED) + _drift_phase) * _SWIM_YAW_AMPLITUDE_RAD
 
 	# Phase 8: procedural rock (typed wobble fish animate on the GPU — no work here).
 	if _proc_anim != null and not _anim_lod_should_skip():
