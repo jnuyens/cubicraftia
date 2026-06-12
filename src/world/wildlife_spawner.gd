@@ -92,7 +92,18 @@ const _BIOME_ROSTER: Dictionary = {
 		"arctic_fox", "snow_rabbit", "penguin", "snowy_owl",
 		"reindeer", "snowman"],
 	3: ["monkey", "toucan", "panda"],                              # JUNGLE
-	4: ["elephant", "giraffe", "gnu"],                             # SAVANNAH
+	# SAVANNAH also hosts the DESERT roster (BUG 3): the desert biome is a narrow, rare band
+	# (~5% of the world) that for the default seed sits 780+ m from the spawn point — the player
+	# roams grassland + savannah and never reaches it, so the camel/meerkat/scorpion/vulture/...
+	# desert fauna never spawned even though they are fully wired. Savannah is the nearest arid
+	# biome to spawn (≈ adjacent to spawn) AND shares fauna with the desert (camels, meerkats,
+	# vultures, scorpions, snakes, lizards all read as savannah/arid animals), so folding the
+	# desert roster into savannah surfaces those creatures in a biome the player actually reaches,
+	# without touching biome generation. The DESERT roster (biome 1) is kept as-is for when the
+	# player does travel into a true desert.
+	4: ["elephant", "giraffe", "gnu",                              # SAVANNAH (+ arid/desert fauna)
+		"desert_mouse", "camel", "fennec_fox", "desert_lizard",
+		"scorpion", "meerkat", "rattlesnake", "vulture"],
 	5: ["fish_blue", "fish_orange", "fish_yellow", "orca", "manta", "jellyfish",
 		"dolphin", "turtle_sea", "flamingo", "seagull",          # OCEAN (+ art-wildlife-beach)
 		"shark_great_white", "whale_blue", "whale_sperm", "squid",  # + art-ocean deep-sea set
