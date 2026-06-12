@@ -79,3 +79,7 @@ meshy-upload-queue/
 
 # Rigging experiment scratch (not for vcs)
 rigify-test/
+
+# Raw art-drop inputs (local source, never imported/packed by Godot)
+_drop/*
+!_drop/.gdignore
