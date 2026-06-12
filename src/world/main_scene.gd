@@ -138,6 +138,21 @@ const _StructureSpawnerScript := preload("res://src/world/structure_spawner.gd")
 const _WorldStructureScript := preload("res://src/world/world_structure.gd")
 var _processed_structure_chunks: Dictionary = {}
 
+## Per-chunk dedup for LAZY village-NPC streaming (QA #8 — villagers never appeared because the
+## only NPC spawn was a ±64 m pre-stamp around origin, where seed 1234 has no village biome).
+## The chunk-load dispatcher spawns the deterministic village NPCs wherever the player roams into
+## a village-biome chunk, so walking villagers actually show up in the overworld.
+var _processed_village_chunks: Dictionary = {}
+
+## Live village-NPC count and global cap. Each villager renders a real ~7-8k-vert rigged figure,
+## so the cap keeps the active set within the mobile frame budget; distant ones are culled in
+## _process (see _cull_distant_village_npcs) to free the cap as the player moves on.
+var _village_npc_count: int = 0
+const _VILLAGE_NPC_GLOBAL_CAP: int = 14
+## Villagers beyond this distance (m) from the builder are culled (their chunk is re-armed so
+## they respawn if the player returns). Comfortably past the streaming radius.
+const _VILLAGE_NPC_DESPAWN_DIST_M: float = 120.0
+
 ## FoliageSpawner helper — static methods only; no instantiation needed.
 const _FoliageSpawnerScript := preload("res://src/world/foliage_spawner.gd")
 
@@ -822,6 +837,11 @@ func _process(delta: float) -> void:
 	if _wildlife_cull_accum >= _WILDLIFE_CULL_INTERVAL_S:
 		_wildlife_cull_accum = 0.0
 		_cull_distant_wildlife()
+		# Cull distant village NPCs on the same cadence (QA #8 — frees the villager cap as the
+		# player roams so new villages they reach can populate).
+		var _b: Node3D = get_node_or_null("Builder") as Node3D
+		if _b != null:
+			_cull_distant_village_npcs(_b.global_position)
 
 	# ─── WATER overhaul (behaviour 4): underwater fog/tint ────────────────────
 	# Sample whether the active camera is submerged (throttled). On a transition
@@ -1611,17 +1631,26 @@ func spawn_starter_chest_and_bed(world_spawn: Vector3) -> void:
 	if bed != null:
 		bed.add_to_group("starter_bed")
 
-	# Decorative "Welcome to Cubicraftia" sign a few metres in front of spawn (+Z), clear of
-	# the chest (+X) and bed (-X) footprints. Ground it at its OWN column surface like the
-	# chest/bed (world_spawn.y is only the origin's height). Face the board back toward spawn
-	# (-Z) so a player at the spawn point reads the text head-on: the sign's text faces local
-	# -Z, so a 180° yaw turns it to look down -Z in world space, i.e. back at the origin.
-	var sign_x: float = world_spawn.x
-	var sign_z: float = world_spawn.z + 3.0
+	# Decorative engraved "Welcome to Cubicraftia" sign-post (welcome_post.glb), placed OFF TO THE
+	# SIDE of the spawn point rather than dead-centre in front of the player — so it greets without
+	# blocking the view down the spawn axis. Offset +X (right) and slightly -Z (behind the spawn
+	# line), clear of the chest (+1 X) and bed (-6 X) footprints. Ground it at its OWN column
+	# surface like the chest/bed (world_spawn.y is only the origin's height).
+	#
+	# Orient the engraving to face back toward the spawn point so a player at spawn can read it by
+	# glancing over. The GLB's boards face local +Z; look_at points local -Z at the target, so we
+	# aim local -Z AWAY from spawn first, then flip 180° so +Z (the engraved face) points at spawn.
+	var sign_offset := Vector3(5.0, 0.0, -2.0)
+	var sign_x: float = world_spawn.x + sign_offset.x
+	var sign_z: float = world_spawn.z + sign_offset.z
 	var sign := _WelcomeSignScript.new() as Node3D
 	add_child(sign)
-	sign.global_position = Vector3(sign_x, _terrain_surface_at(sign_x, sign_z), sign_z)
-	sign.rotation.y = PI
+	var sign_pos := Vector3(sign_x, _terrain_surface_at(sign_x, sign_z), sign_z)
+	sign.global_position = sign_pos
+	# Yaw so the engraved (+Z) face points back at the spawn origin.
+	var to_spawn := Vector2(world_spawn.x - sign_x, world_spawn.z - sign_z)
+	if to_spawn.length() > 0.01:
+		sign.rotation.y = atan2(to_spawn.x, to_spawn.y)
 	sign.add_to_group("starter_welcome_sign")
 
 
@@ -1733,6 +1762,7 @@ func _on_chunk_loaded(chunk_coord: Vector3i) -> void:
 	# it is dispatched immediately.
 	_dispatch_decorations_deferred(chunk_coord, biome)
 	_dispatch_wildlife(chunk_coord, biome)
+	_dispatch_village_npcs(chunk_coord)
 
 
 ## Defer grass/flower decoration spawning by one frame so the chunk's terrain mesh exists before
@@ -2351,41 +2381,99 @@ func _eval_structure_chunk(key: Vector2i, cx: int, cz: int, ccx: float, ccz: flo
 		_ss[key] = {"state": "empty"}
 		return
 	var raw: Vector3 = pick.get("pos", Vector3.ZERO)
-	# Ground to the LOWEST terrain under the structure's footprint (sample centre + corners)
-	# so no edge floats over a slope; embed a little so the base sits in the ground, not on it.
-	const _FOOT: float = 5.0  # ~half a structure footprint
-	var sy: float = _terrain_surface_at(raw.x, raw.z)
-	for off: Vector2 in [Vector2(-_FOOT, -_FOOT), Vector2(_FOOT, -_FOOT), Vector2(-_FOOT, _FOOT), Vector2(_FOOT, _FOOT)]:
-		sy = minf(sy, _terrain_surface_at(raw.x + off.x, raw.z + off.y))
-	# Never place a structure underwater / half-submerged: if the lowest ground here is below
-	# sea level, skip it (this is what put lighthouses + igloos sticking out of the ocean).
-	const _SEA_LEVEL: float = 12.0
-	if sy < _SEA_LEVEL:
-		_ss[key] = {"state": "empty"}
-		return
-	sy -= 0.6  # small embed so footprint edges rest in the terrain rather than floating
 	var id: String = pick.get("id", "")
+	var placement: String = _StructureSpawnerScript.placement_for(id)
+	const _SEA_LEVEL: float = 12.0
+	const _FOOT: float = 5.0  # ~half a structure footprint
+
+	# Ground to the LOWEST SOLID surface under the structure's footprint (centre + corners) so no
+	# edge floats over a slope. _seabed_surface_at is OCEAN-aware (deepened seabed) so underwater
+	# structures land on the real seabed (QA #7), not the old shallow height.
+	var sy: float = _seabed_surface_at(raw.x, raw.z)
+	for off: Vector2 in [Vector2(-_FOOT, -_FOOT), Vector2(_FOOT, -_FOOT), Vector2(-_FOOT, _FOOT), Vector2(_FOOT, _FOOT)]:
+		sy = minf(sy, _seabed_surface_at(raw.x + off.x, raw.z + off.y))
+
+	# Per-placement grounding (QA #3/#4):
+	var base_y: float
+	match placement:
+		"underwater":
+			# Shipwreck / underwater ruin: REQUIRE the seabed to be below sea level (truly
+			# submerged), then rest the base ON the seabed. Skip if the spot is actually dry land.
+			if sy >= _SEA_LEVEL:
+				_ss[key] = {"state": "empty"}
+				return
+			base_y = sy  # sits on the seabed; the water column above hides the join
+		"beach":
+			# Sandcastle: only at the sand/water EDGE — the lowest footprint ground must sit in a
+			# narrow coastal band around the waterline (a beach), not deep underwater nor high
+			# inland. Place its base just above the waterline so it stands on wet sand.
+			if sy < _SEA_LEVEL - 3.0 or sy > _SEA_LEVEL + 2.0:
+				_ss[key] = {"state": "empty"}
+				return
+			base_y = maxf(sy, _SEA_LEVEL)
+		_:  # "land"
+			# Never strand a land structure underwater / half-submerged (this is what put
+			# lighthouses + igloos sticking out of the ocean before).
+			if sy < _SEA_LEVEL:
+				_ss[key] = {"state": "empty"}
+				return
+			# Big landmarks (castles, large ruins) sit cleanly ON the surface — no embed, so the
+			# castle is not half-buried (QA #3). Generic props keep the small embed so their
+			# footprint edges rest in the terrain instead of floating.
+			base_y = sy if _WorldStructureScript.is_no_embed(id) else sy - 0.6
+
 	_ss[key] = {
-		"state": "want", "id": id, "pos": Vector3(raw.x, sy, raw.z),
+		"state": "want", "id": id, "pos": Vector3(raw.x, base_y, raw.z),
 		"path": "res://assets/meshes/structures/" + id + ".glb", "node": null,
 	}
 
 
 ## The VoxelTerrain's VoxelTool (duck-typed; null when the voxel module/terrain is absent, e.g.
 ## headless tests). Used to gate structure spawning on terrain readiness.
+##
+## QA #2 fix: the terrain node in this project is named "Terrain" (terrain.tscn root), NOT
+## "VoxelTerrain" — the old lookup returned null every time, so _terrain_ready_at degenerated to
+## "always true" and structures spawned over not-yet-generated ground (the floating bug). Look up
+## "Terrain" first, keep "VoxelTerrain" as a fallback for any scene that does use that name.
 func _structure_voxel_tool() -> Object:
-	var vterrain: Node = get_node_or_null("VoxelTerrain")
+	var vterrain: Node = get_node_or_null("Terrain")
+	if vterrain == null:
+		vterrain = get_node_or_null("VoxelTerrain")
 	if vterrain == null or not vterrain.has_method("get_voxel_tool"):
 		return null
 	return vterrain.get_voxel_tool()
 
 
-## True if the terrain voxels around `pos` are loaded (so a structure placed there won't float over
-## not-yet-streamed ground). Defaults to true when no VoxelTool is available (no spawn regression).
+## True only when the terrain under `pos` is BOTH (a) generated as voxel data AND (b) meshed with
+## baked collision at this location — so a structure is never revealed floating over ground that
+## has not streamed/meshed yet, even at far LOD (QA #2).
+##
+## Two independent checks, both required:
+##   1. is_area_editable() — the voxel DATA for the footprint column exists (generation done).
+##   2. a downward raycast from above the footprint hits terrain collision (layer 1) — collision
+##      is only baked AFTER the chunk meshes, so a hit is a reliable "meshed at this LOD" proxy.
+##      At far LOD the data can be present long before the mesh bakes; check (1) alone passed too
+##      early and let structures pop in over flat/empty ground. The ray closes that gap.
+##
+## Defaults to permissive (true) only when neither a VoxelTool nor a physics space is available
+## (headless tests / no terrain) so the spawn path has no regression there.
 func _terrain_ready_at(vt: Object, pos: Vector3) -> bool:
-	if vt == null or not vt.has_method("is_area_editable"):
+	# (1) Voxel data present for the footprint.
+	if vt != null and vt.has_method("is_area_editable"):
+		if not vt.is_area_editable(AABB(pos - Vector3(2.0, 4.0, 2.0), Vector3(4.0, 8.0, 4.0))):
+			return false
+	# (2) Collision baked under the footprint (mesh exists). Skip if no physics space (tests).
+	if not is_inside_tree():
 		return true
-	return vt.is_area_editable(AABB(pos - Vector3(2.0, 4.0, 2.0), Vector3(4.0, 8.0, 4.0)))
+	var space := get_world_3d().direct_space_state if get_world_3d() != null else null
+	if space == null:
+		return true
+	# Ray from well above the structure base down through it — a hit means the chunk meshed and
+	# baked collision here. `pos.y` is the (slightly embedded) base, so start a few m higher.
+	var q := PhysicsRayQueryParameters3D.create(
+		pos + Vector3(0.0, 6.0, 0.0), pos - Vector3(0.0, 3.0, 0.0))
+	q.collision_mask = 1
+	return not space.intersect_ray(q).is_empty()
 
 
 ## Get the current world session ID.
@@ -2443,6 +2531,25 @@ func _terrain_surface_at(x: float, z: float) -> float:
 	var noise_val: float = _surface_noise.get_noise_2d(float(floori(x)), float(floori(z)))
 	var surface_y: int = int(noise_val * 8.0 + 12.0)  # height_amplitude 8, sea_level 12
 	return float(surface_y) + 1.0
+
+
+## SOLID-ground (seabed) surface height at (x, z), accounting for the OCEAN floor deepening that
+## multipass_generator applies to OCEAN-biome columns (QA #7). For land columns this equals
+## _terrain_surface_at; for OCEAN columns it returns the DEEPENED seabed top, so underwater
+## structures rest on the real seabed rather than floating at the old shallow height. Mirrors
+## multipass_generator._generate_base_terrain's ocean branch exactly.
+func _seabed_surface_at(x: float, z: float) -> float:
+	if _biome_map == null or not _biome_map.has_method("biome_at"):
+		return _terrain_surface_at(x, z)
+	if int(_biome_map.biome_at(x, z)) != int(BiomeMap.Biome.OCEAN):
+		return _terrain_surface_at(x, z)
+	# Ensure the noise instance exists (built lazily by _terrain_surface_at).
+	if _surface_noise == null:
+		_terrain_surface_at(x, z)
+	# OCEAN seabed: sea_level - OCEAN_FLOOR_DEPTH(9) + noise*OCEAN_FLOOR_RELIEF(4); top face +1.
+	var noise_val: float = _surface_noise.get_noise_2d(float(floori(x)), float(floori(z)))
+	var seabed_y: int = 12 - 9 + int(noise_val * 4.0)  # sea_level - OCEAN_FLOOR_DEPTH + relief
+	return float(seabed_y) + 1.0
 
 
 # ─── Plan 02-07: Structure pre-stamp (do not modify from 02-08.5) ─────────────
@@ -2547,27 +2654,18 @@ func _pre_stamp_structures_near_spawn() -> void:
 	# Village templates carry npc_spawns slots (populated by Plan 02-13). For each
 	# stamped village template, instantiate one VillageNpc per slot.
 	#
-	# NPCs use a TIGHTER radius than the structure pre-stamp + a hard count cap.
-	# The structure-placement loop above pre-stamps bricks across the full
-	# _PRE_STAMP_RADIUS_M (256 m) so the world is visually complete, but
-	# instantiating an NPC CharacterBody3D across that whole area would spawn
-	# >1500 NPCs (≈57 villages × 3 slots) — far more than can be visible at
-	# once and very expensive per-frame for AI + collision.
-	# Proper streaming (lazy per-chunk NPC spawn on block_loaded) is tracked
-	# as a follow-up phase.
-	const _NPC_PRESTAMP_RADIUS_M: float = 64.0
-	# Capped low: each village NPC now renders a real ~7-8k-vert figure with an 11 MB texture
-	# (was a tinted capsule), so far fewer can be on-screen within the mobile frame budget.
-	const _NPC_SPAWN_CAP: int = 12
-	var npc_radius_chunks: int = int(_NPC_PRESTAMP_RADIUS_M / chunk_size_m)
-	var total_npcs: int = 0
-	var npc_cap_reached: bool = false
+	# Pre-stamp NPCs across the SAME radius as the village BRICKS (so any village near spawn gets
+	# its villagers up-front), and mark every scanned chunk as processed so the lazy chunk-load
+	# streamer (_dispatch_village_npcs, QA #8) does not double-spawn them when those chunks load.
+	# Villages farther out are populated lazily as the player roams into them. Shares the global
+	# live cap (_VILLAGE_NPC_GLOBAL_CAP) with the lazy streamer via _village_npc_count.
+	var npc_radius_chunks: int = int(_PRE_STAMP_RADIUS_M / chunk_size_m)
 	for cx_npc: int in range(-npc_radius_chunks, npc_radius_chunks + 1):
-		if npc_cap_reached:
-			break
 		for cz_npc: int in range(-npc_radius_chunks, npc_radius_chunks + 1):
-			if npc_cap_reached:
-				break
+			# Mark this chunk handled so the lazy streamer skips it (no double villagers).
+			_processed_village_chunks[Vector3i(cx_npc, 0, cz_npc)] = true
+			if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+				continue
 			var hits_npc: Array = _structure_placer.structures_intersecting_chunk(cx_npc, cz_npc)
 			for hit_npc: Variant in hits_npc:
 				var hit_dict_npc: Dictionary = hit_npc as Dictionary
@@ -2578,20 +2676,13 @@ func _pre_stamp_structures_near_spawn() -> void:
 				if npc_template == null:
 					continue
 				# Only village templates carry npc_spawns; other templates have empty arrays.
-				# Access npc_spawns directly as @export var (BrickTemplate) — Object.get()
-				# does not accept a default argument in GDScript 4; use property access.
 				var _npc_spawns_arr: Array = npc_template.npc_spawns if "npc_spawns" in npc_template else []
-				if not _npc_spawns_arr.is_empty():
-					for slot_idx: int in range(npc_template.npc_spawns.size()):
-						if total_npcs >= _NPC_SPAWN_CAP:
-							npc_cap_reached = true
-							break
-						spawn_village_npc(npc_template, npc_anchor, slot_idx)
-						total_npcs += 1
-					if npc_cap_reached:
+				for slot_idx: int in range(_npc_spawns_arr.size()):
+					if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
 						break
-	if total_npcs > 0:
-		print_debug("VillageNpc: spawned %d NPCs (cap %d, radius %dm) — lazy chunk-load streaming TBD." % [total_npcs, _NPC_SPAWN_CAP, int(_NPC_PRESTAMP_RADIUS_M)])
+					spawn_village_npc(npc_template, npc_anchor, slot_idx)
+	if _village_npc_count > 0:
+		print_debug("VillageNpc: pre-stamped %d NPCs near spawn (cap %d); rest stream lazily on chunk-load." % [_village_npc_count, _VILLAGE_NPC_GLOBAL_CAP])
 
 	# Pre-stamp complete — allow the loading splash to fade once terrain has streamed AND the
 	# builder has ground under it (else it would reveal a floating builder).
@@ -2634,12 +2725,24 @@ func spawn_village_npc(template: Resource, world_anchor: Vector3i, slot_index: i
 		# Slot has no patrol path — NPC will stand idle at anchor. Still spawn for atmosphere.
 		pass
 
+	# Build world-space patrol path, GROUNDING each waypoint's Y to the actual terrain surface.
+	# The template anchor's Y is a placeholder (StructurePlacer.SURFACE_Y = 16), so adding the
+	# local waypoint Y verbatim left villagers floating at Y≈16 over real terrain that sits at
+	# Y≈4..20 (QA #8). Sample the column under each waypoint so villagers walk ON the ground.
 	var path_world: PackedVector3Array = PackedVector3Array()
 	for local_wp: Vector3 in local_path:
-		path_world.append(Vector3(world_anchor) + local_wp)
+		var wx: float = float(world_anchor.x) + local_wp.x
+		var wz: float = float(world_anchor.z) + local_wp.z
+		path_world.append(Vector3(wx, _terrain_surface_at(wx, wz), wz))
 
-	# Determine NPC spawn position: first waypoint if available, else anchor.
-	var spawn_pos: Vector3 = path_world[0] if path_world.size() > 0 else Vector3(world_anchor)
+	# Determine NPC spawn position: first waypoint if available, else the anchor (grounded).
+	var spawn_pos: Vector3
+	if path_world.size() > 0:
+		spawn_pos = path_world[0]
+	else:
+		spawn_pos = Vector3(float(world_anchor.x),
+			_terrain_surface_at(float(world_anchor.x), float(world_anchor.z)),
+			float(world_anchor.z))
 
 	# Instantiate and configure the NPC. add_child() FIRST so the node is in the tree before
 	# we touch global_position — setting it off-tree spammed "is_inside_tree() is false"
@@ -2650,6 +2753,61 @@ func spawn_village_npc(template: Resource, world_anchor: Vector3i, slot_index: i
 	npc.global_position = spawn_pos
 	npc.set_skin_variant(slot.get("skin_variant", "desert"))
 	npc.set_patrol_path(path_world)
+	npc.add_to_group("village_npc")
+	_village_npc_count += 1
+
+
+## QA #8 — LAZY per-chunk village-NPC streaming. For each village template that deterministically
+## intersects this loaded chunk, spawn its VillageNpc slots (grounded, walking patrol paths). This
+## is what makes friendly villagers actually appear in the overworld: previously NPCs were ONLY
+## pre-stamped within ±64 m of origin, and seed 1234 has no village biome there — so the player
+## met zero villagers. Streaming per-chunk (like wildlife/crops) populates every village the player
+## walks into, in any village biome, anywhere in the world.
+##
+## Gated by a per-chunk dedup cache + a global live cap (_VILLAGE_NPC_GLOBAL_CAP). The same
+## structures_intersecting_chunk() the pre-stamp uses keeps placement deterministic and biome-gated
+## (a desert village only resolves in a desert chunk), so this never invents villages.
+func _dispatch_village_npcs(chunk_coord: Vector3i) -> void:
+	if _processed_village_chunks.has(chunk_coord):
+		return
+	_processed_village_chunks[chunk_coord] = true
+	if _structure_placer == null:
+		return
+	if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+		return
+	var hits: Array = _structure_placer.structures_intersecting_chunk(chunk_coord.x, chunk_coord.z)
+	for hit: Variant in hits:
+		var hit_dict: Dictionary = hit as Dictionary
+		if hit_dict.is_empty():
+			continue
+		var template: Resource = hit_dict.get("template", null)
+		var anchor: Vector3i = hit_dict.get("anchor", Vector3i.ZERO)
+		if template == null:
+			continue
+		# Only village templates carry npc_spawns; temples/shipwrecks/dungeons have none.
+		var npc_spawns_arr: Array = template.npc_spawns if "npc_spawns" in template else []
+		if npc_spawns_arr.is_empty():
+			continue
+		for slot_idx: int in range(npc_spawns_arr.size()):
+			if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+				return
+			spawn_village_npc(template, anchor, slot_idx)
+
+
+## Throttled cull of village NPCs that have wandered far from the builder, freeing the global cap
+## as the player explores (mirrors _cull_distant_wildlife). The NPC's origin chunk is re-armed so
+## the village repopulates if the player returns.
+func _cull_distant_village_npcs(bpos: Vector3) -> void:
+	for n: Node in get_tree().get_nodes_in_group("village_npc"):
+		var npc: Node3D = n as Node3D
+		if npc == null:
+			continue
+		if npc.global_position.distance_to(bpos) <= _VILLAGE_NPC_DESPAWN_DIST_M:
+			continue
+		var ck := Vector3i(floori(npc.global_position.x / 16.0), 0, floori(npc.global_position.z / 16.0))
+		_processed_village_chunks.erase(ck)
+		_village_npc_count = maxi(0, _village_npc_count - 1)
+		npc.queue_free()
 
 
 # ─── Plan 03-10: Hostile mob spawning ────────────────────────────────────────

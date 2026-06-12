@@ -8,11 +8,20 @@
 #
 # Biome assignment (curated from the art-structures set):
 #   GRASSLAND_FOREST : cottages, windmill, blacksmith, wooden bridge
-#   DESERT           : desert ruins, mine entrance, treasure rubble
-#   SNOW             : stone keep + gatehouse, stone house, ice castle
-#   JUNGLE           : overgrown ruins, mossy arch, mossy rocks
+#   DESERT           : desert ruins / treasure rooms
+#   SNOW             : stone keep + gatehouse, stone house, ice castle, IGLOO
+#   JUNGLE           : grey castles, overgrown ruins, mossy arch
 #   SAVANNAH         : market stall, watchtower, tent, lookout tower
-#   OCEAN            : lighthouse, shipwreck
+#   OCEAN            : lighthouse, SHIPWRECK + UNDERWATER RUIN (below sea level),
+#                      SANDCASTLE (on the beach / sand-water edge)
+#
+# QA #4 (wrong-biome structures): the desert/jungle/ocean lists previously held the
+# MULTI-OBJECT source GLBs structure_3_00/3_01/3_02 — each baked a sandcastle, an
+# underwater ruin, a shipwreck and an igloo into one mesh, so a shipwreck/igloo/ruin
+# showed up in the desert. Those three sources are now SPLIT into individual landmarks
+# (structure_sandcastle / _underwater_ruin / _shipwreck / _igloo) and each is placed in
+# its correct biome below. structure_3_03 / 3_04 (the stone treasure-room ruins) remain
+# valid desert structures.
 #
 # References:
 #   src/world/crop_spawner.gd     — pattern source
@@ -29,15 +38,32 @@ const SPAWN_CHANCE_PER_CHUNK: float = 0.011
 ## clear of big buildings on top of the starter chest/bed).
 const _MIN_DIST_FROM_ORIGIN: float = 40.0
 
+## Placement type per structure id, read by main_scene._eval_structure_chunk to decide HOW to
+## ground it. Ids not listed default to "land" (sit on the dry surface, above sea level).
+##   "land"       — on the dry surface (default).
+##   "beach"      — at the sand/water edge: ground near sea level, just above the waterline.
+##   "underwater" — on the seabed, BELOW sea level (the chunk surface must be under water).
+const _PLACEMENT: Dictionary = {
+	"structure_sandcastle":      "beach",
+	"structure_underwater_ruin": "underwater",
+	"structure_shipwreck":       "underwater",
+}
+
 ## Biome (BiomeMap.Biome int) → list of structure model ids (file names in structures/).
 const _BIOME_STRUCTURES: Dictionary = {
 	0: ["structure_1_00", "structure_1_01", "structure_1_02", "structure_1_06", "structure_1_08"],  # GRASSLAND
-	1: ["structure_3_01", "structure_3_04", "structure_3_03"],                                       # DESERT
-	2: ["structure_1_04", "structure_2_04", "structure_2_06", "structure_ice_castle"],               # SNOW (+ ice castle)
-	3: ["structure_2_03", "structure_2_05", "structure_3_00", "structure_2_02"],                     # JUNGLE
+	1: ["structure_3_04", "structure_3_03"],                                                         # DESERT (treasure-room ruins)
+	2: ["structure_1_04", "structure_2_04", "structure_2_06", "structure_ice_castle", "structure_igloo"],  # SNOW (+ ice castle + igloo)
+	3: ["structure_2_03", "structure_2_05", "structure_2_02"],                                       # JUNGLE (grey castles + overgrown ruin)
 	4: ["structure_1_05", "structure_2_00", "structure_2_01", "structure_1_07"],                     # SAVANNAH
-	5: ["structure_1_03", "structure_3_02"],                                                         # OCEAN
+	5: ["structure_1_03", "structure_shipwreck", "structure_underwater_ruin", "structure_sandcastle"],  # OCEAN
 }
+
+
+## Placement type for a structure id ("land" | "beach" | "underwater"). Used by main_scene to
+## ground underwater / beach structures correctly (QA #4).
+static func placement_for(id: String) -> String:
+	return _PLACEMENT.get(id, "land")
 
 
 ## True if the chunk/biome should spawn a structure this load (biome gate + rare roll +

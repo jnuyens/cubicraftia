@@ -1,132 +1,110 @@
 # SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# welcome_sign.gd — A purely-decorative brick-styled "Welcome to Cubicraftia" sign.
+# welcome_sign.gd — A purely-decorative "Welcome to Cubicraftia" sign-post.
+#
+# The text is ENGRAVED into the artwork itself: this entity instances the
+# assets/meshes/decor/welcome_post.glb model (a wooden post whose three boards
+# read "WELCOME / TO / CUBICRAFTIA"), split from the art-furniture1 set. No
+# code-built box/Label3D any more — the wording lives in the baked mesh, so it
+# reads consistently across platforms and matches the brick-built art style.
 #
 # Built entirely in code (no .tscn dependency) so main_scene can spawn it with one call:
-#   add_child(WelcomeSign.new()); sign.global_position = ...
+#   var sign := WelcomeSign.new(); add_child(sign); sign.global_position = ...
 #
-# Structure (all assembled in _ready, anchored at this Node3D's origin = ground level):
-#   - StaticBody3D post  : wood-brown vertical box (a thin StaticBody so the player can't
-#                          walk through it — trivial to add, gives the sign physical heft).
-#   - MeshInstance3D board: lighter tan horizontal box mounted atop the post.
-#   - Label3D            : "Welcome to Cubicraftia" mounted on the board's front face,
-#                          facing outward (-Z local), with an outline for contrast.
+# Structure (assembled in _ready, anchored at this Node3D's origin = ground level):
+#   - the welcome_post.glb instance, scaled so the post stands ~TARGET_HEIGHT_M tall,
+#     grounded so its base sits at this node's origin (y = 0).
+#   - a StaticBody3D trimesh collider following the geometry so the player can't walk
+#     through it (gives the sign physical heft, like the old code-built post).
 #
-# Colours reuse the locked 18-brick palette (palette.gd): brown #7A4A23 for the post,
-# tan #D7B97A for the board — matching the "wood post + lighter board" brief.
-#
-# The sign faces -Z in local space. The spawner rotates the node so -Z points back toward
-# the spawn point, so a player standing at spawn reads the text head-on.
+# The model's boards face +Z in local space (Meshy authored facing). The spawner
+# rotates this node 180° (rotation.y = PI) so the engraving points back toward the
+# spawn point — a player standing at spawn reads the text head-on.
 
 class_name WelcomeSign
 extends Node3D
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
-## Player-facing game name (intentionally shown to players — see CLAUDE.md).
+## Player-facing game name (intentionally shown to players — see CLAUDE.md). Retained
+## as a group-discoverable constant for tests / tooling even though the wording is now
+## baked into the mesh.
 const SIGN_TEXT: String = "Welcome to Cubicraftia"
 
-## Post (wood-brown #7A4A23, palette index 15).
-const POST_COLOR: Color = Color(0.478, 0.290, 0.137, 1.0)
+## Path to the engraved sign-post model (decor asset, split from art-furniture1.glb).
+const _MODEL_PATH: String = "res://assets/meshes/decor/welcome_post.glb"
 
-## Board (tan #D7B97A, palette index 16) — lighter than the post.
-const BOARD_COLOR: Color = Color(0.843, 0.725, 0.478, 1.0)
-
-## Post dimensions (m): thin square column.
-const POST_SIZE: Vector3 = Vector3(0.16, 1.4, 0.16)
-
-## Board dimensions (m): ~1.8 m wide, mounted near the top of the post.
-const BOARD_SIZE: Vector3 = Vector3(1.8, 0.6, 0.1)
-
-## Height (m) of the board's centre above the sign's origin (ground level).
-const BOARD_CENTER_Y: float = 1.5
-
-## Label font size (point-equivalent for Label3D pixel size). Large + outlined = readable.
-const LABEL_FONT_SIZE: int = 64
-
-## Label3D pixel_size: world metres per font pixel. Tuned so the text fits the board width.
-const LABEL_PIXEL_SIZE: float = 0.0085
-
-## Outline thickness (px) for contrast against the tan board.
-const LABEL_OUTLINE_SIZE: int = 12
+## Target standing height (m) for the whole post. The raw model is ~0.33 m tall; we
+## scale its longest axis (height) to this so the boards sit at a readable adult eye-line.
+const TARGET_HEIGHT_M: float = 2.2
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	add_to_group("welcome_sign")
-	_build_post()
-	_build_board()
-	_build_label()
+	if not _build_from_model():
+		push_warning("WelcomeSign: '%s' missing — sign not built." % _MODEL_PATH)
 
 
-# ─── Builders ─────────────────────────────────────────────────────────────────
+# ─── Builder ──────────────────────────────────────────────────────────────────
 
-## Wood-brown post: a thin StaticBody3D so the player bumps into it instead of
-## clipping through. Box mesh + matching box collision.
-func _build_post() -> void:
-	var post := StaticBody3D.new()
-	post.name = "Post"
-	post.position = Vector3(0.0, POST_SIZE.y * 0.5, 0.0)
+## Instance the engraved GLB, scale it to TARGET_HEIGHT_M, ground its base at the
+## node origin, and build trimesh collision. Returns false if the asset is absent
+## (headless/CI without the decor mesh) so the caller can warn.
+func _build_from_model() -> bool:
+	if not ResourceLoader.exists(_MODEL_PATH):
+		return false
+	var ps: PackedScene = load(_MODEL_PATH) as PackedScene
+	if ps == null:
+		return false
+	var m := ps.instantiate() as Node3D
+	if m == null:
+		return false
+	add_child(m)
 
-	var mesh_inst := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = POST_SIZE
-	mesh_inst.mesh = box
-	mesh_inst.material_override = _make_material(POST_COLOR)
-	post.add_child(mesh_inst)
+	# Scale the model's height to TARGET_HEIGHT_M and ground its base at y = 0.
+	var ab: AABB = _aabb(m)
+	var span: float = maxf(ab.size.y, 0.001)
+	var sc: float = TARGET_HEIGHT_M / span
+	m.scale = Vector3(sc, sc, sc)
+	# Centre on X/Z, drop the base (AABB min-Y) to the origin.
+	m.position = Vector3(-ab.get_center().x * sc, -ab.position.y * sc, -ab.get_center().z * sc)
 
-	var col := CollisionShape3D.new()
-	var shape := BoxShape3D.new()
-	shape.size = POST_SIZE
-	col.shape = shape
-	post.add_child(col)
-
-	add_child(post)
-
-
-## Lighter tan board mounted near the top of the post (purely visual mesh).
-func _build_board() -> void:
-	var board := MeshInstance3D.new()
-	board.name = "Board"
-	var box := BoxMesh.new()
-	box.size = BOARD_SIZE
-	board.mesh = box
-	board.material_override = _make_material(BOARD_COLOR)
-	board.position = Vector3(0.0, BOARD_CENTER_Y, 0.0)
-	add_child(board)
+	# Trimesh (concave) collision following the geometry so the builder bumps into the
+	# post instead of clipping through. Deferred a frame to spread the build cost, mirroring
+	# WorldStructure._build_collision.
+	call_deferred("_build_collision", m)
+	return true
 
 
-## "Welcome to Cubicraftia" Label3D mounted on the board's front (-Z) face,
-## facing outward with an outline for contrast and legibility.
-func _build_label() -> void:
-	var label := Label3D.new()
-	label.name = "WelcomeLabel"
-	label.text = SIGN_TEXT
-	label.font_size = LABEL_FONT_SIZE
-	label.outline_size = LABEL_OUTLINE_SIZE
-	label.pixel_size = LABEL_PIXEL_SIZE
-	label.modulate = Color(0.118, 0.090, 0.043, 1.0)        # dark brown text
-	label.outline_modulate = Color(0.961, 0.941, 0.890, 1.0)  # cream outline for contrast
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	# Always render flat on the board face; never billboard.
-	label.billboard = BaseMaterial3D.BILLBOARD_DISABLED
-	label.no_depth_test = false
-	label.double_sided = false
-	# Sit just in front of the board's -Z face so the text isn't z-fighting the box.
-	label.position = Vector3(0.0, BOARD_CENTER_Y, -(BOARD_SIZE.z * 0.5 + 0.01))
-	# Label3D's text faces +Z by default; rotate 180° so it reads on the -Z (outward) face.
-	label.rotation = Vector3(0.0, PI, 0.0)
-	add_child(label)
+## Build trimesh collision for every MeshInstance3D under the model (recursively).
+## find_children(owned=false): the instantiated .glb's mesh nodes are owned by the .glb
+## root, not by `m`, so owned=true would miss them.
+func _build_collision(m: Node3D) -> void:
+	if not is_instance_valid(m):
+		return
+	for child: Node in m.find_children("*", "MeshInstance3D", true, false):
+		var mi := child as MeshInstance3D
+		if mi != null and mi.mesh != null:
+			mi.create_trimesh_collision()
 
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
-
-## Matte StandardMaterial3D for the brick-styled boxes.
-func _make_material(color: Color) -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = color
-	mat.roughness = 0.9
-	mat.metallic = 0.0
-	return mat
+## Merged local-space AABB of every MeshInstance3D under `root` (static mesh, valid now).
+func _aabb(root: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	var inv: Transform3D = root.global_transform.affine_inverse()
+	var stack: Array[Node] = [root]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
+			var a: AABB = (inv * (n as MeshInstance3D).global_transform) * (n as MeshInstance3D).mesh.get_aabb()
+			if first:
+				out = a
+				first = false
+			else:
+				out = out.merge(a)
+		for c: Node in n.get_children():
+			stack.push_back(c)
+	return out

@@ -146,11 +146,14 @@ func biome_at(x: float, z: float) -> Biome:
 ##   SAVANNAH:         warm + dryish (t > 0.0 and m < 0.0)
 ##   GRASSLAND_FOREST: default fallback
 func classify(t: float, m: float) -> Biome:
-	# Ocean: cold+wet polar ocean
-	if m > 0.3 and t < -0.4:
+	# Ocean: cold+wet polar ocean. Broadened (t<-0.4→-0.35, m>0.3→0.2) so cold coasts read
+	# as sea, enlarging the OCEAN footprint (QA #7 — bigger oceans).
+	if m > 0.2 and t < -0.35:
 		return Biome.OCEAN
-	# Ocean: very wet = sea (any temperature)
-	if m > 0.5:
+	# Ocean: wet = sea (any temperature). Threshold lowered 0.5 → 0.35 to roughly double the
+	# OCEAN surface area (QA #7). Kept above JUNGLE's wet band (the jungle corner case has
+	# m=0.2, still < 0.35) so the Whittaker corner tests and all-6-biomes distribution hold.
+	if m > 0.35:
 		return Biome.OCEAN
 	# Snow: cold (not cold+wet — ocean caught that above)
 	if t < -0.3:
