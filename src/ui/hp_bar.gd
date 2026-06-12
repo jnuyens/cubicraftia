@@ -1,77 +1,64 @@
 # SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# hp_bar.gd — heart HP bar HUD (survival mode only).
+# hp_bar.gd — horizontal HP bar HUD (survival mode only).
 #
 # Shown in survival worlds; hidden in sandbox via Features.is_survival_mode() gate
 # (mirrors tool_durability_bar.gd L62 pattern).
 #
-# Heart icons:
-#   heart_full.png / heart_half.png / heart_empty.png from assets/textures/icons/.
-#   These are the brick-styled heart sprites cropped label-free from the HUD art
-#   sheet. The bar shows the authored sprite colours directly (red brick heart on
-#   full, half-red on half, grey outline on empty) — NO flat colour-tint overlay,
-#   so the art reads as intended. A subtle framed panel sits behind the row and
-#   the whole bar pulses gently when HP is low (<= LOW_HP_THRESHOLD).
+# Art:
+#   The bar uses the authored HUD gauge sprite xp_bar_fill.png (the green-yellow-red
+#   segmented brick gauge cropped label-free from art-hud.png). It is shown as the
+#   "progress" texture of a TextureProgressBar in FILL_LEFT_TO_RIGHT mode, so the
+#   visible fill width tracks the HP fraction: full HP shows the whole gauge, half HP
+#   reveals the left half, etc. A thin framed panel (navy + parchment border) sits
+#   behind the gauge so the empty (un-filled) portion still reads as a bar.
 #
-#   MAX_HP is 10 and there are HEART_COUNT (5) hearts, so each heart represents
-#   2 HP: full = 2, half = 1, empty = 0. (Earlier the bar drew 10 one-HP hearts
-#   that were flat-colour-tinted, which hid the heart art; 5 two-HP hearts using
-#   the half-heart sprite is the classic, more compact read and finally uses the
-#   half-heart art that previously shipped unused.)
+#   Driven by Builder.hp_changed (HP in [0, Builder.MAX_HP], MAX_HP = 10). The bar
+#   pulses gently when HP is low (<= LOW_HP_THRESHOLD).
 #
-#   If the cropped PNGs are somehow unavailable at runtime, each heart degrades
-#   gracefully to a square ColorRect (#D63828 full, grey empty) so the bar is
-#   still usable.
+#   If the gauge PNG is unavailable at runtime, the bar degrades gracefully to a flat
+#   coloured ProgressBar-style fill (#D63828 red over a grey track) drawn via a
+#   StyleBoxFlat fallback, so the bar is still usable.
 #
-# Screen-reader: the overall bar Label accessibility string uses tr("ui.hp.bar_sr")
+# Screen-reader: the bar's accessibility string uses tr("ui.hp.bar_sr")
 # (owned by Plan 03-05 locale/en.po).
 #
 # References:
 #   03-UI-SPEC.md L72 — top-left anchor, 16px from edge + safe-area inset
-#   03-UI-SPEC.md L111 — #D63828 for full hearts (fallback only)
+#   03-UI-SPEC.md L111 — #D63828 for the fallback fill
 #   03-CONTEXT.md D-08 — HP bar as primary survival HUD element
-#   03-PATTERNS.md L695-757 — HP bar analog: hotbar.gd _build_slots
+#   tool_durability_bar.gd — sibling survival-gated HUD bar pattern
 
 class_name HpBar
 extends PanelContainer
 
 # ─── Constants ────────────────────────────────────────────────────────────────
 
-## Number of heart sprites in the bar. Each heart covers 2 HP (full/half/empty),
-## so HEART_COUNT * HP_PER_HEART must equal Builder.MAX_HP (10).
-const HEART_COUNT: int = 5
-
-## HP each heart represents (full heart = HP_PER_HEART, half = HP_PER_HEART / 2).
-const HP_PER_HEART: int = 2
-
-## Heart icon size in pixels.
-const HEART_SIZE_PX: int = 28
-
-## Gap between hearts in pixels.
-const HEART_GAP_PX: int = 2
+## On-screen size of the gauge in pixels (width x height). The authored gauge is a
+## wide, short strip; these proportions keep its segmented brick read.
+const BAR_WIDTH_PX: int = 180
+const BAR_HEIGHT_PX: int = 18
 
 ## At or below this HP the bar pulses to warn the player.
 const LOW_HP_THRESHOLD: int = 4
 
-## Path to the full-heart sprite (label-free brick heart).
-const ICON_FULL: String = "res://assets/textures/icons/heart_full.png"
+## Path to the horizontal gauge sprite (label-free, cropped from art-hud.png).
+const ICON_GAUGE: String = "res://assets/textures/icons/xp_bar_fill.png"
 
-## Path to the half-heart sprite.
-const ICON_HALF: String = "res://assets/textures/icons/heart_half.png"
+## Fallback colours used only if the gauge PNG is unavailable at runtime.
+const COLOR_FILL: Color = Color(0.839, 0.220, 0.157, 1.0)    # #D63828 destructive red
+const COLOR_TRACK: Color = Color(0.533, 0.533, 0.533, 0.5)   # mid-grey at 50%
 
-## Path to the empty-heart sprite (grey brick outline).
-const ICON_EMPTY: String = "res://assets/textures/icons/heart_empty.png"
-
-## Fallback colours used only if the PNG sprites are unavailable at runtime.
-const COLOR_FULL: Color = Color(0.839, 0.220, 0.157, 1.0)   # #D63828 destructive red
-const COLOR_EMPTY: Color = Color(0.533, 0.533, 0.533, 0.5)  # mid-grey at 50%
-
-## Framed-panel styling (drawn behind the hearts).
+## Framed-panel styling (drawn behind the gauge).
 const PANEL_BG: Color = Color(0.106, 0.173, 0.337, 0.55)     # navy at 55% (UI-SPEC surface)
 const PANEL_BORDER: Color = Color(0.945, 0.941, 0.914, 0.85) # #F1F0EA parchment border
 const PANEL_PAD: int = 6
 const PANEL_RADIUS: int = 8
+
+## Empty-track styling drawn behind the fill so the un-filled portion reads.
+const TRACK_BG: Color = Color(0.04, 0.07, 0.14, 0.85)        # near-black navy
+const TRACK_RADIUS: int = 4
 
 ## Low-HP pulse: self.modulate.a oscillates between these over PULSE_PERIOD seconds.
 const PULSE_MIN_ALPHA: float = 0.55
@@ -80,11 +67,9 @@ const PULSE_PERIOD: float = 0.9
 
 # ─── State ────────────────────────────────────────────────────────────────────
 
-## Row container holding the heart nodes.
-var _row: HBoxContainer = null
-
-## Array of heart display nodes (TextureRect when PNG available, ColorRect fallback).
-var _hearts: Array = []
+## The progress bar showing the gauge fill (TextureProgressBar when the PNG is
+## available, ProgressBar fallback otherwise). Typed loosely as Range so both work.
+var _bar: Range = null
 
 ## Cached reference to the builder node (wired in _ready).
 var _builder: Builder = null
@@ -101,17 +86,14 @@ func _ready() -> void:
 	# Survival-mode visibility gate (mirrors tool_durability_bar.gd L62).
 	visible = Features.is_survival_mode()
 
-	# Framed panel behind the hearts.
+	# Framed panel behind the bar.
 	add_theme_stylebox_override("panel", _make_panel_style())
 
-	# Inner row of hearts.
-	_row = HBoxContainer.new()
-	_row.name = "HeartRow"
-	_row.add_theme_constant_override("separation", HEART_GAP_PX)
-	add_child(_row)
+	# Build the progress bar (textured when art is available, flat fallback otherwise).
+	_build_bar()
 
-	# Build the heart row.
-	_build_hearts()
+	# Accessibility label for screen readers.
+	tooltip_text = tr("ui.hp.bar_sr")
 
 	# Wire to the Builder hp_changed signal.
 	var b: Node = get_tree().get_first_node_in_group("builder")
@@ -123,6 +105,8 @@ func _ready() -> void:
 		if b.get("hp") != null:
 			start_hp = int(b.get("hp"))
 		_on_hp_changed(start_hp)
+	else:
+		_on_hp_changed(_current_hp)
 
 	# Only run _process while the bar is visible (pulse is the only per-frame work).
 	# main_scene.gd may force visible=true after our _ready (it opens WorldSave and
@@ -139,7 +123,7 @@ func _notification(what: int) -> void:
 		set_process(visible)
 
 
-## Build the StyleBoxFlat used for the framed panel behind the hearts.
+## Build the StyleBoxFlat used for the framed panel behind the bar.
 func _make_panel_style() -> StyleBoxFlat:
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = PANEL_BG
@@ -150,32 +134,58 @@ func _make_panel_style() -> StyleBoxFlat:
 	return sb
 
 
-## Build the heart display nodes. Uses TextureRect with the cropped PNG sprites
-## if available, else a square ColorRect as a graceful fallback.
-func _build_hearts() -> void:
-	_hearts.clear()
-	for child in _row.get_children():
-		child.queue_free()
+## Build the progress bar. Prefers a TextureProgressBar driven by the authored gauge
+## sprite (FILL_LEFT_TO_RIGHT). Falls back to a flat-styled ProgressBar if the PNG is
+## unavailable so the bar still renders and tracks HP.
+func _build_bar() -> void:
+	if _bar != null and is_instance_valid(_bar):
+		_bar.queue_free()
+		_bar = null
 
-	var have_png: bool = ResourceLoader.exists(ICON_FULL, "Texture2D")
-	for i: int in range(HEART_COUNT):
-		if have_png:
-			var tr_node := TextureRect.new()
-			tr_node.name = "Heart%d" % (i + 1)
-			tr_node.custom_minimum_size = Vector2(HEART_SIZE_PX, HEART_SIZE_PX)
-			tr_node.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-			tr_node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-			tr_node.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-			tr_node.texture = load(ICON_FULL)
-			_row.add_child(tr_node)
-			_hearts.append(tr_node)
-		else:
-			var cr_node := ColorRect.new()
-			cr_node.name = "Heart%d" % (i + 1)
-			cr_node.custom_minimum_size = Vector2(HEART_SIZE_PX, HEART_SIZE_PX)
-			cr_node.color = COLOR_FULL
-			_row.add_child(cr_node)
-			_hearts.append(cr_node)
+	if ResourceLoader.exists(ICON_GAUGE, "Texture2D"):
+		var tpb := TextureProgressBar.new()
+		tpb.name = "Gauge"
+		tpb.custom_minimum_size = Vector2(BAR_WIDTH_PX, BAR_HEIGHT_PX)
+		tpb.min_value = 0.0
+		tpb.max_value = float(Builder.MAX_HP)
+		tpb.value = float(_current_hp)
+		tpb.step = 0.0
+		tpb.nine_patch_stretch = true
+		tpb.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
+		tpb.texture_progress = load(ICON_GAUGE)
+		# Empty-track background so the un-filled portion reads as a bar.
+		tpb.add_theme_stylebox_override("background", _make_track_style())
+		_bar = tpb
+	else:
+		var pb := ProgressBar.new()
+		pb.name = "Gauge"
+		pb.custom_minimum_size = Vector2(BAR_WIDTH_PX, BAR_HEIGHT_PX)
+		pb.min_value = 0.0
+		pb.max_value = float(Builder.MAX_HP)
+		pb.value = float(_current_hp)
+		pb.step = 0.0
+		pb.show_percentage = false
+		pb.add_theme_stylebox_override("background", _make_track_style())
+		pb.add_theme_stylebox_override("fill", _make_fill_style())
+		_bar = pb
+
+	add_child(_bar)
+
+
+## Empty-track StyleBoxFlat (the bar background behind the fill).
+func _make_track_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = TRACK_BG
+	sb.set_corner_radius_all(TRACK_RADIUS)
+	return sb
+
+
+## Flat-fill StyleBoxFlat used only by the ProgressBar fallback.
+func _make_fill_style() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = COLOR_FILL
+	sb.set_corner_radius_all(TRACK_RADIUS)
+	return sb
 
 
 # ─── Per-frame ────────────────────────────────────────────────────────────────
@@ -195,28 +205,10 @@ func _process(delta: float) -> void:
 
 # ─── Signal handler ───────────────────────────────────────────────────────────
 
-## Update the heart display when builder HP changes. Each heart maps to 2 HP:
-## full (>=2 remaining for this heart), half (exactly 1), empty (0). The sprites
-## carry their own colour, so we do NOT tint full hearts — only dim empties a
-## touch so the row still reads left-to-right.
+## Update the bar fill when builder HP changes. The visible fill width tracks the
+## HP fraction directly (value = new_hp over [0, MAX_HP]).
 ## @param new_hp  New HP value [0..MAX_HP].
 func _on_hp_changed(new_hp: int) -> void:
 	_current_hp = clampi(new_hp, 0, Builder.MAX_HP)
-	for i: int in range(HEART_COUNT):
-		# HP that falls within this heart's 2-HP slice.
-		var heart_hp: int = clampi(_current_hp - i * HP_PER_HEART, 0, HP_PER_HEART)
-		var heart: Node = _hearts[i]
-		if heart is TextureRect:
-			var tr_heart: TextureRect = heart as TextureRect
-			var icon_path: String = ICON_EMPTY
-			if heart_hp >= HP_PER_HEART:
-				icon_path = ICON_FULL
-			elif heart_hp == 1:
-				icon_path = ICON_HALF
-			if ResourceLoader.exists(icon_path, "Texture2D"):
-				tr_heart.texture = load(icon_path)
-			# Sprites are pre-coloured; just dim empties slightly for contrast.
-			tr_heart.modulate = Color(1, 1, 1, 1) if heart_hp > 0 else Color(1, 1, 1, 0.55)
-		elif heart is ColorRect:
-			var cr_heart: ColorRect = heart as ColorRect
-			cr_heart.color = COLOR_FULL if heart_hp > 0 else COLOR_EMPTY
+	if _bar != null and is_instance_valid(_bar):
+		_bar.value = float(_current_hp)
