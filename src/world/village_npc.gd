@@ -364,16 +364,30 @@ func _set_walking(walking: bool) -> void:
 # ─── Physics ──────────────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
-	# No patrol path → NPC stands idle forever.
+	# Gravity ALWAYS applies (BUG 2 villager grounding): a villager is spawned at the FORMULA
+	# surface Y (_terrain_surface_at), which can sit a fraction above the actually-meshed
+	# collision, and a villager spends most of its life idle / may have no patrol path at all.
+	# The old code zeroed velocity and skipped move_and_slide() in the no-path branch (and
+	# applied gravity ONLY while actively walking), so an idle / pathless villager NEVER settled
+	# onto the terrain — it floated at its spawn estimate (the "14 pre-stamped but the player
+	# sees none / they hover" report). Applying gravity + move_and_slide() in every branch makes
+	# every villager fall onto and rest on the real surface, standing visibly on the ground.
+
+	# No patrol path → NPC stands idle, but STILL settles onto the floor under gravity.
 	if patrol_path.is_empty():
-		velocity = Vector3.ZERO
+		velocity.x = 0.0
+		velocity.z = 0.0
+		_apply_gravity(delta)
 		_set_walking(false)
+		move_and_slide()
 		return
 
 	# ── Idle countdown ───────────────────────────────────────────────────────
 	if _idle_timer > 0.0:
 		_idle_timer -= delta
-		velocity = Vector3.ZERO
+		velocity.x = 0.0
+		velocity.z = 0.0
+		_apply_gravity(delta)
 		_set_walking(false)
 		move_and_slide()
 		return
@@ -388,7 +402,9 @@ func _physics_process(delta: float) -> void:
 		# Reached waypoint — advance to next and begin idle pause.
 		_current_waypoint = (_current_waypoint + 1) % patrol_path.size()
 		_idle_timer = randf_range(IDLE_PAUSE_MIN, IDLE_PAUSE_MAX)
-		velocity = Vector3.ZERO
+		velocity.x = 0.0
+		velocity.z = 0.0
+		_apply_gravity(delta)
 		_set_walking(false)
 		move_and_slide()
 		return
@@ -400,12 +416,7 @@ func _physics_process(delta: float) -> void:
 	var direction: Vector3 = to_target_h.normalized()
 	velocity.x = direction.x * _move_speed
 	velocity.z = direction.z * _move_speed
-
-	# Apply gravity when airborne.
-	if not is_on_floor():
-		velocity.y += get_gravity().y * delta
-	else:
-		velocity.y = 0.0
+	_apply_gravity(delta)
 
 	# Rotate body to face movement direction (Y-up world assumption).
 	if direction.length_squared() > 0.01:
@@ -416,3 +427,13 @@ func _physics_process(delta: float) -> void:
 
 	# T-13-01 mitigation: move_and_slide() respects StaticBody3D brick/terrain colliders.
 	move_and_slide()
+
+
+## Accumulate gravity onto velocity.y while airborne; zero it once resting on the floor so the
+## villager settles onto and stays on the terrain. Shared by every _physics_process branch so an
+## idle / pathless villager grounds itself just like a walking one (BUG 2 grounding fix).
+func _apply_gravity(delta: float) -> void:
+	if not is_on_floor():
+		velocity.y += get_gravity().y * delta
+	else:
+		velocity.y = 0.0
