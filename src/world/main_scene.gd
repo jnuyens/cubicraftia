@@ -1611,17 +1611,26 @@ func spawn_starter_chest_and_bed(world_spawn: Vector3) -> void:
 	if bed != null:
 		bed.add_to_group("starter_bed")
 
-	# Decorative "Welcome to Cubicraftia" sign a few metres in front of spawn (+Z), clear of
-	# the chest (+X) and bed (-X) footprints. Ground it at its OWN column surface like the
-	# chest/bed (world_spawn.y is only the origin's height). Face the board back toward spawn
-	# (-Z) so a player at the spawn point reads the text head-on: the sign's text faces local
-	# -Z, so a 180° yaw turns it to look down -Z in world space, i.e. back at the origin.
-	var sign_x: float = world_spawn.x
-	var sign_z: float = world_spawn.z + 3.0
+	# Decorative engraved "Welcome to Cubicraftia" sign-post (welcome_post.glb), placed OFF TO THE
+	# SIDE of the spawn point rather than dead-centre in front of the player — so it greets without
+	# blocking the view down the spawn axis. Offset +X (right) and slightly -Z (behind the spawn
+	# line), clear of the chest (+1 X) and bed (-6 X) footprints. Ground it at its OWN column
+	# surface like the chest/bed (world_spawn.y is only the origin's height).
+	#
+	# Orient the engraving to face back toward the spawn point so a player at spawn can read it by
+	# glancing over. The GLB's boards face local +Z; look_at points local -Z at the target, so we
+	# aim local -Z AWAY from spawn first, then flip 180° so +Z (the engraved face) points at spawn.
+	var sign_offset := Vector3(5.0, 0.0, -2.0)
+	var sign_x: float = world_spawn.x + sign_offset.x
+	var sign_z: float = world_spawn.z + sign_offset.z
 	var sign := _WelcomeSignScript.new() as Node3D
 	add_child(sign)
-	sign.global_position = Vector3(sign_x, _terrain_surface_at(sign_x, sign_z), sign_z)
-	sign.rotation.y = PI
+	var sign_pos := Vector3(sign_x, _terrain_surface_at(sign_x, sign_z), sign_z)
+	sign.global_position = sign_pos
+	# Yaw so the engraved (+Z) face points back at the spawn origin.
+	var to_spawn := Vector2(world_spawn.x - sign_x, world_spawn.z - sign_z)
+	if to_spawn.length() > 0.01:
+		sign.rotation.y = atan2(to_spawn.x, to_spawn.y)
 	sign.add_to_group("starter_welcome_sign")
 
 
