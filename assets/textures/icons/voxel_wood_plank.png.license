@@ -1,3 +1,5 @@
 SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 SPDX-License-Identifier: GPL-3.0-or-later
-Icon rendered (Godot, tools/render_item_icon.gd) from assets/meshes/wood_plank.glb.
+Icon rendered (Godot, tools/render_item_icon.gd) from assets/meshes/wood_plank.glb,
+stretched (scale 3.6,0.42,1.05) into a wide flat plank silhouette and textured with the
+procedural wood-plank albedo so it reads as a wooden plank, not a unit brick.

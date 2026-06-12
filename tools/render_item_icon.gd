@@ -8,12 +8,20 @@
 # existing assets/textures/icons/*.png item-thumbnail style.
 #
 # Godot --headless has NO rendering, so run this WITH a rendering display:
-#   godot -s tools/render_item_icon.gd -- <abs_glb_path> <abs_out_png> [pitch_deg] [yaw_deg]
+#   godot -s tools/render_item_icon.gd -- <abs_glb_path> <abs_out_png> \
+#         [pitch_deg] [yaw_deg] [albedo_res_path] [scale_x,scale_y,scale_z]
 #
 # The optional pitch/yaw (degrees) rotate the camera around the framed model; defaults
-# give a Minecraft-style 3/4 view (yaw 35, pitch -25). An optional 5th arg is a res://
+# give a Minecraft-style 3/4 view (yaw 35, pitch -25). The optional 5th arg is a res://
 # path to an albedo texture applied to every surface (used to give the plain wood_plank
 # brick model a visible wood-plank grain so the thumbnail clearly reads as a plank).
+#
+# The optional 6th arg is a non-uniform model scale "x,y,z" applied to the instance
+# before framing. The shipped brick meshes are unit 1x1 studs (the wood_plank.glb is a
+# tall single-stud cube), so on its own a "plank" reads as a box. Passing e.g. 3.2,0.5,1
+# stretches the brick into a wide, flat plank silhouette that clearly reads as a wooden
+# plank in the inventory slot. The camera framing follows the scaled AABB, so the icon
+# stays centred and fills the frame at any scale.
 
 extends SceneTree
 
@@ -24,6 +32,7 @@ var _out := "/tmp/item_icon.png"
 var _yaw_deg := 35.0
 var _pitch_deg := -25.0
 var _wood_texture := ""
+var _scale := Vector3.ONE
 var _root: Node3D
 var _cam: Camera3D
 var _inst: Node3D
@@ -41,9 +50,11 @@ func _init() -> void:
 		_yaw_deg = float(ua[3])
 	if ua.size() >= 5:
 		_wood_texture = ua[4]
+	if ua.size() >= 6:
+		_scale = _parse_scale(ua[5])
 
 	if _glb.is_empty():
-		push_error("[render_item_icon] usage: -- <glb_path> <out_png> [pitch] [yaw]")
+		push_error("[render_item_icon] usage: -- <glb_path> <out_png> [pitch] [yaw] [albedo] [sx,sy,sz]")
 		quit(1)
 		return
 
@@ -90,6 +101,10 @@ func _init() -> void:
 		quit(1)
 		return
 	_inst = scene.instantiate() as Node3D
+	# Non-uniform model scale (e.g. stretch a unit brick into a wide flat plank). Applied
+	# before framing so the camera AABB follows the scaled silhouette.
+	if not _scale.is_equal_approx(Vector3.ONE):
+		_inst.scale = _scale
 	_root.add_child(_inst)
 	if not _wood_texture.is_empty():
 		_apply_wood_texture(_inst)
@@ -98,6 +113,24 @@ func _init() -> void:
 	# then give the renderer a moment to settle (texture upload, light) before saving.
 	create_timer(0.05).timeout.connect(_frame)
 	create_timer(0.6).timeout.connect(_save)
+
+
+## Parse a "x,y,z" command-line scale token into a Vector3 (defaults to ONE on any
+## malformed component so a bad arg can never silently zero-out the model).
+func _parse_scale(token: String) -> Vector3:
+	var parts := token.split(",", false)
+	var v := Vector3.ONE
+	if parts.size() >= 1 and parts[0].is_valid_float():
+		v.x = float(parts[0])
+	if parts.size() >= 2 and parts[1].is_valid_float():
+		v.y = float(parts[1])
+	if parts.size() >= 3 and parts[2].is_valid_float():
+		v.z = float(parts[2])
+	# Guard against zero/negative components that would collapse the AABB.
+	v.x = maxf(v.x, 0.001)
+	v.y = maxf(v.y, 0.001)
+	v.z = maxf(v.z, 0.001)
+	return v
 
 
 func _frame() -> void:
