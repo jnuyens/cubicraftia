@@ -1,14 +1,13 @@
 ; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 ; SPDX-License-Identifier: GPL-3.0-or-later
 ;
-; hp_bar.tscn — heart HP bar HUD node.
+; hp_bar.tscn — horizontal HP bar HUD node.
 ;
-; Root: PanelContainer with hp_bar.gd script (framed panel behind the hearts).
+; Root: PanelContainer with hp_bar.gd script (framed panel behind the gauge).
 ; Anchored top-left of the parent CanvasLayer.
-; Added to group "hp_bar" for external lookup.
 ;
-; The inner HBoxContainer of heart sprites is built procedurally in
-; hp_bar.gd _build_hearts().
+; The inner TextureProgressBar (driven by the xp_bar_fill.png gauge sprite) is
+; built procedurally in hp_bar.gd _build_bar().
 
 [gd_scene load_steps=2 format=3]
 
