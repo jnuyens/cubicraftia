@@ -211,6 +211,9 @@ msgstr ""
 msgid "ui.hotbar.slot_filled"
 msgstr ""
 
+msgid "ui.hp.bar_sr"
+msgstr ""
+
 msgid "ui.inventory.cell.filled"
 msgstr ""
 
