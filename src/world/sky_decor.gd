@@ -60,29 +60,36 @@ const _BALLOON_FALLBACK_GROUND_Y: float = 2.0
 const _BALLOON_GROUND_RAY_UP: float = 80.0
 const _BALLOON_GROUND_RAY_DOWN: float = 240.0
 
-# ── Basket geometry (local space, relative to the balloon root) ───────────────
-# The basket hangs below the envelope. Its floor + walls are AnimatableBody3D bodies on
-# collision layer 1 (the SAME terrain layer the builder already stands on), with
-# sync_to_physics enabled — so a CharacterBody3D standing on the floor is carried up like an
-# elevator on ASCEND via the builder's own is_on_floor() physics. NO builder.gd change needed.
-## Local Y of the basket FLOOR TOP surface, relative to the balloon root origin (below envelope).
-const _BASKET_FLOOR_TOP_Y: float = -6.5
-## Interior footprint (metres) of the basket floor the builder stands on.
-const _BASKET_INNER_SIZE: float = 3.0
+# ── Basket carrier (INVISIBLE collision that rides inside the GLB's own basket) ──
+# The hot_air_balloon.glb already renders a basket as part of its single baked mesh (the
+# scaled model spans local y ≈ -6.0 … +6.0, with the basket at the bottom). So the carrier
+# here is collision ONLY — no visible mesh — sitting just inside that rendered basket. A
+# previous version drew a brown floor + walls 6.5 m below the envelope, which poked out under
+# the GLB basket as the "thing underneath" artifact; the geometry is now invisible.
+#
+# CARRY (the ride): the carrier is a SINGLE AnimatableBody3D (floor + 3 wall shapes) with
+# sync_to_physics enabled, on collision layer 1 (the terrain layer the builder already stands
+# on). CRITICAL: an AnimatableBody3D only carries a standing CharacterBody3D when ITS OWN
+# transform is moved on the physics tick — moving an ANCESTOR node does NOT trigger the carry
+# (verified). So the carrier is parented to SkyDecor (NOT the moving balloon root) and its own
+# position is driven each physics frame in _step_balloon. NO builder.gd change needed.
+## Local Y (relative to the balloon root) of the carrier FLOOR TOP — just inside the GLB basket
+## bottom (≈ -6.0) so the builder stands on the rendered basket floor, not a phantom slab below.
+const _BASKET_FLOOR_TOP_Y: float = -5.9
+## Interior footprint (metres) of the floor the builder stands on (fits inside the GLB basket).
+const _BASKET_INNER_SIZE: float = 2.4
 ## Thickness of the floor slab and of the walls (metres).
 const _BASKET_FLOOR_THICKNESS: float = 0.3
 const _BASKET_WALL_THICKNESS: float = 0.2
-## Height of the low retaining walls (metres) so the builder does not slide off.
+## Height of the low retaining walls (metres) so the builder does not slide off mid-ride.
 const _BASKET_WALL_HEIGHT: float = 1.1
-## Wicker-basket colour for the floor + walls.
-const _BASKET_COLOUR: Color = Color(0.55, 0.38, 0.20)
 
 var _islands: Array[Node3D] = []
 var _t: float = 0.0
 
 # The single rideable balloon (null until spawned; absent in headless/CI without the asset).
 var _balloon: Node3D = null
-var _balloon_basket: Node3D = null  # container of the AnimatableBody3D floor + walls
+var _balloon_basket: AnimatableBody3D = null  # single invisible carrier body (floor + wall shapes)
 var _balloon_state: int = BalloonState.DRIFTING
 var _balloon_state_t: float = 0.0  # seconds elapsed in the current state
 var _balloon_cruise_y: float = 46.0  # randomised altitude the balloon returns to after a ride
@@ -196,32 +203,39 @@ func _spawn_balloons(rng: RandomNumberGenerator) -> void:
 	root.set_meta("yaw_speed", rng.randf_range(-0.03, 0.03))
 	root.set_meta("drift", drift)
 
+	# The carrier is parented to SkyDecor (self), NOT the moving balloon root: an
+	# AnimatableBody3D only carries a rider when ITS OWN transform is moved (see _build_basket).
+	# _step_balloon drives its position each physics frame to track the balloon.
 	_balloon_basket = _build_basket()
-	root.add_child(_balloon_basket)
+	add_child(_balloon_basket)
+	_sync_basket_to_balloon()
 
 	_balloon = root
 	_balloon_state = BalloonState.DRIFTING
 	_balloon_state_t = 0.0
 
 
-## Build the basket that hangs under the envelope: an AnimatableBody3D floor the builder stands
-## on, plus three low retaining walls (also AnimatableBody3D) so it cannot slide off — with one
-## OPEN side (no wall) to walk in while landed. All bodies sit on collision layer 1 (terrain
-## layer) with sync_to_physics enabled so a standing CharacterBody3D is carried when the basket
-## moves. Returned as a plain Node3D container parented to the balloon root.
-func _build_basket() -> Node3D:
-	var basket := Node3D.new()
-	basket.name = "Basket"
+## Build the INVISIBLE basket carrier: a SINGLE AnimatableBody3D holding the floor collision
+## shape the builder stands on, plus three low retaining-wall shapes so it cannot slide off mid-
+## ride — with one OPEN side (no wall) to walk in while landed. No visible meshes (the GLB renders
+## the basket); this is collision only. One body (not four) so moving its OWN transform on the
+## physics tick reliably carries a standing CharacterBody3D — an ancestor move does not.
+func _build_basket() -> AnimatableBody3D:
+	var body := AnimatableBody3D.new()
+	body.name = "BasketCarrier"
+	body.sync_to_physics = true   # carry a standing CharacterBody3D when this body's own pos moves
+	body.collision_layer = 1      # terrain layer — the builder's default mask collides with it
+	body.collision_mask = 0       # the carrier itself detects nothing (cheap)
+
 	var half: float = _BASKET_INNER_SIZE * 0.5
 
-	# Floor slab: its TOP surface sits at _BASKET_FLOOR_TOP_Y, so the floor centre is half a
-	# thickness below that. The builder stands on this top face.
+	# Floor slab: its TOP surface sits at _BASKET_FLOOR_TOP_Y (local to the body origin, which
+	# tracks the balloon root), so the floor centre is half a thickness below that.
 	var floor_centre_y: float = _BASKET_FLOOR_TOP_Y - _BASKET_FLOOR_THICKNESS * 0.5
 	var floor_size := Vector3(_BASKET_INNER_SIZE + _BASKET_WALL_THICKNESS * 2.0,
 		_BASKET_FLOOR_THICKNESS,
 		_BASKET_INNER_SIZE + _BASKET_WALL_THICKNESS * 2.0)
-	basket.add_child(_animatable_box(floor_size, _BASKET_COLOUR,
-		Vector3(0.0, floor_centre_y, 0.0)))
+	_add_box_shape(body, floor_size, Vector3(0.0, floor_centre_y, 0.0))
 
 	# Three low walls (the -X side is left OPEN as the doorway to walk in). Walls rest on the
 	# floor top, centred at floor_top + wall_height/2.
@@ -229,31 +243,29 @@ func _build_basket() -> Node3D:
 	var span: float = _BASKET_INNER_SIZE + _BASKET_WALL_THICKNESS * 2.0
 	var wall_x := Vector3(_BASKET_WALL_THICKNESS, _BASKET_WALL_HEIGHT, span)
 	var wall_z := Vector3(span, _BASKET_WALL_HEIGHT, _BASKET_WALL_THICKNESS)
-	# +X wall (back), +Z and -Z walls (sides). -X stays open as the entrance.
-	basket.add_child(_animatable_box(wall_x, _BASKET_COLOUR,
-		Vector3(half + _BASKET_WALL_THICKNESS * 0.5, wall_centre_y, 0.0)))
-	basket.add_child(_animatable_box(wall_z, _BASKET_COLOUR,
-		Vector3(0.0, wall_centre_y, half + _BASKET_WALL_THICKNESS * 0.5)))
-	basket.add_child(_animatable_box(wall_z, _BASKET_COLOUR,
-		Vector3(0.0, wall_centre_y, -(half + _BASKET_WALL_THICKNESS * 0.5))))
-	return basket
+	_add_box_shape(body, wall_x, Vector3(half + _BASKET_WALL_THICKNESS * 0.5, wall_centre_y, 0.0))
+	_add_box_shape(body, wall_z, Vector3(0.0, wall_centre_y, half + _BASKET_WALL_THICKNESS * 0.5))
+	_add_box_shape(body, wall_z, Vector3(0.0, wall_centre_y, -(half + _BASKET_WALL_THICKNESS * 0.5)))
+	return body
 
 
-## An AnimatableBody3D box (collision + matching visual) on collision layer 1 with
-## sync_to_physics enabled, so a CharacterBody3D standing on it rides along when it is moved.
-func _animatable_box(size: Vector3, col: Color, pos: Vector3) -> AnimatableBody3D:
-	var body := AnimatableBody3D.new()
-	body.position = pos
-	body.sync_to_physics = true        # carry standing CharacterBody3D bodies (elevator behaviour)
-	body.collision_layer = 1           # terrain layer — builder's default mask collides with it
-	body.collision_mask = 0            # the basket itself detects nothing (cheap)
+## Add one box CollisionShape3D (no visual) at a local position to `body`.
+func _add_box_shape(body: AnimatableBody3D, size: Vector3, pos: Vector3) -> void:
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = size
 	shape.shape = box
+	shape.position = pos
 	body.add_child(shape)
-	body.add_child(_box(size, col, Vector3.ZERO))
-	return body
+
+
+## Track the carrier's OWN transform to the balloon (XZ + ride Y). Driven each physics frame in
+## _step_balloon so the AnimatableBody3D's own-transform motion carries a standing builder; also
+## called once at spawn so the carrier is seated before the first physics tick.
+func _sync_basket_to_balloon() -> void:
+	if _balloon_basket == null or _balloon == null:
+		return
+	_balloon_basket.global_position = _balloon.global_position
 
 
 ## Merged local-space AABB of every MeshInstance3D under `root` (root must be in-tree).
@@ -291,9 +303,10 @@ func _physics_process(delta: float) -> void:
 	_step_balloon(delta)
 
 
-## Advance the rideable balloon's state machine and move it. Driving the whole balloon root
-## (envelope + basket together) keeps them attached; the basket's AnimatableBody3D floor carries
-## a standing builder on ASCEND. No-op when the balloon is absent (headless/CI without the asset).
+## Advance the rideable balloon's state machine and move the envelope root. The invisible carrier
+## body is then re-seated to the balloon via _sync_basket_to_balloon() — moving the carrier's OWN
+## transform (not an ancestor) is what makes its AnimatableBody3D floor carry a standing builder up
+## on ASCEND. No-op when the balloon is absent (headless/CI without the asset).
 func _step_balloon(delta: float) -> void:
 	if _balloon == null:
 		return
@@ -332,12 +345,16 @@ func _step_balloon(delta: float) -> void:
 				_enter_balloon_state(BalloonState.ASCEND)
 
 		BalloonState.ASCEND:
-			# Rise back to cruise height. The AnimatableBody3D floor carries a standing builder up.
+			# Rise back to cruise height. The carrier floor (re-seated below) lifts a standing builder.
 			_balloon.position.y = minf(_balloon_cruise_y,
 				_balloon.position.y + _BALLOON_VERTICAL_SPEED * delta)
 			if _balloon.position.y >= _balloon_cruise_y - 0.001:
 				_balloon.position.y = _balloon_cruise_y
 				_enter_balloon_state(BalloonState.DRIFTING)
+
+	# Re-seat the invisible carrier to the balloon's new position. Setting the AnimatableBody3D's
+	# OWN global_position on the physics tick is what drives its sync_to_physics rider-carry.
+	_sync_basket_to_balloon()
 
 
 ## Switch balloon state and reset the per-state timer.

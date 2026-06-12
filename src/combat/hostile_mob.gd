@@ -150,6 +150,18 @@ var _skinned_clip_name: String = ""
 ## Root Node3D of the instantiated rigged GLB (the live visual), else null.
 var _rigged_root: Node3D = null
 
+## Procedural body-motion overlay for a rigged mob whose baked clip carries NO real motion.
+## The Meshy "clip0" exports for the humanoid hostiles (goblin/vampire/zombie) bake a STATIC
+## pose — every translation/rotation/scale channel is flat (verified: 72 channels, all
+## zero-spread). The AnimationPlayer "plays" but no bone moves, so the mob slides rigidly.
+## When that degeneracy is detected at setup, this animator gives the rig a visible alive-bob +
+## sway so it reads as walking instead of gliding. Null when the clip has real motion.
+var _rigged_proc_anim: ProceduralCreatureAnimator = null
+
+## Grounded baseline Y of the rigged root (set by _ground_rigged_to_target). The procedural
+## overlay bobs AROUND this so it never un-grounds the feet-on-floor placement.
+var _rigged_base_y: float = 0.0
+
 ## Cached builder node for the LOD-distance gate (resolved lazily).
 var _builder_ref: Node3D = null
 
@@ -293,6 +305,14 @@ func _update_animator(delta: float) -> void:
 				_skinned_anim.play(_skinned_clip_name)
 		elif _skinned_anim.is_playing():
 			_skinned_anim.pause()
+		# Degenerate-clip overlay: the Meshy clip0 bakes a static pose, so the rig would slide
+		# without limb/body motion. Give it a procedural bob + sway around the grounded baseline so
+		# it reads as alive. We always pass walking=false (full bob amplitude): the generic
+		# animator zeroes the bob while "walking" on the assumption that leg/translation motion
+		# conveys the gait, but this rig has NO limb motion to lean on — so the full vertical bob IS
+		# the visible cadence that replaces the missing footsteps.
+		if _rigged_proc_anim != null and _rigged_root != null:
+			_rigged_proc_anim.update(_rigged_root, delta, false, _rigged_base_y)
 		return
 	if _anim is MinifigureAnimator:
 		(_anim as MinifigureAnimator).gait = _gait_from_state()
@@ -363,6 +383,12 @@ func _setup_skinned_rig() -> void:
 			var clip: Animation = _skinned_anim.get_animation(_skinned_clip_name)
 			if clip != null:
 				clip.loop_mode = Animation.LOOP_LINEAR
+				# The Meshy humanoid clip0 exports bake a STATIC pose (all channels flat), so
+				# the AnimationPlayer plays but no bone moves and the mob slides rigidly. Detect
+				# that and attach a procedural body bob/sway overlay so it reads as walking.
+				if not _clip_has_motion(clip):
+					_rigged_proc_anim = ProceduralCreatureAnimator.new(
+						ProceduralCreatureAnimator.Motion.LAND)
 		_skinned_anim.stop()  # cancel any glTF autoplay; _update_animator starts it on motion
 
 	# Hide the static art mesh so the rigged skinned visual is the only one shown.
@@ -399,6 +425,28 @@ func _ground_rigged_to_target() -> void:
 	var center: Vector3 = ab.get_center() * sc
 	var min_y: float = ab.position.y * sc
 	glb.position = Vector3(center.x, -min_y, center.z)
+	# Record the grounded Y baseline so the degenerate-clip procedural overlay bobs AROUND it
+	# (writing position.y absolutely) without lifting the feet off the floor.
+	_rigged_base_y = -min_y
+
+
+## True when `clip` carries real motion: any rotation/scale track, or any track whose
+## keyframe values vary beyond a tiny epsilon. The Meshy humanoid clip0 exports bake a static
+## pose (all channels flat), so this returns false for them and the caller attaches a procedural
+## body-motion overlay. A normal walk clip returns true and the overlay is skipped.
+func _clip_has_motion(clip: Animation) -> bool:
+	const EPS: float = 0.0001
+	for ti: int in range(clip.get_track_count()):
+		var kc: int = clip.track_get_key_count(ti)
+		if kc < 2:
+			continue
+		var first: Variant = clip.track_get_key_value(ti, 0)
+		for ki: int in range(1, kc):
+			var v: Variant = clip.track_get_key_value(ti, ki)
+			if (first is Vector3 and v is Vector3 and (v - first).length() > EPS) \
+					or (first is Quaternion and v is Quaternion and (v - first).length() > EPS):
+				return true
+	return false
 
 
 ## Posed-skeleton AABB (in `rig_root`'s local frame): the bbox of every bone's global-pose
