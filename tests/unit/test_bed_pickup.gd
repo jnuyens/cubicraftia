@@ -20,6 +20,7 @@
 extends GutTest
 
 const BedEntityScript = preload("res://src/world/bed_entity.gd")
+const HotbarScript = preload("res://src/ui/hotbar.gd")
 
 var _builder_id: String = "test_bed_pickup_builder_001"
 
@@ -79,4 +80,68 @@ func test_bed_pickup_adds_to_inventory() -> void:
 			bed_count += int(s.get("count", 0))
 	assert_eq(bed_count, 1,
 		"After pickup, exactly one builder_bed must be present in the inventory")
+	bed.free()
+
+
+# ─── Test 3: a picked-up bed can be equipped + dispatched to the bed-place path ────
+#
+# Closes the second half of the loop: the bed must be SELECTABLE as the active hotbar
+# brick and Builder._try_place must route it to _try_place_bed (brick_id check), not the
+# generic stud-grid place. We exercise the same seams the UI uses:
+#   palette tile click -> Hotbar.set_slot_brick -> Hotbar.get_active_brick
+#   -> BrickRegistry.get_definition().brick_id == "builder_bed" (the _try_place dispatch test).
+func test_bed_equips_and_routes_to_bed_place() -> void:
+	var bed = BedEntityScript.new()
+	bed._ensure_bed_registered()
+
+	var hotbar = HotbarScript.new()
+	add_child_autofree(hotbar)  # _ready builds the slot arrays so set_slot_brick works fully
+
+	# Equip the bed into the active hotbar slot (the palette's equip seam).
+	hotbar.set_slot_brick(0, "builder_bed", -1)
+	hotbar.selected_slot = 0
+
+	var active: Dictionary = hotbar.get_active_brick()
+	assert_eq(str(active.get("def_id", "")), "builder_bed",
+		"After equipping, the active hotbar brick must be builder_bed")
+
+	# Mirror Builder._try_place's dispatch decision: the active def's brick_id drives whether
+	# placement routes to _try_place_bed (spawn a BedEntity) instead of the stud grid.
+	var active_def: Resource = BrickRegistry.get_definition(str(active.get("def_id", "")))
+	assert_not_null(active_def, "Equipped builder_bed must resolve in BrickRegistry")
+	if active_def != null:
+		assert_eq(str(active_def.get("brick_id")), "builder_bed",
+			"Active def's brick_id must be builder_bed so _try_place routes to _try_place_bed")
+
+	bed.free()
+
+
+# ─── Test 4: placing a bed from the inventory consumes exactly one ────────────────
+#
+# Mirrors Builder._try_place_bed's consume step: a REMOVE of one builder_bed must succeed
+# when the player holds one and decrement to zero (no double-spend, no silent failure that
+# would leave the bed stuck in the bag). This is the inventory side of re-placement.
+func test_bed_place_consumes_one_from_inventory() -> void:
+	var bed = BedEntityScript.new()
+	bed._ensure_bed_registered()
+
+	# Hold one bed, then place it (consume).
+	Inventory.apply_event({"kind": "ADD", "builder_id": _builder_id, "def_id": "builder_bed", "count": 1})
+	var consumed: bool = Inventory.apply_event({
+		"kind": "REMOVE", "builder_id": _builder_id, "def_id": "builder_bed", "count": 1,
+	})
+	assert_true(consumed, "Placing a held bed must consume one builder_bed (REMOVE succeeds)")
+
+	var remaining: int = 0
+	for s: Dictionary in Inventory.get_slots(_builder_id):
+		if s.get("def_id", "") == "builder_bed":
+			remaining += int(s.get("count", 0))
+	assert_eq(remaining, 0, "After placing the only bed, none must remain in the inventory")
+
+	# With none held, a second place must NOT succeed (no phantom bed / double-spend).
+	var consumed_again: bool = Inventory.apply_event({
+		"kind": "REMOVE", "builder_id": _builder_id, "def_id": "builder_bed", "count": 1,
+	})
+	assert_false(consumed_again, "Placing a bed the player no longer holds must fail (no double-spend)")
+
 	bed.free()
