@@ -42,30 +42,47 @@ extends RefCounted
 # ─── Spawn tuning constants ────────────────────────────────────────────────────
 
 ## Maximum number of animals to spawn in a single LAND chunk when the chance roll succeeds.
-## Bumped 2 → 3 (density pass: the world read as empty). The active-cap distance-cull in
-## main_scene (_WILDLIFE_ACTIVE_CAP = 16) still bounds the total, so this raises local
-## density without unbounded growth; ocean multiplies this further (see _OCEAN_COUNT_MULT).
-const WILDLIFE_PER_CHUNK_MAX: int = 3
+## Bumped 2 → 3 → 5 (density passes: the world kept reading as empty). The active-cap
+## distance-cull in main_scene (_WILDLIFE_ACTIVE_CAP) still bounds the TOTAL alive at once,
+## so this raises LOCAL density without unbounded growth; ocean and snow multiply this further
+## (see _OCEAN_COUNT_MULT / _SNOW_COUNT_MULT). spawn_count_for_chunk rolls 1..this, so the
+## average per spawning chunk is ~ (1+this)/2 = 3 before any per-biome multiplier.
+const WILDLIFE_PER_CHUNK_MAX: int = 5
 
 ## Per-chunk probability of spawning any wildlife on a LAND biome (0..1). Bumped 0.25 → 0.55
-## (density pass) so animals are common as you roam rather than a rare sight; the active cap
-## keeps the total sane. Ocean uses a higher chance (see _OCEAN_SPAWN_CHANCE) so the
-## underwater world — which looks great but felt lifeless — is visibly populated.
-const SPAWN_CHANCE_PER_CHUNK: float = 0.55
+## → 0.80 (density passes) so animals are a common, lively sight as you roam rather than rare;
+## the active cap keeps the total sane. Ocean and snow use higher chances (see
+## _OCEAN_SPAWN_CHANCE / _SNOW_SPAWN_CHANCE) so those biomes (which read as especially empty)
+## are visibly populated.
+const SPAWN_CHANCE_PER_CHUNK: float = 0.80
 
 ## Per-chunk wildlife chance for OCEAN biome (0..1) — higher than land so the underwater
 ## world is lively. Near-certain per ocean chunk; combined with _OCEAN_COUNT_MULT this fills
 ## reefs/open water with fish, orcas and rays (still bounded by the main_scene active cap).
-const _OCEAN_SPAWN_CHANCE: float = 0.9
+const _OCEAN_SPAWN_CHANCE: float = 0.92
 
 ## Ocean animal-count multiplier applied on top of WILDLIFE_PER_CHUNK_MAX in pick_spawn_entries
 ## (the main_scene spawn_count_for_chunk call carries no biome, so the ocean bump lives here).
-## ×2 → up to 6 sea creatures per ocean chunk, giving the underwater scene real schools of life.
+## ×2 → up to 10 sea creatures per ocean chunk, giving the underwater scene real schools of life.
 const _OCEAN_COUNT_MULT: int = 2
+
+## Per-chunk wildlife chance for the SNOW biome (0..1): higher than the general land rate so
+## the ice/snow world (polar bears, caribou, huskies, arctic foxes/wolves, snow rabbits,
+## penguins, snowy owls, reindeer, snowmen) feels inhabited rather than barren. Mirrors the
+## OCEAN boost so the two "felt empty" biomes both get a dedicated lift, not the baseline land rate.
+const _SNOW_SPAWN_CHANCE: float = 0.92
+
+## SNOW animal-count multiplier on top of WILDLIFE_PER_CHUNK_MAX (same role as _OCEAN_COUNT_MULT).
+## ×2 → up to 10 snow creatures per spawning snow chunk, so herds of caribou / packs of wolves
+## read as a living polar biome. Still bounded by the main_scene active-cap distance cull.
+const _SNOW_COUNT_MULT: int = 2
 
 ## BiomeMap.Biome.OCEAN int value. Centralised so the ocean-specific density branches all
 ## reference the same constant instead of a bare literal.
 const _OCEAN_BIOME: int = 5
+
+## BiomeMap.Biome.SNOW int value (id 2). Centralised for the snow-specific density branches.
+const _SNOW_BIOME: int = 2
 
 ## Margin (in terrain metres) from chunk edges for spawn-position sampling.
 const CHUNK_EDGE_MARGIN_M: float = 2.0
@@ -128,14 +145,35 @@ static func should_spawn_in_chunk(chunk_coord: Vector3i, biome: int, world_seed:
 	if not _BIOME_ROSTER.has(biome):
 		return false
 
-	# Gate 2: deterministic per-chunk chance roll. Ocean uses a higher chance so the
-	# underwater world is visibly populated (density pass).
+	# Gate 2: deterministic per-chunk chance roll. Ocean AND snow use a higher chance so those
+	# biomes (which read as especially empty) are visibly populated (density pass); all other
+	# land biomes use the (now raised) general SPAWN_CHANCE_PER_CHUNK.
 	var rng := RandomNumberGenerator.new()
 	var coord_hash: int = (chunk_coord.x * 2654435761) ^ (chunk_coord.y * 1013904223) \
 		^ (chunk_coord.z * 1664525)
 	rng.seed = (world_seed ^ coord_hash ^ "wildlife_chance".hash()) & 0x7FFFFFFFFFFFFFFF
-	var chance: float = _OCEAN_SPAWN_CHANCE if biome == _OCEAN_BIOME else SPAWN_CHANCE_PER_CHUNK
-	return rng.randf() < chance
+	return rng.randf() < _chance_for_biome(biome)
+
+
+## Per-biome per-chunk spawn chance (0..1): ocean and snow get a dedicated lift; every other
+## land biome uses the general rate. Centralised so should_spawn_in_chunk and any future caller
+## agree on the same per-biome probability.
+static func _chance_for_biome(biome: int) -> float:
+	if biome == _OCEAN_BIOME:
+		return _OCEAN_SPAWN_CHANCE
+	if biome == _SNOW_BIOME:
+		return _SNOW_SPAWN_CHANCE
+	return SPAWN_CHANCE_PER_CHUNK
+
+
+## Per-biome animal-count multiplier applied to the (biome-agnostic) caller count in
+## pick_spawn_entries. Ocean and snow get a ×N herd/school bump; every other biome is ×1.
+static func _count_mult_for_biome(biome: int) -> int:
+	if biome == _OCEAN_BIOME:
+		return _OCEAN_COUNT_MULT
+	if biome == _SNOW_BIOME:
+		return _SNOW_COUNT_MULT
+	return 1
 
 
 ## Returns the number of animals to spawn for this chunk (always 1..WILDLIFE_PER_CHUNK_MAX
@@ -180,11 +218,11 @@ static func pick_spawn_entries(chunk_coord: Vector3i, count: int,
 	var is_ocean: bool = (biome == _OCEAN_BIOME)
 	var spawn_y: float = _OCEAN_WATER_Y if is_ocean else 0.0
 
-	# Ocean chunks place MORE creatures than the (biome-agnostic) caller count so the
-	# underwater world has real schools of life — the caller's spawn_count_for_chunk has no
-	# biome, so the ocean bump lives here. Land uses the caller count unchanged. The
+	# Ocean and snow chunks place MORE creatures than the (biome-agnostic) caller count so those
+	# biomes have real schools/herds. The caller's spawn_count_for_chunk carries no biome, so the
+	# per-biome multiplier lives here. Other land biomes use the caller count unchanged. The
 	# _MIN_SPAWN_DIST_FROM_ORIGIN skip below may still drop some near the world origin.
-	var place_count: int = count * _OCEAN_COUNT_MULT if is_ocean else count
+	var place_count: int = count * _count_mult_for_biome(biome)
 
 	for _i: int in range(place_count):
 		var chunk_origin_x: float = chunk_coord.x * 16.0
