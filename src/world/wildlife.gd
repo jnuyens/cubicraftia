@@ -665,10 +665,17 @@ func _setup_animator(host: Node3D, proc_motion: ProceduralCreatureAnimator.Motio
 		# Ground the rig via its base_y baseline (NOT position.y directly): the walk/idle
 		# gaits rewrite position.y every frame, so a one-shot position.y would be clobbered
 		# the moment the panda moved — that was the "floats while walking" bug. base_y drops
-		# the rig's lowest point onto the feet plane (= body origin, where the capsule bottom
-		# now sits after the half-height lift); the bob rides on top of it.
-		var rig_aabb: AABB = _subtree_local_aabb(quad)
-		quad.base_y = -rig_aabb.position.y * _PANDA_SCALE
+		# the rig's lowest assembled-mesh point onto the feet plane (= body origin, where the
+		# capsule bottom sits after the half-height lift); the bob rides on top of it.
+		#
+		# Measure the lowest point by WALKING THE ASSEMBLED RIG's piece nodes (the legs/body/
+		# head/tail MeshInstance3Ds built in QuadrupedAnimator._ready, which ran synchronously
+		# during host.add_child above). assembled_local_min_y() returns that foot datum in the
+		# rig's own un-scaled frame; multiplying by _PANDA_SCALE converts it to the scaled rig.
+		# This replaces the prior _subtree_local_aabb() guess and is the same "measure the real
+		# rendered geometry, then ground to it" approach the skinned creatures use.
+		var rig_min_y: float = quad.assembled_local_min_y()
+		quad.base_y = -rig_min_y * _PANDA_SCALE
 		quad.position.y = quad.base_y
 		_hide_mesh_root()
 		return

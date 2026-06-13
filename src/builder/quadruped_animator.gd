@@ -78,6 +78,43 @@ func _build_rig(layout: Dictionary) -> void:
         var scene: PackedScene = load(glb_path)
         pivot.add_child(scene.instantiate())
 
+## Lowest Y (this node's LOCAL frame, BEFORE this node's own scale/rotation) of every
+## MeshInstance3D in the assembled rig (i.e. the rig's foot level relative to its origin).
+## The owner (wildlife.gd) grounds the panda by setting base_y = -assembled_local_min_y() *
+## scale so the rig's lowest piece lands on the feet plane (the body origin), NOT by
+## assuming the rig is authored feet-at-origin. Returns 0.0 if the rig has no meshes yet
+## (called before _ready built the pieces); 0.0 is the safe identity (no lift).
+##
+## Measured in IDLE rest pose (no leg swing): the walk bob/leg swing add only millimetres
+## below this and ride on top of base_y, so the rest-pose minimum is the stable foot datum.
+func assembled_local_min_y() -> float:
+    var lo: float = INF
+    var stack: Array = [self]
+    while not stack.is_empty():
+        var node: Node = stack.pop_back()
+        # Accumulate the local transform of each piece relative to THIS animator (excluding
+        # this animator's own transform), so the result is in the rig's own un-scaled frame.
+        if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+            var mi := node as MeshInstance3D
+            var xf: Transform3D = _local_xform_to_self(mi)
+            var box: AABB = xf * mi.mesh.get_aabb()
+            lo = minf(lo, box.position.y)
+        for child: Node in node.get_children():
+            stack.append(child)
+    return 0.0 if lo == INF else lo
+
+## Transform of `node` expressed in THIS animator's local frame (product of every ancestor
+## transform up to, but excluding, this node). Lets assembled_local_min_y() measure piece
+## meshes in the rig's own frame regardless of how deep the pivot→glb→MeshInstance3D nests.
+func _local_xform_to_self(node: Node3D) -> Transform3D:
+    var xf := Transform3D.IDENTITY
+    var n: Node = node
+    while n != null and n != self:
+        if n is Node3D:
+            xf = (n as Node3D).transform * xf
+        n = n.get_parent()
+    return xf
+
 func _process(delta: float) -> void:
     _t += delta
     match gait:
