@@ -498,6 +498,14 @@ func get_visible_tiles() -> Array:
 
 ## Show the palette panel. On mobile (bottomsheet), animates to expanded position.
 func open() -> void:
+	# Rebuild the grid every time the palette opens so its availability snapshot
+	# (_owned_def_ids) is current. Without this the grid was built ONCE in _ready
+	# and never again on a plain open(), so any item picked up AFTER the palette was
+	# first shown (e.g. a bed broken back into the inventory) never appeared as a
+	# tile, so the player could not equip it and the pick-up, equip, place loop was
+	# impossible without first toggling a filter to force a refresh. Refreshing on
+	# open() makes a just-picked-up bed immediately selectable and re-placeable.
+	_refresh_palette_grid()
 	visible = true
 	if layout == "bottomsheet":
 		_animate_to(_expanded_y)
