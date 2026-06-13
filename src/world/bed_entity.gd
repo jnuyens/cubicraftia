@@ -48,12 +48,14 @@ extends StaticBody3D
 ## Walk-up interact range in metres (UI-SPEC L76 — matches ChestEntity.INTERACT_RANGE_M).
 const INTERACT_RANGE_M: float = 2.0
 
-## BrickDefinition resource for the bed item. Loaded directly (not via BrickRegistry) so the
-## bed can self-register: builder_bed.tres ships in src/bricks/ but is MISSING from
-## src/bricks/manifest.json, so BrickRegistry never loads it at boot. That gap silently broke
-## bed pickup — on_break gated the inventory ADD on BrickRegistry.get_definition("builder_bed"),
-## which returned null, so the bed never entered the inventory and could never be re-placed.
-## _ensure_bed_registered() repairs this at runtime; see _ready / on_break.
+## BrickDefinition resource for the bed item. builder_bed.tres ships in src/bricks/ AND is
+## listed in src/bricks/manifest.json, so BrickRegistry loads it as a normal base brick at
+## boot — on a normal world load get_definition("builder_bed") already resolves and
+## _ensure_bed_registered() is a no-op (no register_pack warning fires). The direct load()
+## path here is only a fallback: if the bed is ever missing from the registry (e.g. a stripped
+## manifest or a test scene with a different brick set), _ensure_bed_registered() self-registers
+## it so bed pickup (on_break) and re-placement (Builder._try_place, which resolves the active
+## brick via get_definition) keep working.
 const _BED_DEF_PATH: String = "res://src/bricks/builder_bed.tres"
 
 # ─── Node references ──────────────────────────────────────────────────────────
@@ -73,10 +75,11 @@ var _builder_in_range: bool = false
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
-	# Ensure builder_bed is known to BrickRegistry (it is absent from manifest.json — see
-	# _BED_DEF_PATH). Doing this on every bed _ready guarantees the def exists before the
-	# player can pick this bed up (on_break) OR re-place it (Builder._try_place resolves the
-	# active brick via BrickRegistry.get_definition, which would otherwise return null).
+	# Ensure builder_bed is known to BrickRegistry. On a normal world load it is already
+	# present (listed in manifest.json), so this is a no-op. It only self-registers as a
+	# fallback (stripped manifest / alternate test scene) so the def exists before the player
+	# can pick this bed up (on_break) OR re-place it (Builder._try_place resolves the active
+	# brick via BrickRegistry.get_definition, which would otherwise return null).
 	_ensure_bed_registered()
 
 	# Register into Spawning's chunk-keyed bed-bubble index (D-10).
@@ -195,13 +198,13 @@ func refresh_prompt() -> void:
 ##
 ## @param builder_id  Stable builder UUID the bed item is awarded to.
 func on_break(builder_id: String = "") -> void:
-	# Make sure the bed def is registered (manifest gap — see _BED_DEF_PATH) before awarding,
-	# so the item resolves an icon/name in the inventory UI and is re-placeable. The award then
-	# fires unconditionally: the inventory stores def_id as a plain string, so the bed lands in
-	# a slot and the slide-in/hotbar redraw on Inventory.inventory_changed. The previous
+	# Make sure the bed def is registered before awarding so the item resolves an icon/name in
+	# the inventory UI and is re-placeable. Normally a no-op (the bed is in the manifest); the
+	# fallback self-register covers stripped-manifest cases. The award then fires uncondition-
+	# ally: the inventory stores def_id as a plain string, so the bed lands in a slot and the
+	# slide-in/hotbar redraw on Inventory.inventory_changed. The previous
 	# `if BrickRegistry.get_definition("builder_bed") != null` guard swallowed the ADD whenever
-	# the def was unregistered — which, given the manifest gap, was always — so the picked-up
-	# bed never appeared in the inventory.
+	# the def was unregistered, so the picked-up bed never appeared in the inventory.
 	_ensure_bed_registered()
 	Inventory.apply_event({
 		"kind": "ADD",
@@ -214,9 +217,12 @@ func on_break(builder_id: String = "") -> void:
 
 
 ## Register the builder_bed BrickDefinition into BrickRegistry if it is not already present.
-## builder_bed.tres is absent from src/bricks/manifest.json, so BrickRegistry._load_base_pack
-## never picks it up. We load the .tres directly and insert it via BrickRegistry.register_pack
-## (the only public mutator). Idempotent: a second call is a no-op once the def is present.
+## builder_bed.tres is listed in src/bricks/manifest.json, so BrickRegistry._load_base_pack
+## normally loads it at boot and this method is a no-op (the early return below fires before
+## register_pack, so NO "empty iap_pack_origin" warning is logged on a normal load). The
+## fallback path — load the .tres directly and insert it via register_pack (the only public
+## mutator) — only runs when the registry somehow lacks the bed (stripped manifest / alternate
+## test scene). Idempotent: a second call is a no-op once the def is present.
 func _ensure_bed_registered() -> void:
 	if BrickRegistry == null:
 		return

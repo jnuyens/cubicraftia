@@ -3,13 +3,14 @@
 #
 # test_bed_pickup.gd — Regression tests for the "bed not in inventory after pickup" bug.
 #
-# Root cause: builder_bed.tres ships in src/bricks/ but is absent from src/bricks/manifest.json,
-# so BrickRegistry never loads it at boot. BedEntity.on_break gated its Inventory ADD on
-# BrickRegistry.get_definition("builder_bed") != null — which was always null — so the picked-up
-# bed never entered the inventory and could never be re-placed.
+# Root cause (original bug): builder_bed.tres shipped in src/bricks/ but was absent from
+# src/bricks/manifest.json, so BrickRegistry never loaded it at boot. BedEntity.on_break gated its
+# Inventory ADD on BrickRegistry.get_definition("builder_bed") != null — which was always null — so
+# the picked-up bed never entered the inventory and could never be re-placed.
 #
-# Fix: BedEntity self-registers the bed def into BrickRegistry (load .tres directly + register_pack)
-# in _ready and on_break, then awards the bed unconditionally. These tests verify both halves:
+# Fix: builder_bed.tres is now listed in manifest.json (loads as a normal base brick), AND
+# BedEntity self-registers the bed def as a fallback (load .tres directly + register_pack) in
+# _ready and on_break, then awards the bed unconditionally. These tests verify both halves:
 #   1. After _ensure_bed_registered, BrickRegistry resolves "builder_bed" (re-placement path needs this).
 #   2. An ADD event for "builder_bed" lands in the builder's inventory (pickup path).
 #
@@ -41,9 +42,10 @@ func before_each() -> void:
 # ─── Test 1: bed self-registers into BrickRegistry ────────────────────────────
 
 func test_bed_registers_into_brick_registry() -> void:
-	# A fresh BedEntity instance must make "builder_bed" resolvable in BrickRegistry, even though
-	# it is absent from manifest.json. _ensure_bed_registered is the public seam we exercise here
-	# (calling it directly avoids needing a full scene-tree _ready with Spawning/world deps).
+	# "builder_bed" must be resolvable in BrickRegistry after _ensure_bed_registered. On a normal
+	# boot it is already present (manifest-loaded) so this is a no-op; the fallback self-register
+	# still guarantees resolution if it were missing. _ensure_bed_registered is the public seam we
+	# exercise here (calling it directly avoids a full scene-tree _ready with Spawning/world deps).
 	var bed = BedEntityScript.new()
 	bed._ensure_bed_registered()
 	var def: Resource = BrickRegistry.get_definition("builder_bed")

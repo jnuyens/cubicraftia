@@ -75,12 +75,27 @@ const SPAWN_CHANCE: Dictionary = {
 	"dungeon":   0.50,
 }
 
-## Surface Y anchor for above-ground structures (placeholder; Phase 4 will
-## sample actual terrain height via VoxelTool).
+## Fallback surface Y anchor for above-ground structures, used only when the height
+## noise is somehow unavailable. Normal placement samples the real terrain surface per
+## structure via _surface_y_at() (see should_place_structure_at_cell), so a stamped
+## village floor (local cell Y=0) lands ON the generated ground instead of floating at
+## this constant on uneven terrain.
 const SURFACE_Y: int = 16
 
 ## Deep-underground Y anchor for dungeons. Placement gated to negative Y only.
 const DUNGEON_Y: int = -32
+
+## ── Terrain height-map parameters ──────────────────────────────────────────────
+## These MUST match multipass_generator.gd exactly so a stamped structure's surface Y
+## equals the meshed terrain surface the generator produces (and matches main_scene's
+## _terrain_surface_at, which grounds the villagers — so structures and villagers agree).
+##   surface_solid_top = int(noise(x, z) * HEIGHT_AMPLITUDE + SEA_LEVEL)
+##   anchor_y          = surface_solid_top + 1   (first cell above the solid column; the
+##                       same +1 top-face convention _terrain_surface_at uses)
+## Noise: Simplex FBM, 4 octaves, lacunarity 2.0, gain 0.5, freq 0.01, seed = world_seed.
+const HEIGHT_AMPLITUDE: float = 8.0
+const SEA_LEVEL: float = 12.0
+const HEIGHT_NOISE_FREQUENCY: float = 0.01
 
 ## Template directories per structure type.
 const TEMPLATE_DIRS: Dictionary = {
@@ -105,6 +120,11 @@ var _templates_by_type: Dictionary = {}
 ## BrickRegistry autoload node (set in _init; used in stamp_template).
 var _brick_registry: Node = null
 
+## Terrain height-map noise. Mirrors multipass_generator's base-terrain noise exactly so the
+## per-structure surface Y matches the meshed ground. Immutable after _init(); get_noise_2d()
+## is pure, so _surface_y_at() is deterministic (same seed -> same anchor) and thread-safe.
+var _height_noise: FastNoiseLite = null
+
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 ## Construct a StructurePlacer with the given world seed and BiomeMap.
@@ -116,7 +136,21 @@ func _init(world_seed: int, biome_map: RefCounted) -> void:
 	# In headless tests, BrickRegistry may not be an autoload; fall back gracefully.
 	if Engine.has_singleton("BrickRegistry"):
 		_brick_registry = Engine.get_singleton("BrickRegistry")
+	_build_height_noise()
 	_load_templates()
+
+
+## Build the terrain height noise. Same shape/params as multipass_generator._rebuild_noise
+## and main_scene._terrain_surface_at so all three agree on the surface column.
+func _build_height_noise() -> void:
+	_height_noise = FastNoiseLite.new()
+	_height_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_height_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	_height_noise.fractal_octaves = 4
+	_height_noise.fractal_lacunarity = 2.0
+	_height_noise.fractal_gain = 0.5
+	_height_noise.frequency = HEIGHT_NOISE_FREQUENCY
+	_height_noise.seed = _world_seed
 
 
 ## Load all templates from assets/templates/{type}/ into _templates_by_type.
@@ -199,7 +233,11 @@ func should_place_structure_at_cell(structure_type: String,
 	var anchor_z: int = int(base_z + margin + rng.randf() * usable)
 
 	# ── Y anchor per type ────────────────────────────────────────────────────
-	var anchor_y: int = DUNGEON_Y if structure_type == "dungeon" else SURFACE_Y
+	# Dungeons stay at the fixed deep-underground depth. Above-ground structures anchor to
+	# the REAL terrain surface at the structure's XZ (a pure noise function — no VoxelTool),
+	# so house-brick floors (local cell Y=0) rest on the generated ground on uneven terrain
+	# instead of floating/sinking at the old placeholder SURFACE_Y.
+	var anchor_y: int = DUNGEON_Y if structure_type == "dungeon" else _surface_y_at(anchor_x, anchor_z)
 
 	# ── Biome-restriction gate ────────────────────────────────────────────────
 	if _biome_map != null and not template.allowed_biomes.is_empty():
@@ -434,6 +472,29 @@ func _world_to_chunk(world_pos: Vector3) -> Vector3i:
 		int(floor(world_pos.y / CHUNK_SIZE_M)),
 		int(floor(world_pos.z / CHUNK_SIZE_M))
 	)
+
+
+## Real terrain surface Y at world (x, z) — the anchor a stamped above-ground structure
+## sits on so its floor (local cell Y=0) rests on the generated ground.
+##
+## Replicates multipass_generator._surface_top_for (land branch) plus main_scene's
+## _terrain_surface_at: solid_top = int(noise * HEIGHT_AMPLITUDE + SEA_LEVEL); the returned
+## anchor is solid_top + 1 (first cell above the solid column, the same +1 top-face convention
+## the villager grounding uses), so structures and villagers agree at the anchor column.
+##
+## Pure function of world_seed + (x, z) — deterministic (same seed -> same anchor) and
+## thread-safe (read-only noise). Floors x/z to the integer column the generator sampled,
+## avoiding an off-by-one at column boundaries. OCEAN seabed deepening is intentionally NOT
+## applied: above-ground structures spawn on land (biome gate / ocean structures are landmarks,
+## not stamped brick villages), so the plain land height-map is the correct anchor.
+func _surface_y_at(x: int, z: int) -> int:
+	if _height_noise == null:
+		_build_height_noise()
+		if _height_noise == null:
+			return SURFACE_Y  # extreme fallback (should never happen)
+	var noise_val: float = _height_noise.get_noise_2d(float(x), float(z))
+	var solid_top: int = int(noise_val * HEIGHT_AMPLITUDE + SEA_LEVEL)
+	return solid_top + 1
 
 
 ## Deterministic hash for (world_seed, structure_type, cell_x, cell_z).

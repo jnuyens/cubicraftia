@@ -2732,9 +2732,12 @@ func spawn_village_npc(template: Resource, world_anchor: Vector3i, slot_index: i
 		pass
 
 	# Build world-space patrol path, GROUNDING each waypoint's Y to the actual terrain surface.
-	# The template anchor's Y is a placeholder (StructurePlacer.SURFACE_Y = 16), so adding the
-	# local waypoint Y verbatim left villagers floating at Y≈16 over real terrain that sits at
-	# Y≈4..20 (QA #8). Sample the column under each waypoint so villagers walk ON the ground.
+	# We sample the real surface per waypoint (not the structure anchor Y) so villagers walk ON
+	# the ground even where the terrain slopes under the patrol path. StructurePlacer now anchors
+	# stamped bricks to this same surface formula at the structure's XZ (_surface_y_at mirrors
+	# _terrain_surface_at), so the building floor and the villagers agree at the anchor column.
+	# (Before: the anchor Y was a placeholder 16, which floated villagers + bricks over real
+	# terrain at Y≈4..20 — QA #8.) Sample the column under each waypoint.
 	var path_world: PackedVector3Array = PackedVector3Array()
 	for local_wp: Vector3 in local_path:
 		var wx: float = float(world_anchor.x) + local_wp.x
