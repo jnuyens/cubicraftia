@@ -11,8 +11,10 @@
 #
 # Category distribution contract (DOCS.md §3.1):
 #   RECTANGULAR (0)=7, PLATE (1)=5, SLOPE (2)=4, TILE (3)=3, ROUND (4)=4,
-#   FUNCTIONAL (5)=6, DECORATIVE (6)=5, MATERIAL_ORE (7)=9, ACCESSORY (8)=5, MOB_DROP (9)=3
-#   Total = 50 (+ raw_meat & sashimi MOB_DROP from issue #17 + 16 art-furniture DECORATIVE)
+#   FUNCTIONAL (5)=7, DECORATIVE (6)=5, MATERIAL_ORE (7)=9, ACCESSORY (8)=5, MOB_DROP (9)=3
+#   Total = 50 (+ raw_meat & sashimi MOB_DROP from issue #17 + 16 art-furniture DECORATIVE
+#               + builder_bed FUNCTIONAL — now manifest-loaded so the bed self-register no
+#                 longer fires a register_pack warning on world load)
 #
 # fence_post intentionally dropped (per 02-04-PLAN.md DOCS §3.1 ±2-per-category clause).
 #
@@ -48,8 +50,8 @@ func test_all_50_load_and_validate() -> void:
 	var defs: Array = _load_all_from_manifest()
 
 	# Total count. Base 50 + 16 art-furniture decorative placeables (Meshy furniture set)
-	# + raw_meat + sashimi (issue #17 wildlife drops) = 68.
-	assert_eq(defs.size(), 68, "BrickRegistry must have exactly 68 BrickDefinitions")
+	# + raw_meat + sashimi (issue #17 wildlife drops) + builder_bed (now manifest-loaded) = 69.
+	assert_eq(defs.size(), 69, "BrickRegistry must have exactly 69 BrickDefinitions")
 
 	# Uniqueness and basic validity.
 	var seen_ids: Dictionary = {}
@@ -63,16 +65,16 @@ func test_all_50_load_and_validate() -> void:
 			"T-04-01 invariant: stud_profile must be 'concave_top' for brick '%s'" % bd.brick_id)
 		# No duplicate ids.
 		assert_false(seen_ids.has(bd.brick_id),
-			"brick_id '%s' must be unique across the 50-brick set" % bd.brick_id)
+			"brick_id '%s' must be unique across the brick set" % bd.brick_id)
 		seen_ids[bd.brick_id] = true
 
-	assert_eq(seen_ids.size(), 68, "All 68 brick_ids must be unique")
+	assert_eq(seen_ids.size(), 69, "All 69 brick_ids must be unique")
 
 # ─── Test 2 ────────────────────────────────────────────────────────────────────
 
 func test_get_by_category_returns_correct_set() -> void:
 	var defs: Array = _load_all_from_manifest()
-	assert_eq(defs.size(), 68, "Must have 68 definitions to verify category distribution")
+	assert_eq(defs.size(), 69, "Must have 69 definitions to verify category distribution")
 
 	# Build per-category count map.
 	var counts: Dictionary = {}
@@ -86,7 +88,7 @@ func test_get_by_category_returns_correct_set() -> void:
 	assert_eq(counts.get(BrickDefinition.Category.SLOPE,        0), 4, "SLOPE must have 4 bricks")
 	assert_eq(counts.get(BrickDefinition.Category.TILE,         0), 3, "TILE must have 3 bricks")
 	assert_eq(counts.get(BrickDefinition.Category.ROUND,        0), 4, "ROUND must have 4 bricks")
-	assert_eq(counts.get(BrickDefinition.Category.FUNCTIONAL,   0), 6, "FUNCTIONAL must have 6 bricks")
+	assert_eq(counts.get(BrickDefinition.Category.FUNCTIONAL,   0), 7, "FUNCTIONAL must have 7 bricks (6 base + builder_bed)")
 	assert_eq(counts.get(BrickDefinition.Category.DECORATIVE,   0), 21, "DECORATIVE must have 21 bricks (5 base + 16 art-furniture)")
 	assert_eq(counts.get(BrickDefinition.Category.MATERIAL_ORE, 0), 9, "MATERIAL_ORE must have 9 bricks")
 	assert_eq(counts.get(BrickDefinition.Category.ACCESSORY,    0), 5, "ACCESSORY must have 5 bricks")
