@@ -91,7 +91,68 @@ var _skinned_clip_name: String = ""
 ## (see _apply_rigged_figure / _ground_rigged_to_target).
 var _rigged_glb_ref: Node3D = null
 
+# ─── Collision-based grounding (BUG: villagers float in the sky) ───────────────
+# The spawn places the body origin at main_scene._terrain_surface_at (a noise FORMULA, not a
+# raycast). Where that estimate sits ABOVE the real meshed voxel surface (sloped/low village
+# columns, or before a chunk's collision has streamed in), the villager hangs in the air and
+# only sinks down once gravity has pulled it through ~2 s of fall, so the player sees it "floating
+# high in the sky" the whole time. The fix mirrors wildlife._ground_to_collision: a downward
+# raycast against the REAL terrain collision (layer 1) SNAPS the body so the figure's feet rest
+# on the meshed surface from frame one, rejecting tree-voxel hits so a villager never seats up a
+# trunk/canopy. Re-ground while walking tracks slopes/steps. Falls back to the formula clamp +
+# gravity when no collision is available (headless / chunk not yet meshed).
+
+## Height (m) above the body the down-ray starts from. Clears a ~1.85 m figure plus headroom so
+## the cast begins above all geometry and looks DOWN onto terrain.
+const _GROUND_RAY_UP: float = 4.0
+
+## Depth (m) below the body the down-ray reaches. Generous so the cast still finds the surface
+## when the formula estimate placed the body several metres too high (real terrain below it).
+const _GROUND_RAY_DOWN: float = 24.0
+
+## Tree-geometry voxel ids (wood_log = 10, leaves = 12) matching terrain.tscn's VoxelBlockyLibrary
+## / multipass_generator.gd. Trees are voxels in the SAME VoxelTerrain on layer 1, so a naive cast
+## can land on a canopy and seat a villager up a tree; _ground_to_collision rejects these and
+## keeps casting down past them to real ground.
+const _TREE_VOXEL_WOOD_LOG: int = 10
+const _TREE_VOXEL_LEAVES: int = 12
+
+## Max tree-voxel hits to skip in one grounding cast (bounds the worst case; a tall tree is a few
+## cells deep). On exhaustion we keep the formula clamp rather than loop forever.
+const _GROUND_TREE_SKIP_MAX: int = 24
+
+## Downward nudge (m) to restart the cast just below a rejected tree hit so it doesn't re-hit the
+## same face. One voxel is 1 m; half a cell clears it.
+const _GROUND_TREE_SKIP_STEP: float = 0.5
+
+## Horizontal distance (m²) the villager must cross before a walking re-ground recast fires, so a
+## per-frame raycast doesn't cost on mobile. ~1 voxel cell (enough to follow slopes/steps).
+const _REGROUND_MOVE_DIST_SQ: float = 1.0 * 1.0
+
+## Minimum seconds between re-ground recasts (throttle, belt-and-braces with the move-distance gate).
+const _REGROUND_INTERVAL_S: float = 0.3
+
+## Injected MainScene (set by spawn_village_npc), used to read terrain voxel ids for tree
+## rejection. Null in tests / when spawned bare; tree rejection then degrades to "accept any hit".
+var _main_scene: Node = null
+
+## Cached Terrain VoxelTool for voxel-id lookups (tree rejection). Resolved lazily.
+var _voxel_tool: Object = null
+
+## True once a real terrain-collision raycast has grounded this villager at least once.
+var _ground_cast_hit_once: bool = false
+
+## Throttle accumulator (s) and last-grounded XZ for the walking re-ground recast.
+var _reground_accum: float = 0.0
+var _last_ground_xz: Vector3 = Vector3.ZERO
+
 # ─── Public API ───────────────────────────────────────────────────────────────
+
+## Inject the MainScene so the grounding raycast can reject tree-voxel hits via the terrain
+## VoxelTool. Optional: when unset (tests / bare spawn) grounding still works, it just accepts
+## the first collision hit without tree rejection.
+func set_main_scene(scene: Node) -> void:
+	_main_scene = scene
 
 ## Set the patrol waypoints for this NPC.
 ##
@@ -182,6 +243,11 @@ func _ready() -> void:
 	# the final position, not the origin it has during add_child(). _apply_figure_model() is
 	# idempotent via _figure_applied, so a direct test-harness call still works.
 	call_deferred("_apply_figure_model")
+	# Snap onto the REAL meshed terrain (raycast) so the villager stands on the ground from the
+	# first frame instead of hanging at the noise-formula spawn Y and slowly falling (the "floating
+	# in the sky" bug). Deferred so the figure has been applied (feet sit at the body origin) and
+	# the chunk collision has a chance to be present; no-op + gravity fallback when it is not.
+	call_deferred("_ground_to_collision")
 	# Stagger the initial idle so not all village NPCs step simultaneously.
 	_idle_timer = randf_range(IDLE_PAUSE_MIN, IDLE_PAUSE_MAX)
 
@@ -361,6 +427,133 @@ func _set_walking(walking: bool) -> void:
 	elif _skinned_anim.is_playing():
 		_skinned_anim.pause()
 
+# ─── Collision-based grounding ────────────────────────────────────────────────
+
+## Raycast the REAL terrain collision (layer 1) straight down and snap the body so the figure's
+## feet rest on the meshed surface. This is the general fix for "villagers float in the sky": the
+## spawn Y is a noise FORMULA that can sit metres above the real terrain (sloped/low columns, or
+## a chunk whose collision has not streamed yet), and relying on gravity to fall meant the player
+## saw the villager hang in the air for ~2 s. The cast ignores the formula estimate and the capsule
+## geometry; it drops the body so the lowest visible point of the figure sits on the hit. Tree
+## voxels (wood_log/leaves) are rejected so a villager never seats up a trunk/canopy. No collision
+## hit (headless / chunk not yet meshed) → leaves the body on the formula clamp so gravity still
+## settles it. Mirrors wildlife._ground_to_collision.
+func _ground_to_collision() -> void:
+	if not is_inside_tree():
+		return
+	var world := get_world_3d()
+	if world == null:
+		return
+	var space := world.direct_space_state
+	if space == null:
+		return  # headless / no physics; gravity fallback in _physics_process still applies.
+
+	# Foot level of the VISIBLE figure as an offset from the body origin (origin-relative so it
+	# survives the body translation we are about to apply). For a rigged figure this is the posed
+	# bone envelope min-Y (the real rendered feet); _ground_rigged_to_target already places that at
+	# the body origin, so the offset is ~0, but measuring keeps it robust for the static-figure path.
+	var foot_world_y: float = _visible_figure_min_world_y()
+	if foot_world_y == INF:
+		# No figure mesh yet (figure load deferred / headless): ground the capsule bottom, which the
+		# scene places at the body origin (CollisionShape3D height 1.8 centred at y=0.9).
+		foot_world_y = global_position.y
+	var foot_offset: float = foot_world_y - global_position.y
+
+	var origin: Vector3 = global_position
+	var from: Vector3 = origin + Vector3(0.0, _GROUND_RAY_UP, 0.0)
+	var ray_bottom: float = origin.y - _GROUND_RAY_DOWN
+	var q := PhysicsRayQueryParameters3D.create(from, Vector3(origin.x, ray_bottom, origin.z))
+	q.collision_mask = 1  # terrain / statics only (the layer main_scene grounds builders on).
+	q.exclude = [get_rid()]
+
+	# Skip past tree-voxel hits (wood_log/leaves live in the SAME VoxelTerrain on layer 1) so the
+	# villager only ever grounds on real terrain. Bounded by _GROUND_TREE_SKIP_MAX.
+	var surface_y: float = INF
+	for _attempt: int in range(_GROUND_TREE_SKIP_MAX):
+		var hit: Dictionary = space.intersect_ray(q)
+		if hit.is_empty():
+			break  # no terrain below; keep formula clamp / gravity.
+		var hit_pos: Vector3 = hit["position"] as Vector3
+		if not _is_tree_voxel_at(hit_pos):
+			surface_y = hit_pos.y  # real ground, accept.
+			break
+		var next_top: float = hit_pos.y - _GROUND_TREE_SKIP_STEP
+		if next_top <= ray_bottom:
+			break  # exhausted the cast depth without finding non-tree terrain.
+		q.from = Vector3(origin.x, next_top, origin.z)
+
+	if surface_y == INF:
+		return  # no real terrain under the villager this frame; keep formula clamp / gravity.
+
+	# Place the body so the figure's feet sit ON the surface, regardless of the body origin vs feet.
+	global_position.y = surface_y - foot_offset
+	velocity.y = 0.0
+	_ground_cast_hit_once = true
+	_last_ground_xz = Vector3(global_position.x, 0.0, global_position.z)
+	_reground_accum = 0.0
+
+
+## Lowest world-Y of the VISIBLE figure: the posed Skeleton3D bone envelope for a rigged figure
+## (its child MeshInstance3D carries a degenerate pre-skin bind-pose AABB, useless while posed), or
+## the merged mesh AABB min-Y for a static figure. INF when no visible figure exists yet. Mirrors
+## wildlife._visible_mesh_min_world_y.
+func _visible_figure_min_world_y() -> float:
+	var lowest: float = INF
+	var stack: Array[Node] = [self]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		if node is Node3D and not (node as Node3D).visible:
+			continue  # skip the hidden placeholder capsule "Body".
+		if node is Skeleton3D:
+			var sk := node as Skeleton3D
+			for i: int in range(sk.get_bone_count()):
+				var bw: Vector3 = sk.global_transform * sk.get_bone_global_pose(i).origin
+				lowest = minf(lowest, bw.y)
+			continue  # the bone envelope already covers the rig; skip its degenerate-AABB children.
+		if node is MeshInstance3D and (node as MeshInstance3D).mesh != null:
+			var mi := node as MeshInstance3D
+			var box: AABB = mi.global_transform * mi.mesh.get_aabb()
+			lowest = minf(lowest, box.position.y)
+		for child: Node in node.get_children():
+			stack.push_back(child)
+	return lowest
+
+
+## Lazily fetch (and cache) the world Terrain's VoxelTool for tree-rejection voxel-id reads.
+## Returns null when the terrain/tool is unavailable (headless / no injected main_scene) so the
+## caller degrades to accepting any collision hit.
+func _terrain_voxel_tool() -> Object:
+	if _voxel_tool != null:
+		return _voxel_tool
+	var scene: Node = _main_scene
+	if (scene == null or not is_instance_valid(scene)) and is_inside_tree():
+		scene = get_tree().get_first_node_in_group("main_scene")
+	if scene == null or not is_instance_valid(scene):
+		return null
+	var terrain: Node = scene.get_node_or_null("Terrain")
+	if terrain == null or not terrain.has_method("get_voxel_tool"):
+		return null
+	var tool: Object = terrain.get_voxel_tool()
+	if tool == null:
+		return null
+	if "channel" in tool:
+		tool.channel = 0  # VoxelBuffer.CHANNEL_TYPE (the block-id channel).
+	_voxel_tool = tool
+	return _voxel_tool
+
+
+## True when the voxel containing the ground-ray hit at `hit_pos` is tree geometry (wood_log or
+## leaves). The hit sits ON the struck voxel's top face, so we sample a hair BELOW it to land inside
+## that cell. Returns false (accept the hit) when no terrain tool is available.
+func _is_tree_voxel_at(hit_pos: Vector3) -> bool:
+	var tool: Object = _terrain_voxel_tool()
+	if tool == null:
+		return false
+	var pos: Vector3 = hit_pos - Vector3(0.0, 0.05, 0.0)
+	var cell := Vector3i(floori(pos.x), floori(pos.y), floori(pos.z))
+	var id: int = int(tool.get_voxel(cell))
+	return id == _TREE_VOXEL_WOOD_LOG or id == _TREE_VOXEL_LEAVES
+
 # ─── Physics ──────────────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
@@ -380,6 +573,7 @@ func _physics_process(delta: float) -> void:
 		_apply_gravity(delta)
 		_set_walking(false)
 		move_and_slide()
+		_maybe_reground(delta)
 		return
 
 	# ── Idle countdown ───────────────────────────────────────────────────────
@@ -390,6 +584,7 @@ func _physics_process(delta: float) -> void:
 		_apply_gravity(delta)
 		_set_walking(false)
 		move_and_slide()
+		_maybe_reground(delta)
 		return
 
 	# ── Walk toward current waypoint ─────────────────────────────────────────
@@ -407,6 +602,7 @@ func _physics_process(delta: float) -> void:
 		_apply_gravity(delta)
 		_set_walking(false)
 		move_and_slide()
+		_maybe_reground(delta)
 		return
 
 	# Walking this frame → run the rigged figure's clip0 (no-op if static figure).
@@ -427,6 +623,9 @@ func _physics_process(delta: float) -> void:
 
 	# T-13-01 mitigation: move_and_slide() respects StaticBody3D brick/terrain colliders.
 	move_and_slide()
+	# Re-snap onto the real surface as it walks (tracks slopes/steps) and retries the initial
+	# ground cast if the spawn-time chunk collision was not yet meshed.
+	_maybe_reground(delta)
 
 
 ## Accumulate gravity onto velocity.y while airborne; zero it once resting on the floor so the
@@ -437,3 +636,24 @@ func _apply_gravity(delta: float) -> void:
 		velocity.y += get_gravity().y * delta
 	else:
 		velocity.y = 0.0
+
+
+## Periodically re-run the ground raycast so the villager (a) keeps its feet on the meshed surface
+## as it walks across slopes/steps, and (b) snaps down the first time terrain collision becomes
+## available when the spawn-time chunk had not meshed yet (until then it falls under gravity, which
+## is the safe fallback). Throttled by distance + time so it stays mobile-cheap. Called from every
+## _physics_process branch (idle / pathless villagers also need the not-yet-meshed retry).
+func _maybe_reground(delta: float) -> void:
+	_reground_accum += delta
+	# Until the first successful cast, retry every interval regardless of movement (the spawn chunk
+	# may still be streaming). After that, only recast once the villager has crossed ~one cell.
+	var moved_enough: bool = Vector3(global_position.x, 0.0, global_position.z) \
+		.distance_squared_to(_last_ground_xz) >= _REGROUND_MOVE_DIST_SQ
+	if not _ground_cast_hit_once:
+		if _reground_accum >= _REGROUND_INTERVAL_S:
+			_reground_accum = 0.0
+			_ground_to_collision()
+		return
+	if _reground_accum >= _REGROUND_INTERVAL_S and moved_enough:
+		_reground_accum = 0.0
+		_ground_to_collision()
