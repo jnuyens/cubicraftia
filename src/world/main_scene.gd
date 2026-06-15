@@ -2760,6 +2760,11 @@ func spawn_village_npc(template: Resource, world_anchor: Vector3i, slot_index: i
 	var npc: VillageNpc = VillageNpcScene.instantiate() as VillageNpc
 	add_child(npc)
 	npc.global_position = spawn_pos
+	# Inject self so the NPC's ground raycast can reject tree-voxel hits via the Terrain VoxelTool
+	# (otherwise a villager could ground on a trunk/canopy). Set before _ready's deferred ground
+	# cast runs. Optional for the NPC: it grounds fine without it, just without tree rejection.
+	if npc.has_method("set_main_scene"):
+		npc.set_main_scene(self)
 	npc.set_skin_variant(slot.get("skin_variant", "desert"))
 	npc.set_patrol_path(path_world)
 	npc.add_to_group("village_npc")
