@@ -175,6 +175,14 @@ const CHASE_DIST_STEP: float = 0.5
 ## does not clip flush into geometry (equivalent to SpringArm3D margin=0.2).
 const CHASE_MARGIN: float = 0.2
 
+## Vertical field-of-view (degrees) for the chase camera. Godot's Camera3D default is 75°,
+## which at the chase distance read as a fish-eye (visible barrel distortion / stretch at the
+## viewport edges). 70° narrows it just enough to look natural without zooming the framing in
+## noticeably. Applied in _ready() (the scene leaves fov at the default so this single source
+## of truth lives in code). Wall-retraction (CameraRay) and RMB-steer are unaffected — those
+## drive position.z and rotation, not fov.
+const CHASE_CAMERA_FOV_DEG: float = 70.0
+
 # ─── Plan 03-04: Survival constants ──────────────────────────────────────────
 
 ## Maximum HP in survival mode (0..10 range; 10 hearts in the HP bar).
@@ -566,6 +574,13 @@ func _ready() -> void:
 	# T-CAM-02: assert CameraRay collision_mask includes layer 1 (bit 0).
 	assert(camera_ray.collision_mask & 1 != 0,
 		"T-CAM-02: camera_ray.collision_mask must include layer 1 (WorldStaticBody/terrain)")
+
+	# Narrow the chase camera FOV away from Godot's 75° default, which read as a fish-eye
+	# (edge barrel distortion) in the third-person view. Set in code so CHASE_CAMERA_FOV_DEG
+	# is the single source of truth; does not touch position.z (wall retraction) or rotation
+	# (RMB-steer). The FPV camera keeps its scene default.
+	if camera_chase != null:
+		camera_chase.fov = CHASE_CAMERA_FOV_DEG
 
 	# Load persisted camera mode from WorldSave (T-CAM-01: defensive parse).
 	if WorldSave.is_open():
