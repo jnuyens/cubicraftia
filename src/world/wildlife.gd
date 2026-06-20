@@ -170,10 +170,12 @@ const _TARGET_HEIGHT_DEFAULT: float = 1.4
 ## hook for any creature whose authored mesh still dips below its AABB minimum.
 const _GROUND_LIFT: Dictionary = {}
 
-## Small downward settle (m) so feet rest ON the surface rather than hovering a hair above
-## it. Removing the old -0.45 capsule sink left creatures (panda/pig/sheep) floating slightly;
-## this nudges them down to contact without burying them.
-const _GROUND_SETTLE: float = 0.2
+## Tiny downward settle (m) so feet rest flush ON the surface rather than hovering a hair above
+## it. The grounding raycast already returns the exact terrain top-face Y, so the feet are placed
+## at that surface; this is only a hair of contact bias. It was 0.2 m, which visibly SANK the
+## flatter-footed creatures (the sheep "sits slightly inside the terrain" report) — 0.2 m is a
+## quarter of a 0.9 m capsule. Dropped to a 2 cm contact bias so feet rest flush, not buried.
+const _GROUND_SETTLE: float = 0.02
 
 ## Half-height of the land collision capsule (height 0.9 / 2). The CapsuleShape3D is centred on
 ## its node origin; the collider is lifted by this amount so the capsule BOTTOM coincides with the
@@ -797,11 +799,16 @@ func _ground_skinned_to_target() -> void:
 	else:
 		# No skeleton (shouldn't happen for these rigs) — fall back to the mesh subtree bounds.
 		ab = _subtree_local_aabb(glb)
-	# Target on-screen HEIGHT = the idle static mesh's rendered Y (already scaled to _TARGET_HEIGHT
-	# by _normalise_creature_mesh); fall back to _TARGET_HEIGHT when no static idle mesh exists.
+	# Target on-screen HEIGHT = the idle static mesh's rendered Y height — exactly what the player
+	# sees the instant the walk/idle visibility swaps. Measured via _idle_rendered_height_y at this
+	# one-frame-deferred call, BEFORE the idle ProceduralCreatureAnimator bob starts perturbing the
+	# mesh each frame, so it is the clean rest height (the bob would otherwise jitter the reading).
+	# Sizing the walk rig to this same rendered height is what makes idle and walk match (~1.0 ratio)
+	# and kills the "slightly different size idle-vs-walking" pop. Fall back to _TARGET_HEIGHT only
+	# when there is no static idle mesh.
 	var idle_rendered_h: float = 0.0
 	if _mesh_root != null and is_instance_valid(_mesh_root):
-		idle_rendered_h = _subtree_local_aabb(_mesh_root).size.y * _mesh_root.scale.y
+		idle_rendered_h = _idle_rendered_height_y(_mesh_root)
 	var want_h: float = idle_rendered_h if idle_rendered_h > 0.001 else target_h
 	var posed_y: float = maxf(ab.size.y, 0.0001)
 	var sc: float = want_h / posed_y
@@ -1049,6 +1056,26 @@ func _visible_mesh_min_world_y(root: Node3D) -> float:
 		for child: Node in node.get_children():
 			stack.append(child)
 	return lowest
+
+
+## The idle static mesh's RENDERED Y height (metres) — the on-screen height the player sees, so
+## the skinned walk rig can be sized to match it and not pop in size at the idle/walk swap.
+##
+## Computed deterministically WITHOUT relying on global transforms (which are not settled at the
+## one-frame-deferred grounding call, and which the idle bob perturbs every frame): take the mesh
+## subtree AABB in `mesh_root`'s local frame, then apply mesh_root's OWN local Basis (its yaw +
+## uniform scale) before reading the Y span. Folding in the basis keeps the measure correct for any
+## authored orientation (a non-yaw tilt WOULD change the Y extent), so the walk rig is sized to the
+## exact rendered height of the idle mesh and the two visuals stay the same size across the swap.
+func _idle_rendered_height_y(mesh_root: Node3D) -> float:
+	if mesh_root == null:
+		return 0.0
+	var local: AABB = _subtree_local_aabb(mesh_root)
+	if local.size == Vector3.ZERO:
+		return 0.0
+	# Apply the mesh-root's own rotation+scale so the AABB matches the rendered extent.
+	var rotated: AABB = Transform3D(mesh_root.transform.basis, Vector3.ZERO) * local
+	return maxf(rotated.size.y, 0.0)
 
 
 ## Raycast the REAL terrain collision (layer 1) straight down and drop the body so the
