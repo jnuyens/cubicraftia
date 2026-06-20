@@ -43,6 +43,7 @@ ContextMenu="*res://src/ui/context_menu.gd"
 BlockModal="*res://src/ui/block_modal.gd"
 ReportModal="*res://src/ui/report_modal.gd"
 OnboardingTelemetry="*res://src/autoload/onboarding_telemetry.gd"
+BuildInfo="*res://src/autoload/build_info.gd"
 
 [cubicraftia]
 
