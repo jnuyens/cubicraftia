@@ -85,3 +85,7 @@ rigify-test/
 # Raw art-drop inputs (local source, never imported/packed by Godot)
 _drop/*
 !_drop/.gdignore
+
+# Leftover extracted Meshy sidecar images under assets/meshes (orphaned, excluded from builds; source lives in _drop/ + assets/_source_textures/)
+assets/meshes/**/*.jpg
+assets/meshes/**/*.png
