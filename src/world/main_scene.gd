@@ -150,14 +150,14 @@ var _processed_village_chunks: Dictionary = {}
 var _village_npc_count: int = 0
 const _VILLAGE_NPC_GLOBAL_CAP: int = 14
 ## Villagers beyond this distance (m) from the builder are culled (their chunk is re-armed so
-## they respawn if the player returns). MUST exceed the pre-stamp radius (_PRE_STAMP_RADIUS_M
-## = 160 m), because a village whose 128 m blueprint cell intersects a pre-stamped chunk can
-## anchor its villagers anywhere in that cell — up to ~240 m from the spawn point. At the old
-## 120 m the FIRST cull pass immediately freed every pre-stamped villager (the village near
-## seed-1234 spawn anchors at ~244 m), so the player saw the "14 pre-stamped" villagers vanish
-## before reaching them — net zero people in the world (BUG 4). 260 m comfortably covers the
-## pre-stamp radius plus a full village footprint; the global cap (14) still bounds the live set.
-const _VILLAGE_NPC_DESPAWN_DIST_M: float = 260.0
+## they respawn if the player returns). MUST exceed _VILLAGE_PRESTAMP_RADIUS_M (400 m): the
+## pre-stamp now populates the village NEAREST the player spawn, which for some seeds anchors
+## 300-372 m out (the player spawns at the nearest LAND column to origin, the village on its own
+## 128 m grid). At the old 260 m the FIRST cull pass (runs every 2 s from world-open) freed
+## those just-pre-stamped villagers before the player ever walked toward them — net zero people
+## again (the VILLAGERS-NEVER-VISIBLE report). 420 m comfortably covers the widest pre-stamp
+## anchor plus a full village footprint; the global cap (14) still bounds the live/rendered set.
+const _VILLAGE_NPC_DESPAWN_DIST_M: float = 420.0
 
 ## FoliageSpawner helper — static methods only; no instantiation needed.
 const _FoliageSpawnerScript := preload("res://src/world/foliage_spawner.gd")
@@ -193,15 +193,24 @@ var _processed_wildlife_chunks: Dictionary = {}
 ## Active wildlife count — capped at _WILDLIFE_ACTIVE_CAP to keep performance sane.
 var _wildlife_active_count: int = 0
 
-## Hard cap on simultaneously active wildlife nodes. Lowered 60 → 22: the art pass replaced
-## the light TripoSR meshes with heavier textured Meshy creatures (2048² maps, ~5-8k verts),
-## so 60 live animals tanked the frame rate. 22 keeps the world lively within budget.
-const _WILDLIFE_ACTIVE_CAP: int = 16
+## Hard cap on simultaneously active wildlife nodes. 16 → 26: the player reported "~1 animal near
+## spawn" despite the lively per-chunk spawn math. Root cause was the budget being thin AND spread
+## too wide — 16 animals smeared across the old 110 m cull radius (a ~150-chunk disc) left almost
+## none right where the player stands. Raising the cap to 26 while TIGHTENING the cull radius (below)
+## concentrates more animals into the immediate area the player sees, so the world reads populated
+## without unbounded growth (the cap is still a hard ceiling; the cull keeps the live set near the
+## player). 26 stays within the §7.2 mobile frame budget for the heavier textured Meshy creatures.
+const _WILDLIFE_ACTIVE_CAP: int = 26
 
-## Wildlife beyond this distance (m) from the builder are culled so the active-cap frees
-## up as the player roams — otherwise animals pile up near spawn and the world reads empty
-## elsewhere. Comfortably past the streaming/view radius so culls are never visible.
-const _WILDLIFE_DESPAWN_DIST_M: float = 110.0
+## Wildlife beyond this distance (m) from the builder are culled so the active-cap frees up as the
+## player roams. Tightened 110 → 84: a smaller cull radius concentrates the (now larger) active cap
+## into the area the player actually sees instead of smearing it across a ~150-chunk disc where most
+## animals sat behind/around the player out of view. 84 m still comfortably exceeds the terrain
+## view distance (~80 m) so animals are never culled while visible, but it keeps the live budget
+## packed near the player — directly fixing the "world feels empty around me" report. The freed cap
+## immediately refills the chunks ahead (their dedup entry is cleared on cull), so density tracks
+## the player rather than piling up at spawn.
+const _WILDLIFE_DESPAWN_DIST_M: float = 84.0
 
 ## Seconds between distance-cull passes (cheap; only walks the "wildlife" group).
 const _WILDLIFE_CULL_INTERVAL_S: float = 2.0
@@ -310,6 +319,24 @@ var dynamite_particle_count: int = 120
 ## MultiMesh, so facing the village rendered ~5–9M primitives in a frame (the worst FPS
 ## dips). 160 m keeps villages near spawn while cutting that brick count to ~40%.
 const _PRE_STAMP_RADIUS_M: float = 160.0
+
+## The actual player spawn point (world-space), computed by _find_world_spawn BEFORE the
+## pre-stamp runs. Used to CENTRE the village-NPC pre-stamp scan on the player rather than the
+## world origin (0,0). VILLAGERS-NEVER-VISIBLE bug: villages anchor on a 128 m blueprint grid
+## that for most seeds places the nearest npc-bearing village 120-370 m from the player spawn
+## (the player spawns at the nearest LAND column to origin, which is rarely a village biome). The
+## origin-centred scan therefore stamped villagers hundreds of metres from where the player lands
+## and roams, so they were never within view distance. Centring the villager scan on this spawn
+## point stamps the village the player can actually reach. Defaults to ZERO (origin) until set.
+var _player_spawn_centre: Vector3 = Vector3.ZERO
+
+## Half-extent (m) of the village-NPC pre-stamp scan, centred on _player_spawn_centre. Wider than
+## the brick pre-stamp radius because the nearest npc-bearing village can sit up to ~370 m from the
+## spawn (a village's 128 m cell + the gap to the nearest village biome). Villagers are cheap to
+## scan for (structures_intersecting_chunk is a pure deterministic hash) and the global live cap
+## (_VILLAGE_NPC_GLOBAL_CAP) plus the distance cull still bound how many actually exist + render,
+## so a wide scan just guarantees the closest village to the player gets populated up-front.
+const _VILLAGE_PRESTAMP_RADIUS_M: float = 400.0
 
 # ─── Signals ─────────────────────────────────────────────────────────────────
 
@@ -681,12 +708,26 @@ func _ready() -> void:
 	# Apply the hostile mob cap to Spawning autoload (adaptive-quality hook).
 	if Spawning.has_method("set_hostile_mob_cap_override"):
 		Spawning.set_hostile_mob_cap_override(hostile_mob_active_cap)
+	# Seed the hostile-spawn kind RNG from this world's seed so night-mob kind selection is
+	# deterministic per world (WR-01). Production never called this before — kind picks were then
+	# driven by the autoload's default-seeded RNG, still functional but non-deterministic across
+	# worlds. Seeding it here (after _apply_world_seed set _world_seed) makes a given world's nights
+	# reproducible and is the documented contract for Spawning (see spawning.gd seed_from_world).
+	if Spawning.has_method("seed_from_world"):
+		Spawning.seed_from_world(_world_seed)
 
 	# ─── Plan 02-07: StructurePlacer pre-stamp (do not modify from 02-08.5) ──
 	# Create the BiomeMap with the same seed as terrain_generator uses.
 	var biome_map: RefCounted = BiomeMapScript.new(_world_seed)
 	_biome_map = biome_map  # Store for chunk-load strawberry dispatch (Plan 03-11).
 	_structure_placer = StructurePlacerScript.new(_world_seed, biome_map)
+	# Compute the player spawn point BEFORE the pre-stamp so the village-NPC scan can centre on
+	# WHERE THE PLAYER ACTUALLY LANDS, not the world origin. _find_world_spawn searches outward
+	# from origin for the nearest land column; villages anchor on a 128 m grid that is rarely at
+	# the same place. The origin-centred villager scan therefore stamped villagers 120-370 m from
+	# the player (outside view distance) and the player saw none. (Re-computed below for the
+	# builder-move + world_spawn meta; this early call is the pure, cheap noise+biome search.)
+	_player_spawn_centre = _find_world_spawn(biome_map)
 	# Pre-stamp structures within ±256m of spawn. Idempotent: StudGrid.place()
 	# returns false for already-occupied cells; duplicates are silently dropped.
 	# Phase 3 will track stamped anchors in WorldSave to skip on world reload.
@@ -710,7 +751,9 @@ func _ready() -> void:
 	# many seeds; with water now non-collidable that left the builder underwater /
 	# floating with no ground ("terrain gone"). _find_world_spawn searches outward for
 	# solid land above the waterline. Done in BOTH modes so sandbox players land safely.
-	var _world_spawn: Vector3 = _find_world_spawn(biome_map)
+	# Reuse the spawn already computed above (used to centre the village pre-stamp); recompute only
+	# if that early call was skipped (defensive — biome_map is always present here).
+	var _world_spawn: Vector3 = _player_spawn_centre if _player_spawn_centre != Vector3.ZERO else _find_world_spawn(biome_map)
 	WorldSave.set_world_meta("world_spawn", var_to_bytes(_world_spawn))
 	# Move the builder to the computed spawn directly so the first frame doesn't drop
 	# 30 m from the .tscn-baked Vector3(0, 32, 0). The spawn grace gate in builder.gd
@@ -848,6 +891,13 @@ func _process(delta: float) -> void:
 		var _b: Node3D = get_node_or_null("Builder") as Node3D
 		if _b != null:
 			_cull_distant_village_npcs(_b.global_position)
+			# Top-up pass: refill freed cap into chunks AROUND the player. The chunk-load signal
+			# fires only once per chunk; any chunk that streamed in while the cap was saturated was
+			# left empty and never revisited, so freed slots otherwise drained only into newly
+			# streamed chunks ahead — leaving the area the player is standing in sparse (the "~1
+			# animal near spawn" report). Re-dispatching the near ring after each cull keeps the
+			# immediate surroundings populated up to the cap.
+			_top_up_wildlife_near(_b.global_position)
 
 	# ─── WATER overhaul (behaviour 4): underwater fog/tint ────────────────────
 	# Sample whether the active camera is submerged (throttled). On a transition
@@ -2269,6 +2319,55 @@ func _cull_distant_wildlife() -> void:
 		fn.queue_free()
 
 
+## Refill freed wildlife cap into chunks AROUND the player. The terrain chunk-load signal fires
+## once per chunk; any chunk that streamed while _wildlife_active_count was at the cap got marked
+## processed-or-skipped and was never revisited, so the immediate surroundings stayed sparse even
+## after the distance-cull freed slots (the "~1 animal near spawn" report). Each cull tick this
+## scans the chunks within the cull radius of the player, RE-ARMS any that hold no live wildlife
+## (clears their dedup entry) and re-dispatches them until the cap is reached — so the area the
+## player is actually standing in keeps refilling. Bounded by the active cap; cheap (a ~11×11
+## chunk ring, deterministic hash gates most out before any node is created).
+func _top_up_wildlife_near(bpos: Vector3) -> void:
+	if _biome_map == null:
+		return
+	if _wildlife_active_count >= _WILDLIFE_ACTIVE_CAP:
+		return
+	# Build a set of chunks that already hold a live animal so we don't double-stack them.
+	var occupied: Dictionary = {}
+	for wl: Node in get_tree().get_nodes_in_group("wildlife"):
+		var n3: Node3D = wl as Node3D
+		if n3 != null and n3.has_meta("origin_chunk"):
+			occupied[n3.get_meta("origin_chunk")] = true
+	var centre_cx: int = floori(bpos.x / 16.0)
+	var centre_cz: int = floori(bpos.z / 16.0)
+	# Radius (chunks) just inside the despawn radius so we never spawn an animal that the very next
+	# cull would immediately free.
+	var ring: int = int(_WILDLIFE_DESPAWN_DIST_M / 16.0) - 1
+	# Spiral-ish nearest-first ordering: iterate by ring distance so the closest empty chunks fill
+	# first (the player notices density right around them, not at the edge of the cull radius).
+	for r: int in range(0, ring + 1):
+		if _wildlife_active_count >= _WILDLIFE_ACTIVE_CAP:
+			return
+		for dx: int in range(-r, r + 1):
+			for dz: int in range(-r, r + 1):
+				# Only the perimeter of this ring (cells exactly at Chebyshev distance r).
+				if maxi(absi(dx), absi(dz)) != r:
+					continue
+				if _wildlife_active_count >= _WILDLIFE_ACTIVE_CAP:
+					return
+				var ck := Vector3i(centre_cx + dx, 0, centre_cz + dz)
+				if occupied.has(ck):
+					continue
+				# Skip chunks within the world-origin keep-clear / outside the cull disc.
+				var cc := Vector3(float(ck.x) * 16.0 + 8.0, 0.0, float(ck.z) * 16.0 + 8.0)
+				if Vector2(cc.x - bpos.x, cc.z - bpos.z).length() > _WILDLIFE_DESPAWN_DIST_M:
+					continue
+				# Re-arm + re-dispatch this empty near chunk.
+				_processed_wildlife_chunks.erase(ck)
+				var biome: int = int(_biome_map.biome_at(cc.x, cc.z)) if _biome_map.has_method("biome_at") else 0
+				_dispatch_wildlife(ck, biome)
+
+
 # ─── Structure proximity streaming ───────────────────────────────────────────
 # Structures are NOT spawned on terrain chunk-load any more. Instead this streamer scans a
 # radius AHEAD of the player, threaded-loads each eligible structure's GLB on a worker
@@ -2665,13 +2764,26 @@ func _pre_stamp_structures_near_spawn() -> void:
 	# streamer (_dispatch_village_npcs, QA #8) does not double-spawn them when those chunks load.
 	# Villages farther out are populated lazily as the player roams into them. Shares the global
 	# live cap (_VILLAGE_NPC_GLOBAL_CAP) with the lazy streamer via _village_npc_count.
-	var npc_radius_chunks: int = int(_PRE_STAMP_RADIUS_M / chunk_size_m)
-	for cx_npc: int in range(-npc_radius_chunks, npc_radius_chunks + 1):
-		for cz_npc: int in range(-npc_radius_chunks, npc_radius_chunks + 1):
+	# CENTRE the villager scan on the PLAYER SPAWN CHUNK (not origin) and widen it: the nearest
+	# npc-bearing village sits 120-370 m from spawn for most seeds, so an origin-centred 160 m scan
+	# found ZERO villager slots near the player even though "14 pre-stamped" printed (those 14 were
+	# a village whose 128 m brick cell merely clipped a near-origin chunk while its anchor — where
+	# the villagers spawn — was 230+ m away, outside view distance). Scanning around the spawn at
+	# _VILLAGE_PRESTAMP_RADIUS_M guarantees the closest village to the player gets its villagers
+	# stamped where the player can walk up to them.
+	var spawn_chunk_x: int = floori(_player_spawn_centre.x / chunk_size_m)
+	var spawn_chunk_z: int = floori(_player_spawn_centre.z / chunk_size_m)
+	var npc_radius_chunks: int = int(_VILLAGE_PRESTAMP_RADIUS_M / chunk_size_m)
+	# Collect every UNIQUE npc-bearing village in the scan (deduped by anchor) so we can populate
+	# the ones CLOSEST to the player first. A naive chunk-order loop starts at the far corner and
+	# could exhaust the global cap on a distant village before reaching the near one — leaving the
+	# village the player actually spawns next to empty. Dedup is required because a village's 128 m
+	# cell spans many chunks, so structures_intersecting_chunk reports the same anchor repeatedly.
+	var villages_by_anchor: Dictionary = {}
+	for cx_npc: int in range(spawn_chunk_x - npc_radius_chunks, spawn_chunk_x + npc_radius_chunks + 1):
+		for cz_npc: int in range(spawn_chunk_z - npc_radius_chunks, spawn_chunk_z + npc_radius_chunks + 1):
 			# Mark this chunk handled so the lazy streamer skips it (no double villagers).
 			_processed_village_chunks[Vector3i(cx_npc, 0, cz_npc)] = true
-			if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
-				continue
 			var hits_npc: Array = _structure_placer.structures_intersecting_chunk(cx_npc, cz_npc)
 			for hit_npc: Variant in hits_npc:
 				var hit_dict_npc: Dictionary = hit_npc as Dictionary
@@ -2683,12 +2795,37 @@ func _pre_stamp_structures_near_spawn() -> void:
 					continue
 				# Only village templates carry npc_spawns; other templates have empty arrays.
 				var _npc_spawns_arr: Array = npc_template.npc_spawns if "npc_spawns" in npc_template else []
-				for slot_idx: int in range(_npc_spawns_arr.size()):
-					if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
-						break
-					spawn_village_npc(npc_template, npc_anchor, slot_idx)
+				if _npc_spawns_arr.is_empty():
+					continue
+				var akey := Vector2i(npc_anchor.x, npc_anchor.z)
+				if not villages_by_anchor.has(akey):
+					villages_by_anchor[akey] = {"template": npc_template, "anchor": npc_anchor}
+
+	# Order villages nearest-to-spawn first so the global cap funds the village the player can
+	# reach, then spawn each one's NPC slots until the cap fills.
+	var ordered: Array = villages_by_anchor.values()
+	ordered.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var aa: Vector3i = a["anchor"]
+		var bb: Vector3i = b["anchor"]
+		var da: float = Vector2(float(aa.x) - _player_spawn_centre.x, float(aa.z) - _player_spawn_centre.z).length_squared()
+		var db: float = Vector2(float(bb.x) - _player_spawn_centre.x, float(bb.z) - _player_spawn_centre.z).length_squared()
+		return da < db)
+	for v: Dictionary in ordered:
+		if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+			break
+		var v_template: Resource = v["template"]
+		var v_anchor: Vector3i = v["anchor"]
+		var v_slots: Array = v_template.npc_spawns if "npc_spawns" in v_template else []
+		for slot_idx: int in range(v_slots.size()):
+			if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+				break
+			spawn_village_npc(v_template, v_anchor, slot_idx)
 	if _village_npc_count > 0:
-		print_debug("VillageNpc: pre-stamped %d NPCs near spawn (cap %d); rest stream lazily on chunk-load." % [_village_npc_count, _VILLAGE_NPC_GLOBAL_CAP])
+		var nearest_d: float = 1.0e9
+		if not ordered.is_empty():
+			var na: Vector3i = ordered[0]["anchor"]
+			nearest_d = Vector2(float(na.x) - _player_spawn_centre.x, float(na.z) - _player_spawn_centre.z).length()
+		print_debug("VillageNpc: pre-stamped %d NPCs around player spawn (cap %d; nearest village %.0f m); rest stream lazily on chunk-load." % [_village_npc_count, _VILLAGE_NPC_GLOBAL_CAP, nearest_d])
 
 	# Pre-stamp complete — allow the loading splash to fade once terrain has streamed AND the
 	# builder has ground under it (else it would reveal a floating builder).
