@@ -50,6 +50,20 @@ func after_each() -> void:
 	_builder = null
 
 
+# ─── Test 0: chase camera FOV is narrowed away from the fish-eye default ────────
+
+func test_chase_camera_fov_is_narrowed() -> void:
+	# _ready() sets camera_chase.fov = CHASE_CAMERA_FOV_DEG so the third-person view does
+	# not read as a fish-eye (Godot's 75° default showed edge barrel distortion). Lock the
+	# applied value + the constant so a regression to the wide default is caught.
+	assert_eq(Builder.CHASE_CAMERA_FOV_DEG, 70.0,
+		"CHASE_CAMERA_FOV_DEG must be the narrowed 70° value")
+	assert_eq(_builder.camera_chase.fov, Builder.CHASE_CAMERA_FOV_DEG,
+		"_ready() must apply CHASE_CAMERA_FOV_DEG to the chase camera")
+	assert_lt(_builder.camera_chase.fov, 75.0,
+		"chase camera fov must be below the 75° default that caused the fish-eye")
+
+
 # ─── Test 1: Toggle swaps the active camera and reverts on second toggle ────────
 
 func test_toggle_swaps_active_camera() -> void:
