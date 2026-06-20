@@ -216,12 +216,20 @@ const _WANDERER_CHANCE: float = 0.22
 ## wildlife._setup_skinned_glb).
 const _RIGGED_DIR: String = "res://assets/meshes/npcs/"
 
-## The 28 figure indices that ship a rigged + animated GLB under _RIGGED_DIR. Used as the
-## villager APPEARANCE ROSTER: every village NPC is assigned one of these deterministically
-## (hashed from its spawn position — stable across reloads, varied across NPCs).
+## Figure indices that ship a rigged + animated GLB under _RIGGED_DIR AND are BIPEDAL humanoids.
+## Used as the villager APPEARANCE ROSTER: every village NPC is assigned one of these
+## deterministically (hashed from its spawn position — stable across reloads, varied across NPCs).
+##
+## 4-FOOT GAIT FIX (roster prune): indices 7, 33 and 38 were removed because they are NOT bipeds —
+## render-verified, 7 is an aquatic diver/creature in a horizontal swimming pose, 33 is an armored
+## crab/mech creature, and 38 is a mermaid (human torso + fish tail). Driving the upright humanoid
+## walk clip on them makes them sprawl/crawl on the ground (the "walks on 4 feet" report) because
+## they have no two legs to stand on. They are sheet-3 fantasy/underwater figures that do not belong
+## in a walking village-NPC roster. The remaining 25 are all bipedal humanoids whose hunch is fixed
+## by _uprightify_torso (it pins the corrupted Hips+spine tracks to the rig's upright rest pose).
 const _RIGGED_FIGURES: Array[int] = [
-	1, 2, 5, 6, 7, 8, 9, 11, 14, 15, 16, 17, 18, 19, 21,
-	23, 24, 25, 26, 28, 29, 31, 32, 33, 34, 36, 37, 38,
+	1, 2, 5, 6, 8, 9, 11, 14, 15, 16, 17, 18, 19, 21,
+	23, 24, 25, 26, 28, 29, 31, 32, 34, 36, 37,
 ]
 
 ## Target standing height (metres) for a rigged figure, matching the placeholder capsule
@@ -309,6 +317,15 @@ func _apply_rigged_figure() -> bool:
 			var clip: Animation = _skinned_anim.get_animation(_skinned_clip_name)
 			if clip != null:
 				clip.loop_mode = Animation.LOOP_LINEAR
+				# 4-FOOT GAIT FIX: the transplanted walk clip drives the Hips bone to an absolute
+				# rotation (~yaw -60°, roll -16° relative to the Meshy rest pose) that tips the whole
+				# pelvis forward+sideways, so the figure leans onto its hands and reads as a quadruped
+				# crawl. The mocap was authored against a DIFFERENT rest orientation than these Meshy
+				# rigs, so its absolute Hips track is wrong here. Hold the Hips at its REST rotation
+				# (upright) while leaving every limb/spine track intact — the legs + arms still swing,
+				# but around an upright pelvis, giving a proper two-legged walk. Done on a per-instance
+				# DUPLICATE so we never mutate the shared cached Animation resource for other entities.
+				_uprightify_torso(glb, clip)
 		_skinned_anim.stop()  # cancel any glTF autoplay; _physics_process starts it on motion
 
 	# Hide the placeholder capsule so the rigged visual is the only one shown.
@@ -325,6 +342,66 @@ func _apply_rigged_figure() -> bool:
 	_rigged_glb_ref = glb
 	call_deferred("_ground_rigged_to_target")
 	return true
+
+
+## Torso bones whose rotation tracks the transplant corrupted: the pelvis (Hips) AND the full spine
+## chain (Spine, Spine01, Spine02) plus neck. The walk mocap was authored against a DIFFERENT rest
+## orientation than these Meshy rigs, so its absolute Hips+spine rotations pitch the whole upper body
+## forward — the figure hunches over and reads as a quadruped crawl. Pinning these to the rig's REST
+## rotation holds the torso vertical (render-verified: pins the hunch out, see _uprightify_torso) while
+## the LEG and ARM tracks still animate, giving a proper upright two-legged walk. Names cover the
+## casing/variants the 28 villager rigs use (all currently use Hips/Spine/Spine01/Spine02/neck).
+const _UPRIGHT_PIN_BONES: Array[String] = [
+	"Hips", "hips", "Pelvis", "pelvis", "Root", "root",
+	"Spine", "spine", "Spine01", "Spine1", "spine01", "Spine02", "Spine2", "spine02",
+	"neck", "Neck",
+]
+
+
+## 4-FOOT GAIT FIX: rewrite the torso-bone rotation tracks of `clip` so they hold the skeleton's REST
+## rotation for the whole cycle, keeping the pelvis + spine UPRIGHT while every LEG/ARM track animates
+## normally. The transplanted walk clip stored absolute torso rotations authored against a different
+## rest pose, which pitched these Meshy figures forward into a stooped, quadruped-looking crawl
+## (render-verified before/after — the pinned figure stands and strides upright).
+##
+## Operates on a per-instance DUPLICATE of the Animation so the shared cached resource is never
+## mutated (other villagers / hostile mobs that load the same .glb keep their own copy). The
+## duplicated clip is swapped back into THIS instance's AnimationPlayer under the same name.
+func _uprightify_torso(glb: Node3D, clip: Animation) -> void:
+	var skel: Skeleton3D = glb.find_child("Skeleton3D", true, false) as Skeleton3D
+	if skel == null:
+		return
+	# Resolve which of the candidate torso bones this rig actually has → {bone_name: rest_quat}.
+	var pin_rest: Dictionary = {}
+	for bn: String in _UPRIGHT_PIN_BONES:
+		var bi: int = skel.find_bone(bn)
+		if bi >= 0:
+			pin_rest[skel.get_bone_name(bi)] = skel.get_bone_rest(bi).basis.get_rotation_quaternion()
+	if pin_rest.is_empty():
+		return
+
+	var dup: Animation = clip.duplicate(true) as Animation
+	var rewrote: bool = false
+	for ti: int in range(dup.get_track_count()):
+		if dup.track_get_type(ti) != Animation.TYPE_ROTATION_3D:
+			continue
+		# Track paths look like "Armature/Skeleton3D:Hips" — match on the bone-name suffix.
+		var path: String = str(dup.track_get_path(ti))
+		var bone_name: String = path.substr(path.rfind(":") + 1)
+		if not pin_rest.has(bone_name):
+			continue
+		var rest_rot: Quaternion = pin_rest[bone_name]
+		for ki: int in range(dup.track_get_key_count(ti)):
+			dup.rotation_track_set_key(ti, ki, rest_rot)
+		rewrote = true
+	if not rewrote:
+		return
+	# Swap the corrected clip in under the same name so play(_skinned_clip_name) uses it. Replace
+	# inside the existing library so the AnimationPlayer keeps resolving the name.
+	var lib: AnimationLibrary = _skinned_anim.get_animation_library("")
+	if lib != null and lib.has_animation(_skinned_clip_name):
+		lib.remove_animation(_skinned_clip_name)
+		lib.add_animation(_skinned_clip_name, dup)
 
 
 ## Deferred (one frame) scale + ground for the rigged figure. Measures the posed-skeleton bounds
