@@ -392,7 +392,11 @@ func _uprightify_torso(glb: Node3D, clip: Animation) -> void:
 			continue
 		var rest_rot: Quaternion = pin_rest[bone_name]
 		for ki: int in range(dup.track_get_key_count(ti)):
-			dup.rotation_track_set_key(ti, ki, rest_rot)
+			# Godot 4 rotation tracks (TYPE_ROTATION_3D) store a Quaternion per key. The setter is
+			# the generic track_set_key_value (there is NO rotation_track_set_key on Animation — that
+			# call silently threw EVERY frame, so the hunch-pin never applied and the figures stooped
+			# forward into the "walks on 4 feet" pose). Mirrors hostile_mob's track_get_key_value.
+			dup.track_set_key_value(ti, ki, rest_rot)
 		rewrote = true
 	if not rewrote:
 		return
