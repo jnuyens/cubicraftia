@@ -45,8 +45,16 @@ const _BALLOON_DRIFT_SPAN: float = 220.0  # horizontal distance from origin befo
 # standing builder up like an elevator) → DRIFTING. Roughly lands every few minutes.
 enum BalloonState { DRIFTING, DESCEND, LANDED, ASCEND }
 
-## How long the balloon drifts up high between landings (seconds). Roughly "every few minutes".
-const _BALLOON_DRIFT_DURATION: float = 180.0
+## How long the balloon drifts up high between landings (seconds). Kept short enough that a
+## player actually WITNESSES a landing within a reasonable session window (the old 180 s meant
+## the balloon spent 3 minutes high before its first descent, so testers "never saw it land").
+## At ~45 s the balloon lands roughly once a minute, so a landing is always close at hand.
+const _BALLOON_DRIFT_DURATION: float = 45.0
+## How long the FIRST drift lasts after spawn (seconds) — deliberately shorter than the steady-
+## state drift so the very first landing happens soon after the world loads, giving the player an
+## early, obvious "the balloon comes down and you can climb aboard" moment. Subsequent cycles use
+## the full _BALLOON_DRIFT_DURATION.
+const _BALLOON_FIRST_DRIFT_DURATION: float = 20.0
 ## How long the basket rests on the ground for a builder to walk in (seconds).
 const _BALLOON_LANDED_DURATION: float = 30.0
 ## Vertical speed (m/s) while descending to land or ascending back to cruise height.
@@ -94,6 +102,7 @@ var _balloon_state: int = BalloonState.DRIFTING
 var _balloon_state_t: float = 0.0  # seconds elapsed in the current state
 var _balloon_cruise_y: float = 46.0  # randomised altitude the balloon returns to after a ride
 var _balloon_ground_y: float = _BALLOON_FALLBACK_GROUND_Y  # terrain top-Y captured at descent start
+var _balloon_first_drift_done: bool = false  # false until the first (shorter) drift has elapsed
 
 
 func _ready() -> void:
@@ -325,7 +334,13 @@ func _step_balloon(delta: float) -> void:
 			if Vector2(_balloon.position.x, _balloon.position.z).length() > _BALLOON_DRIFT_SPAN:
 				_balloon.position.x = -_balloon.position.x
 				_balloon.position.z = -_balloon.position.z
-			if _balloon_state_t >= _BALLOON_DRIFT_DURATION:
+			# The very first drift after spawn is shorter so the player witnesses a landing soon;
+			# every drift afterwards uses the full duration.
+			var drift_limit: float = (
+				_BALLOON_FIRST_DRIFT_DURATION if not _balloon_first_drift_done
+				else _BALLOON_DRIFT_DURATION)
+			if _balloon_state_t >= drift_limit:
+				_balloon_first_drift_done = true
 				# Begin landing: capture the real ground under the balloon NOW (before it sinks).
 				_balloon_ground_y = _probe_ground_y(_balloon.global_position)
 				_enter_balloon_state(BalloonState.DESCEND)
