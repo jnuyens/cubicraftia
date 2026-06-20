@@ -5,6 +5,8 @@
 .godot/
 *.import
 *.translation
+# Per-build identifier written by scripts/stamp-version.sh (re-stamped each build)
+version.txt
 export_presets.cfg.local
 export.cfg
 build/

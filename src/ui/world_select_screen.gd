@@ -305,6 +305,40 @@ func _build_ui() -> void:
 	# Build delete confirmation modal (hidden).
 	_build_delete_modal()
 
+	# Subtle build identifier in the bottom-right corner (test builds only).
+	_build_build_label()
+
+
+## Small, low-opacity build identifier pinned to the bottom-right corner so the
+## player always knows which build they are testing. Hidden entirely on a major
+## release (BuildInfo.IS_MAJOR_RELEASE). The console line is always printed by
+## the BuildInfo autoload regardless of this label.
+func _build_build_label() -> void:
+	if BuildInfo.IS_MAJOR_RELEASE:
+		return
+	var build_label := Label.new()
+	build_label.name = "BuildLabel"
+	build_label.text = "build %s" % BuildInfo.version_string()
+	build_label.layout_mode = 1
+	build_label.anchors_preset = 3   # PRESET_BOTTOM_RIGHT
+	build_label.anchor_left = 1.0
+	build_label.anchor_top = 1.0
+	build_label.anchor_right = 1.0
+	build_label.anchor_bottom = 1.0
+	build_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	build_label.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	build_label.offset_left = -8.0
+	build_label.offset_top = -8.0
+	build_label.offset_right = -8.0
+	build_label.offset_bottom = -8.0
+	build_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	build_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	build_label.add_theme_font_size_override("font_size", 12)
+	build_label.add_theme_color_override("font_color",
+		Color(COLOR_WHITE.r, COLOR_WHITE.g, COLOR_WHITE.b, 0.6))
+	build_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(build_label)
+
 
 func _build_new_world_modal() -> void:
 	# Full-screen semi-transparent overlay.
