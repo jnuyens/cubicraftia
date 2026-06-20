@@ -62,11 +62,21 @@ const _BALLOON_VERTICAL_SPEED: float = 4.0
 ## Cruise altitude band — randomised once per balloon; the balloon returns here after each ride.
 const _BALLOON_CRUISE_MIN_Y: float = 34.0
 const _BALLOON_CRUISE_MAX_Y: float = 58.0
-## Fallback ground Y used when no terrain raycast hit is available (headless / unmeshed chunk).
-const _BALLOON_FALLBACK_GROUND_Y: float = 2.0
-## Downward ground-probe geometry (metres) used to seat the landed basket on real terrain.
+## Fallback ground Y used when neither the formula nor a raycast yields a height (no main_scene
+## ref AND no physics hit — e.g. a detached unit test). The deterministic _terrain_surface_at
+## formula is the PRIMARY source; this is only a last resort.
+const _BALLOON_FALLBACK_GROUND_Y: float = 13.0
+## Downward ground-probe geometry (metres) used to REFINE the formula height against any actually-
+## meshed terrain/structure directly under the balloon. The ray starts above the formula surface
+## and reaches well below it, so it finds the real meshed top when the chunk is loaded.
 const _BALLOON_GROUND_RAY_UP: float = 80.0
 const _BALLOON_GROUND_RAY_DOWN: float = 240.0
+## Horizontal distance (metres) from the player at which the balloon is re-anchored to drift, so
+## every descend/land cycle happens close enough that the player can walk over and climb in. The
+## balloon crosses through the player's column during its drift, then descends onto the real,
+## loaded terrain right there — instead of drifting 200 m out over unmeshed (and so un-probeable)
+## chunks where it could never find ground and never actually land.
+const _BALLOON_PLAYER_ORBIT_RADIUS: float = 26.0
 
 # ── Basket carrier (INVISIBLE collision that rides inside the GLB's own basket) ──
 # The hot_air_balloon.glb already renders a basket as part of its single baked mesh (the
@@ -103,6 +113,13 @@ var _balloon_state_t: float = 0.0  # seconds elapsed in the current state
 var _balloon_cruise_y: float = 46.0  # randomised altitude the balloon returns to after a ride
 var _balloon_ground_y: float = _BALLOON_FALLBACK_GROUND_Y  # terrain top-Y captured at descent start
 var _balloon_first_drift_done: bool = false  # false until the first (shorter) drift has elapsed
+var _balloon_anchored_to_player: bool = false  # true once the drift has been anchored to a real player
+
+## Lazily-resolved MainScene reference (the node in group "main_scene"). Used READ-ONLY to call
+## _terrain_surface_at(x, z) — the deterministic generator height formula — and to read the local
+## Builder's position so the balloon cycles near the player. Never mutated. May stay null in a
+## detached unit test, in which case the balloon falls back to the constant ground Y + origin.
+var _main_scene: Node = null
 
 
 func _ready() -> void:
@@ -222,6 +239,10 @@ func _spawn_balloons(rng: RandomNumberGenerator) -> void:
 	_balloon = root
 	_balloon_state = BalloonState.DRIFTING
 	_balloon_state_t = 0.0
+	# Re-anchor the drift near the player so the very first landing happens within walking distance
+	# (over LOADED terrain). At spawn the player may not be resolvable yet; _step_balloon re-anchors
+	# again on each DRIFTING entry, and the first-drift handler re-anchors once the player exists.
+	_anchor_balloon_drift_near_player()
 
 
 ## Build the INVISIBLE basket carrier: a SINGLE AnimatableBody3D holding the floor collision
@@ -319,6 +340,11 @@ func _physics_process(delta: float) -> void:
 func _step_balloon(delta: float) -> void:
 	if _balloon == null:
 		return
+	# The Builder is positioned LATER in main_scene._ready than SkyDecor is spawned, so the spawn-
+	# time anchor may have used a stale origin. Re-anchor on the first DRIFTING frame(s) until a real
+	# player resolves, so the very first descent still targets loaded terrain by the player.
+	if not _balloon_anchored_to_player and _balloon_state == BalloonState.DRIFTING:
+		_anchor_balloon_drift_near_player()
 	_balloon_state_t += delta
 	var phase: float = _balloon.get_meta("bob_phase")
 	var amp: float = _balloon.get_meta("bob_amp")
@@ -326,14 +352,14 @@ func _step_balloon(delta: float) -> void:
 
 	match _balloon_state:
 		BalloonState.DRIFTING:
-			# Glide slowly + bob high; wrap to the far side when it leaves the span.
+			# Glide slowly + bob high. The drift was anchored upwind of the player on DRIFTING entry
+			# (see _anchor_balloon_drift_near_player), so it glides THROUGH the player's column and
+			# descends onto loaded terrain right there — no origin-relative wrap is needed, because
+			# each cycle re-anchors near the (possibly-moved) player instead of crossing the origin.
 			_balloon.position.y = _balloon_cruise_y + sin(_t * 0.25 + phase) * amp
 			_balloon.position.x += drift.x * delta
 			_balloon.position.z += drift.z * delta
 			_balloon.rotation.y += float(_balloon.get_meta("yaw_speed")) * delta
-			if Vector2(_balloon.position.x, _balloon.position.z).length() > _BALLOON_DRIFT_SPAN:
-				_balloon.position.x = -_balloon.position.x
-				_balloon.position.z = -_balloon.position.z
 			# The very first drift after spawn is shorter so the player witnesses a landing soon;
 			# every drift afterwards uses the full duration.
 			var drift_limit: float = (
@@ -341,7 +367,9 @@ func _step_balloon(delta: float) -> void:
 				else _BALLOON_DRIFT_DURATION)
 			if _balloon_state_t >= drift_limit:
 				_balloon_first_drift_done = true
-				# Begin landing: capture the real ground under the balloon NOW (before it sinks).
+				# Begin landing: capture the REAL ground under the balloon NOW (before it sinks).
+				# _probe_ground_y uses the deterministic terrain formula first (correct even over
+				# unmeshed chunks), refined by a raycast where the chunk is meshed.
 				_balloon_ground_y = _probe_ground_y(_balloon.global_position)
 				_enter_balloon_state(BalloonState.DESCEND)
 
@@ -366,6 +394,9 @@ func _step_balloon(delta: float) -> void:
 			if _balloon.position.y >= _balloon_cruise_y - 0.001:
 				_balloon.position.y = _balloon_cruise_y
 				_enter_balloon_state(BalloonState.DRIFTING)
+				# Re-anchor the next drift near the (possibly-moved) player so the next landing is
+				# again within walking distance, over loaded terrain.
+				_anchor_balloon_drift_near_player()
 
 	# Re-seat the invisible carrier to the balloon's new position. Setting the AnimatableBody3D's
 	# OWN global_position on the physics tick is what drives its sync_to_physics rider-carry.
@@ -385,21 +416,89 @@ func _balloon_landed_root_y() -> float:
 	return _balloon_ground_y - _BASKET_FLOOR_TOP_Y
 
 
-## Cast a ray straight down from above the balloon to find the terrain top Y under it
-## (collision layer 1 = VoxelTerrain, the same layer the builder stands on). Falls back to a
-## sensible low Y when no physics / no hit is available (headless / unmeshed chunk).
+## The terrain top-Y the balloon should land on, at world (x, z). PRIMARY source is the
+## deterministic generator height FORMULA via main_scene._terrain_surface_at — it is correct even
+## when the chunk under the balloon is not yet meshed (the live-bug case: the old version only had
+## a downward raycast, which over distant/unloaded terrain hit NOTHING and fell back to ~y=2, so
+## the balloon "landed" far below the real surface and the player never saw it). When a chunk IS
+## meshed we REFINE that formula height with a downward raycast (it catches built structures / the
+## exact meshed top), but only when the ray actually hits — a miss never overrides the formula.
 func _probe_ground_y(from_world: Vector3) -> float:
+	var ground_y: float = _formula_ground_y(from_world.x, from_world.z)
+	# Refine against actually-meshed geometry directly below, if any. The ray is centred on the
+	# formula surface (not the high balloon) so a short DOWN reach still spans the real top.
 	var world := get_world_3d()
 	if world == null:
-		return _BALLOON_FALLBACK_GROUND_Y
+		return ground_y
 	var space := world.direct_space_state
 	if space == null:
-		return _BALLOON_FALLBACK_GROUND_Y
-	var from := Vector3(from_world.x, from_world.y + _BALLOON_GROUND_RAY_UP, from_world.z)
-	var to := Vector3(from_world.x, from_world.y - _BALLOON_GROUND_RAY_DOWN, from_world.z)
+		return ground_y
+	var from := Vector3(from_world.x, ground_y + _BALLOON_GROUND_RAY_UP, from_world.z)
+	var to := Vector3(from_world.x, ground_y - _BALLOON_GROUND_RAY_DOWN, from_world.z)
 	var q := PhysicsRayQueryParameters3D.create(from, to)
 	q.collision_mask = 1  # terrain / statics only (same layer main_scene + wildlife probe ground).
 	var hit: Dictionary = space.intersect_ray(q)
 	if hit.is_empty():
-		return _BALLOON_FALLBACK_GROUND_Y
+		return ground_y  # unmeshed chunk: trust the deterministic formula (the real fix).
 	return (hit["position"] as Vector3).y
+
+
+## Deterministic generator surface Y at world (x, z) via main_scene._terrain_surface_at — a pure
+## noise formula (no raycast, no chunk-load dependency), so it gives the REAL ground height even
+## over unloaded terrain. Falls back to the constant only in a detached test with no main_scene.
+func _formula_ground_y(x: float, z: float) -> float:
+	var scene: Node = _resolve_main_scene()
+	if scene != null and scene.has_method("_terrain_surface_at"):
+		return float(scene._terrain_surface_at(x, z))
+	return _BALLOON_FALLBACK_GROUND_Y
+
+
+## Lazily resolve (and cache) the MainScene node — the node in group "main_scene". Read-only use:
+## _terrain_surface_at + the Builder position. Returns null in a detached unit test (no such node).
+func _resolve_main_scene() -> Node:
+	if _main_scene != null and is_instance_valid(_main_scene):
+		return _main_scene
+	if not is_inside_tree():
+		return null
+	_main_scene = get_tree().get_first_node_in_group("main_scene")
+	return _main_scene
+
+
+## The local player's (Builder) XZ, or Vector2.ZERO (world origin) when unavailable. The Builder is
+## a child of MainScene named "Builder" (see main_scene.gd). Used to keep the balloon's drift — and
+## therefore its landing — near the player so a landing is always reachable on foot.
+func _player_xz() -> Vector2:
+	var scene: Node = _resolve_main_scene()
+	if scene == null:
+		return Vector2.ZERO
+	var builder := scene.get_node_or_null("Builder") as Node3D
+	if builder == null:
+		return Vector2.ZERO
+	var p: Vector3 = builder.global_position
+	return Vector2(p.x, p.z)
+
+
+## Re-anchor the balloon's horizontal drift so it starts _BALLOON_PLAYER_ORBIT_RADIUS away from the
+## player on the up-drift side and glides THROUGH the player's column. Called whenever the balloon
+## (re-)enters DRIFTING, so each descend/land cycle targets loaded terrain right by the player
+## rather than 200 m out over unmeshed chunks. No-op (keeps the spawn position) without a player.
+func _anchor_balloon_drift_near_player() -> void:
+	if _balloon == null:
+		return
+	var scene: Node = _resolve_main_scene()
+	var has_player: bool = scene != null and (scene.get_node_or_null("Builder") as Node3D) != null
+	var pxz: Vector2 = _player_xz()
+	var drift: Vector3 = _balloon.get_meta("drift")
+	var dir2 := Vector2(drift.x, drift.z)
+	if dir2.length() < 0.0001:
+		dir2 = Vector2(1.0, 0.0)
+	dir2 = dir2.normalized()
+	# Start upwind of the player by the orbit radius; drifting forward crosses the player's column,
+	# where DESCEND then seats the basket on the real (loaded) ground.
+	var start := pxz - dir2 * _BALLOON_PLAYER_ORBIT_RADIUS
+	_balloon.position.x = start.x
+	_balloon.position.z = start.y
+	# Only mark as anchored once a real player was found, so the first physics frame retries the
+	# anchor after main_scene has finished positioning the Builder (it moves it later in _ready).
+	if has_player:
+		_balloon_anchored_to_player = true
