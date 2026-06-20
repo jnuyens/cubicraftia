@@ -159,6 +159,26 @@ const _VILLAGE_NPC_GLOBAL_CAP: int = 14
 ## anchor plus a full village footprint; the global cap (14) still bounds the live/rendered set.
 const _VILLAGE_NPC_DESPAWN_DIST_M: float = 420.0
 
+## ─── Guaranteed STARTER VILLAGE (near-spawn villagers) ──────────────────────
+## VILLAGERS-NEVER-VISIBLE root cause: villages anchor on their own 128 m blueprint grid, so the
+## nearest npc-bearing village for most seeds sits ~120-370 m from where the player actually lands
+## (the player spawns at the nearest LAND column to origin, rarely a village cell). That is far
+## beyond the ~80 m view distance, so even a correctly pre-stamped+grounded village is never seen.
+## The robust fix: deterministically spawn a small cluster of villagers a few metres from world_spawn
+## — the SAME way the starter chest + bed are placed — completely independent of the 128 m grid. The
+## per-chunk grid streaming still populates villages elsewhere; this just guarantees the near-spawn
+## experience.
+##
+## Count of starter villagers (within the §7.2 mobile budget alongside the grid cap). 4 reads as a
+## small living hamlet without crowding the spawn props (chest/bed/sign).
+const _STARTER_VILLAGE_NPC_COUNT: int = 4
+## Ring radius (m) the starter villagers cluster around world_spawn. Inside view distance (~80 m) and
+## clear of the chest (+1 X), bed (-6 X) and welcome sign (+5,-2) footprints so nothing overlaps.
+const _STARTER_VILLAGE_RING_M: float = 9.0
+## Half-side (m) of each starter villager's little square patrol loop, so they wander visibly in place
+## rather than standing dead still. Small so they stay clustered near spawn.
+const _STARTER_VILLAGE_PATROL_M: float = 2.5
+
 ## FoliageSpawner helper — static methods only; no instantiation needed.
 const _FoliageSpawnerScript := preload("res://src/world/foliage_spawner.gd")
 
@@ -1708,6 +1728,102 @@ func spawn_starter_chest_and_bed(world_spawn: Vector3) -> void:
 	if to_spawn.length() > 0.01:
 		sign.rotation.y = atan2(to_spawn.x, to_spawn.y)
 	sign.add_to_group("starter_welcome_sign")
+
+	# Guaranteed near-spawn villagers (VILLAGERS-NEVER-VISIBLE fix). Spawned the same
+	# deterministic way as the chest/bed/sign above so the player ALWAYS meets a few friendly
+	# builders right where they land, independent of the distant 128 m village grid.
+	spawn_starter_village(world_spawn)
+
+
+## Spawn a small GUARANTEED cluster of friendly VillageNpcs a few metres from world_spawn so the
+## player reliably SEES villagers without trekking hundreds of metres to the nearest grid village.
+##
+## This is the robust fix for VILLAGERS-NEVER-VISIBLE: grid villages anchor on a 128 m blueprint
+## grid that for most seeds places the nearest npc-bearing village ~120-370 m out — far past the
+## ~80 m view distance — so the player saw none even though the pre-stamp reported "14 NPCs". The
+## per-chunk grid streaming (_dispatch_village_npcs) still handles villages elsewhere; this just
+## guarantees the near-spawn experience the same deterministic way the starter chest + bed are placed.
+##
+## Each villager is spawned via spawn_starter_village_npc(), which (1) grounds the spawn Y to the
+## real surface formula AND injects MainScene so VillageNpc's existing raycast grounding snaps the
+## feet onto the meshed terrain from frame one (no sky-spawn / slow fall), (2) draws its appearance
+## from the BIPED rigged roster (_RIGGED_FIGURES) with the upright-torso fix, and (3) shares the
+## global live cap + "village_npc" group + count with the grid streamer.
+##
+## @param world_spawn  The computed land-safe player spawn (its Y is the origin column surface; each
+##                      villager re-samples its OWN column so it sits on the ground where it stands).
+func spawn_starter_village(world_spawn: Vector3) -> void:
+	if not Features.is_survival_mode():
+		return  # D-01 sandbox row: no starter content (matches chest/bed gating).
+	# Skin variant themed to the spawn biome (only affects the static-figure fallback tint/pick; the
+	# rigged biped roster used by villagers is biome-independent). Map every biome onto one of the
+	# three variants VillageNpc.SKIN_COLOURS knows so the fallback never warns.
+	var variant: String = _starter_village_skin_variant(world_spawn)
+	# Spread the villagers evenly around a small ring centred on the spawn so they read as a hamlet.
+	for i: int in range(_STARTER_VILLAGE_NPC_COUNT):
+		if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+			break
+		var ang: float = (TAU / float(_STARTER_VILLAGE_NPC_COUNT)) * float(i)
+		var cx: float = world_spawn.x + cos(ang) * _STARTER_VILLAGE_RING_M
+		var cz: float = world_spawn.z + sin(ang) * _STARTER_VILLAGE_RING_M
+		spawn_starter_village_npc(Vector2(cx, cz), variant)
+
+
+## Map the spawn-biome to one of VillageNpc's three known skin variants (desert/snow/savannah) so
+## the static-figure fallback picks a themed figure without warning. Grassland/jungle → savannah,
+## ocean (shoreline spawn) → desert. The rigged biped roster is biome-independent, so this only
+## affects the rare fallback when the rigged .glb roster is absent.
+func _starter_village_skin_variant(world_spawn: Vector3) -> String:
+	if _biome_map == null or not _biome_map.has_method("biome_at"):
+		return "savannah"
+	var b: int = int(_biome_map.biome_at(world_spawn.x, world_spawn.z))
+	match b:
+		int(BiomeMap.Biome.DESERT):
+			return "desert"
+		int(BiomeMap.Biome.SNOW):
+			return "snow"
+		int(BiomeMap.Biome.SAVANNAH):
+			return "savannah"
+		_:
+			return "savannah"  # grassland/jungle/ocean → savannah-themed locals
+
+
+## Spawn ONE guaranteed starter villager at world XZ `xz`, grounded to the terrain and walking a
+## small square patrol loop so it visibly wanders near spawn. Mirrors spawn_village_npc's wiring
+## (inject MainScene for raycast grounding + tree rejection, set skin variant, add to the
+## "village_npc" group, bump the shared live count) but builds its own near-spawn patrol path
+## instead of reading a template's npc_spawns slot — these villagers are off the 128 m grid.
+##
+## @param xz       World XZ of the villager's home point.
+## @param variant  Skin variant for the static-figure fallback ("desert"|"snow"|"savannah").
+func spawn_starter_village_npc(xz: Vector2, variant: String) -> void:
+	# Small square patrol loop around the home point, each waypoint grounded to its OWN column so the
+	# villager walks ON the ground even where the terrain slopes (same per-waypoint grounding as
+	# spawn_village_npc). VillageNpc's raycast _ground_to_collision snaps onto the meshed surface
+	# from frame one; this formula Y is the safe fallback before the chunk collision is present.
+	var h: float = _STARTER_VILLAGE_PATROL_M
+	var corners: Array[Vector2] = [
+		Vector2(xz.x - h, xz.y - h),
+		Vector2(xz.x + h, xz.y - h),
+		Vector2(xz.x + h, xz.y + h),
+		Vector2(xz.x - h, xz.y + h),
+	]
+	var path_world: PackedVector3Array = PackedVector3Array()
+	for c: Vector2 in corners:
+		path_world.append(Vector3(c.x, _terrain_surface_at(c.x, c.y), c.y))
+
+	var npc: VillageNpc = VillageNpcScene.instantiate() as VillageNpc
+	add_child(npc)
+	# Spawn at the first waypoint (grounded). add_child FIRST so global_position is set in-tree.
+	npc.global_position = path_world[0]
+	# Inject self so the NPC's ground raycast can reject tree-voxel hits via the Terrain VoxelTool.
+	if npc.has_method("set_main_scene"):
+		npc.set_main_scene(self)
+	npc.set_skin_variant(variant)
+	npc.set_patrol_path(path_world)
+	npc.add_to_group("village_npc")
+	npc.add_to_group("starter_village_npc")
+	_village_npc_count += 1
 
 
 ## Sample the terrain surface height at the world origin for the starter-kit spawn.
