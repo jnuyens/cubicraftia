@@ -409,13 +409,16 @@ func _build_ui() -> void:
 	# Version label — anchored to bottom-right.
 	_version_label = Label.new()
 	_version_label.name = "VersionLabel"
-	_version_label.text = "v1.0"
+	# Show the real build identifier on the opening screen (and console via BuildInfo)
+	# so it is always clear which build is running. A clean version string ("v1.0")
+	# is shown only for a tagged major release.
+	_version_label.text = "v1.0" if BuildInfo.IS_MAJOR_RELEASE else "build " + BuildInfo.version_string()
 	_version_label.layout_mode = 1
 	_version_label.anchor_left = 1.0
 	_version_label.anchor_top = 1.0
 	_version_label.anchor_right = 1.0
 	_version_label.anchor_bottom = 1.0
-	_version_label.offset_left = -80.0
+	_version_label.offset_left = -240.0
 	_version_label.offset_top = -36.0
 	_version_label.add_theme_font_size_override("font_size", 12)
 	_version_label.add_theme_color_override("font_color", Color(0.945, 0.941, 0.918, 0.5))
