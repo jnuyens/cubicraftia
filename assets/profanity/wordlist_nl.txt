@@ -1,6 +1,7 @@
 # LDNOOBW-derived, CC-BY-4.0, curated for gaming context — see README.md
 # Source: https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words
 # Curated: false positives voor gaming context verwijderd.
+# Phase 9 review (2026-06-21): fixed 3 typos, removed 10 false positives, added 7 Flemish coverage entries.
 # Format: één woord of uitdrukking per regel, kleine letters. Regels met # zijn commentaar.
 aars
 anaal
@@ -13,20 +14,23 @@ dikzak
 doos
 drol
 drugshoer
+eikel
 etterbak
 flikker
 fokking
-gore
+godver
+godverdomme
 hoer
 homo
 homofoob
-homseksueel
+homosexueel
 huffter
 hufter
-idioot
 jullie hoeren
 kakhoofd
 kanker
+klere
+klerezooi
 klootzak
 klote
 kontgat
@@ -37,39 +41,32 @@ lul
 lulhannes
 mongool
 moederneuker
-neuken
-neuk
+nazi
 neger
 negers
-nazi
+neuk
+neuken
 pik
 pikhoofd
 piss
-plasser
 poep
 poepkop
 poepzak
 prostituee
-prutsers
-puffer
 puta
-ras
 reet
 rotzak
 schijt
 schijtlul
 slet
 sloerie
-smerla
+smeerlap
 snol
-stomaak
+tering
 tiet
 tieten
 trut
-vent
-vieze
-vuil
-waardeloos
+tyfus
 wijf
 zeikerd
 zeiken
