@@ -1987,7 +1987,7 @@ func _dispatch_ocean_decor(chunk_coord: Vector3i, biome: int) -> void:
 	for entry: Dictionary in entries:
 		var kind: String = entry.get("kind", "")
 		var raw_pos: Vector3 = entry.get("pos", Vector3.ZERO)
-		var seabed_y: float = _terrain_surface_at(raw_pos.x, raw_pos.z)
+		var seabed_y: float = _seabed_surface_at(raw_pos.x, raw_pos.z)
 		# Only decorate cells whose seabed is actually under water — skip "ocean" cells that
 		# happen to poke above the waterline so we never strand coral on a dry sandbar.
 		if seabed_y >= _SEA_LEVEL:
