@@ -1759,14 +1759,19 @@ func spawn_starter_village(world_spawn: Vector3) -> void:
 	# rigged biped roster used by villagers is biome-independent). Map every biome onto one of the
 	# three variants VillageNpc.SKIN_COLOURS knows so the fallback never warns.
 	var variant: String = _starter_village_skin_variant(world_spawn)
+	print("[village] spawn_starter_village called, world_spawn=", world_spawn, " count=", _STARTER_VILLAGE_NPC_COUNT, " ring_m=", _STARTER_VILLAGE_RING_M, " live_count=", _village_npc_count, " cap=", _VILLAGE_NPC_GLOBAL_CAP)
 	# Spread the villagers evenly around a small ring centred on the spawn so they read as a hamlet.
+	var spawned: int = 0
 	for i: int in range(_STARTER_VILLAGE_NPC_COUNT):
 		if _village_npc_count >= _VILLAGE_NPC_GLOBAL_CAP:
+			print("[village] STARTER spawn aborted at i=", i, ", global cap reached (", _village_npc_count, "/", _VILLAGE_NPC_GLOBAL_CAP, ")")
 			break
 		var ang: float = (TAU / float(_STARTER_VILLAGE_NPC_COUNT)) * float(i)
 		var cx: float = world_spawn.x + cos(ang) * _STARTER_VILLAGE_RING_M
 		var cz: float = world_spawn.z + sin(ang) * _STARTER_VILLAGE_RING_M
 		spawn_starter_village_npc(Vector2(cx, cz), variant)
+		spawned += 1
+	print("[village] spawn_starter_village done, spawned=", spawned, " total_live=", _village_npc_count)
 
 
 ## Map the spawn-biome to one of VillageNpc's three known skin variants (desert/snow/savannah) so
@@ -1813,6 +1818,9 @@ func spawn_starter_village_npc(xz: Vector2, variant: String) -> void:
 		path_world.append(Vector3(c.x, _terrain_surface_at(c.x, c.y), c.y))
 
 	var npc: VillageNpc = VillageNpcScene.instantiate() as VillageNpc
+	if npc == null:
+		push_error("[village] spawn_starter_village_npc: VillageNpcScene failed to instantiate as VillageNpc")
+		return
 	add_child(npc)
 	# Spawn at the first waypoint (grounded). add_child FIRST so global_position is set in-tree.
 	npc.global_position = path_world[0]
@@ -1824,6 +1832,7 @@ func spawn_starter_village_npc(xz: Vector2, variant: String) -> void:
 	npc.add_to_group("village_npc")
 	npc.add_to_group("starter_village_npc")
 	_village_npc_count += 1
+	print("[village] spawned starter villager #", _village_npc_count, " at ", path_world[0], " (formula_y=", path_world[0].y, ") variant=", variant)
 
 
 ## Sample the terrain surface height at the world origin for the starter-kit spawn.
@@ -3069,8 +3078,15 @@ func _cull_distant_village_npcs(bpos: Vector3) -> void:
 		var npc: Node3D = n as Node3D
 		if npc == null:
 			continue
-		if npc.global_position.distance_to(bpos) <= _VILLAGE_NPC_DESPAWN_DIST_M:
+		# Guaranteed near-spawn starter villagers are NEVER culled. The player must always be able to
+		# meet them no matter how the distance maths lands (defends against any spawn-Y drift that
+		# could push their measured distance past the threshold for a frame).
+		if npc.is_in_group("starter_village_npc"):
 			continue
+		var dist: float = npc.global_position.distance_to(bpos)
+		if dist <= _VILLAGE_NPC_DESPAWN_DIST_M:
+			continue
+		print("[village] culled villager dist=", dist, " pos=", npc.global_position)
 		var ck := Vector3i(floori(npc.global_position.x / 16.0), 0, floori(npc.global_position.z / 16.0))
 		_processed_village_chunks.erase(ck)
 		_village_npc_count = maxi(0, _village_npc_count - 1)
