@@ -100,65 +100,70 @@ const _KIND_TYPE: Dictionary = {
 	"stingray":          _TYPE_WATER,
 }
 
-## Target in-world HEIGHT (metres) per creature, against a ~1.8 m builder. The mesh
-## is scaled so its tallest extent equals this — independent of the source mesh's
-## native size (the .glb meshes vary wildly, e.g. elephant.glb is 2.7 u, panda 1 u).
+## Target RENDERED HEIGHT (metres) per creature, against a ~1.6 m builder. The mesh is scaled
+## so its on-screen Y (height) extent equals this — NOT its largest extent (see
+## _normalise_creature_mesh; scaling max(x,y,z) made longer-than-tall animals render far too
+## small). Values are real-world standing heights (at the shoulder/back for quadrupeds, full
+## height for bipeds/birds) tuned to read right beside the builder: a panda/wolf is knee-to-hip
+## high, a camel/caribou towers over the builder, a polar bear looms, a mouse/scorpion is a
+## low scurrying thing. Long flat swimmers (whales, rays, eels) use their (small) body HEIGHT,
+## so they read as long low shapes in the water rather than absurdly tall.
 const _TARGET_HEIGHT: Dictionary = {
-	"panda":        2.0,
-	"monkey":       1.0,
-	"toucan":       0.8,
-	"elephant":     3.6,
-	"giraffe":      5.0,
-	"gnu":          2.6,
-	"desert_mouse": 0.7,
-	"reindeer":     2.1,
-	"snowman":      1.9,
-	"pig":          1.3,
-	"dog":          0.7,
-	"sheep":        1.0,
+	"panda":        1.1,   # giant panda ~0.9-1.0 m at shoulder (self-sized rig; informs hurtbox)
+	"monkey":       0.7,   # small monkey upright
+	"toucan":       0.6,   # perched toucan body height
+	"elephant":     3.2,   # African elephant ~3 m at shoulder — looms over the builder
+	"giraffe":      5.0,   # 4.5-5.5 m — reference creature, unchanged
+	"gnu":          1.4,   # wildebeest ~1.4 m at shoulder (was 2.6 — far too tall)
+	"desert_mouse": 0.25,  # a mouse is tiny; small but still visible (was 0.7 — huge)
+	"reindeer":     1.4,   # reindeer ~1.0-1.4 m at shoulder, antlers add a little
+	"snowman":      1.6,   # roughly builder-height snow figure
+	"pig":          0.8,   # domestic pig ~0.8 m at shoulder
+	"dog":          0.6,   # medium dog ~0.5-0.6 m at shoulder
+	"sheep":        0.9,   # sheep ~0.9 m at shoulder
 	# Desert-biome wildlife.
-	"camel":        2.0,
-	"fennec_fox":   0.5,
-	"desert_lizard":0.5,
-	"scorpion":     0.4,
-	"meerkat":      0.55,
-	"rattlesnake":  0.6,
-	"vulture":      0.9,
+	"camel":        2.1,   # dromedary ~1.85 m shoulder, hump higher — towers over the builder
+	"fennec_fox":   0.25,  # tiny desert fox
+	"desert_lizard":0.2,   # low ground lizard
+	"scorpion":     0.2,   # low to the ground
+	"meerkat":      0.35,  # standing meerkat ~0.3 m
+	"rattlesnake":  0.35,  # raised-head height of a coiled snake
+	"vulture":      1.0,   # large vulture standing ~0.9-1.1 m
 	# Snow-biome wildlife.
-	"polar_bear":   1.4,
-	"caribou":      2.0,
-	"husky_dog":    0.8,
-	"arctic_wolf":  1.0,
-	"arctic_fox":   0.5,
-	"snow_rabbit":  0.45,
-	"penguin":      0.8,
-	"snowy_owl":    0.5,
-	"fish_blue":    0.6,
-	"fish_orange":  0.6,
-	"fish_yellow":  0.6,
-	"orca":         3.8,
-	"manta":        1.6,
-	"jellyfish":    1.0,
+	"polar_bear":   1.8,   # polar bear ~1.6 m at shoulder on all fours, rears to 2.5+ — looms
+	"caribou":      1.5,   # caribou ~1.2-1.5 m at shoulder
+	"husky_dog":    0.6,   # husky ~0.55-0.6 m at shoulder (was 0.8)
+	"arctic_wolf":  0.85,  # wolf ~0.7-0.85 m at shoulder
+	"arctic_fox":   0.3,   # small fox
+	"snow_rabbit":  0.35,  # rabbit
+	"penguin":      0.9,   # emperor-style penguin reads charming at ~0.9 m
+	"snowy_owl":    0.6,   # large owl
+	"fish_blue":    0.35,  # small reef fish (self-sized wobble; informs hurtbox)
+	"fish_orange":  0.35,
+	"fish_yellow":  0.35,
+	"orca":         2.2,   # orca ~2 m tall dorsal-fin-up — reads big in the water
+	"manta":        0.8,   # manta is flat; low body height, wide span
+	"jellyfish":    0.8,   # bell + trailing tentacles
 	# Beach/ocean wildlife.
-	"dolphin":      1.6,
-	"turtle_sea":   0.9,
-	"flamingo":     1.7,
-	"seagull":      0.55,
-	"crab_red":     0.5,
-	"crab_hermit":  0.5,
-	# Deep-ocean wildlife (art-ocean set). _TARGET_HEIGHT scales the LARGEST extent to this,
-	# so the long whales/shark/stingray read big relative to the ~1.8 m builder, and the
-	# seahorse/pufferfish stay small. Tuned per creature against the brick-built reference.
-	"shark_great_white": 2.5,
-	"whale_blue":        5.0,
-	"whale_sperm":       4.5,
-	"squid":             1.8,
-	"octopus_red":       1.4,
-	"seahorse":          0.7,
-	"pufferfish":        0.6,
-	"hammerhead":        2.2,
-	"eel":               1.3,
-	"stingray":          1.8,
+	"dolphin":      1.0,   # dolphin body height (long, low swimmer)
+	"turtle_sea":   0.5,   # sea turtle shell height
+	"flamingo":     1.3,   # flamingo ~1.2-1.4 m standing
+	"seagull":      0.45,  # gull
+	"crab_red":     0.3,   # low crab
+	"crab_hermit":  0.3,
+	# Deep-ocean wildlife (art-ocean set). HEIGHT (Y) values: the whales/shark/rays are LONG but
+	# not tall, so a modest height target keeps their proportions right while still reading big
+	# in the water; the seahorse/pufferfish stay small.
+	"shark_great_white": 1.5,   # great white body height (long, low)
+	"whale_blue":        4.0,   # blue whale — by far the biggest silhouette
+	"whale_sperm":       3.5,   # sperm whale
+	"squid":             1.2,   # squid mantle + arms
+	"octopus_red":       0.9,
+	"seahorse":          0.5,
+	"pufferfish":        0.45,
+	"hammerhead":        1.4,   # hammerhead body height (long, low)
+	"eel":               0.6,   # eel is long and thin — low body height
+	"stingray":          0.4,   # ray is flat — low body height, wide span
 }
 
 ## Fallback target height when a kind isn't in the map above.
@@ -804,12 +809,19 @@ func _ground_skinned_to_target() -> void:
 	# one-frame-deferred call, BEFORE the idle ProceduralCreatureAnimator bob starts perturbing the
 	# mesh each frame, so it is the clean rest height (the bob would otherwise jitter the reading).
 	# Sizing the walk rig to this same rendered height is what makes idle and walk match (~1.0 ratio)
-	# and kills the "slightly different size idle-vs-walking" pop. Fall back to _TARGET_HEIGHT only
-	# when there is no static idle mesh.
+	# and kills the "slightly different size idle-vs-walking" pop. The idle _mesh_root is now itself
+	# normalised so its rendered Y == _TARGET_HEIGHT (see _normalise_creature_mesh — scale by Y, not
+	# max extent), so matching it ALSO makes the walk rig render at _TARGET_HEIGHT. Fall back to
+	# _TARGET_HEIGHT directly only when there is no static idle mesh. clampf guards against a
+	# degenerate idle reading (e.g. a hidden/zero-AABB mesh) snapping the rig to an absurd scale.
 	var idle_rendered_h: float = 0.0
 	if _mesh_root != null and is_instance_valid(_mesh_root):
 		idle_rendered_h = _idle_rendered_height_y(_mesh_root)
-	var want_h: float = idle_rendered_h if idle_rendered_h > 0.001 else target_h
+	# Reject an idle reading that is wildly off the target (it would be a measurement glitch, not a
+	# real proportion) so the walk rig can never inherit a degenerate idle scale.
+	var idle_ok: bool = idle_rendered_h > 0.001 \
+		and idle_rendered_h >= target_h * 0.5 and idle_rendered_h <= target_h * 2.0
+	var want_h: float = idle_rendered_h if idle_ok else target_h
 	var posed_y: float = maxf(ab.size.y, 0.0001)
 	var sc: float = want_h / posed_y
 	glb.scale = Vector3.ONE * sc
@@ -888,12 +900,11 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 			mat.roughness = 1.0
 			mat.cull_mode = BaseMaterial3D.CULL_BACK  # single-sided (see _force_backface_culling)
 			mi.set_surface_override_material(s, mat)
-	# Scale by the LARGEST extent so size is correct regardless of orientation.
-	var sz: Vector3 = mesh.get_aabb().size
-	var native: float = maxf(sz.x, maxf(sz.y, sz.z))
-	native = maxf(native, 0.001)
+	# Target rendered HEIGHT for this kind. Each branch below derives a uniform scale from the
+	# relevant Y (height) extent so the on-screen height equals this — NOT from the max extent,
+	# which sized longer-than-tall animals too small (see the per-branch notes / probe data).
 	var target_h: float = _TARGET_HEIGHT.get(kind, _TARGET_HEIGHT_DEFAULT)
-	var s: float = target_h / native
+	var s: float = 1.0
 
 	if not is_art_mesh:
 		# Clean multi-surface stylised model: authored UPRIGHT with real materials, so
@@ -901,8 +912,14 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 		# a multi-part model's first-mesh AABB is NOT the whole creature, so deriving the
 		# scale from it (the `native`/`s` above) sized animals wrong and left them floating.
 		var full: AABB = _subtree_local_aabb(root)
-		var fnative: float = maxf(full.size.x, maxf(full.size.y, full.size.z))
-		fnative = maxf(fnative, 0.001)
+		# Scale by the HEIGHT (Y extent), NOT the largest extent. _TARGET_HEIGHT is a HEIGHT,
+		# and most land animals are LONGER than they are tall (a polar bear / dog / wolf on all
+		# fours, a low scorpion/lizard): scaling the max extent (= body length) to the target
+		# made the rendered HEIGHT a fraction of it — the "polar bear / husky extremely small"
+		# bug (probe: polar_bear rendered 0.54x of target, dog 0.66x, scorpion 0.58x). Sizing
+		# the Y extent to the target makes the on-screen HEIGHT equal _TARGET_HEIGHT for every
+		# proportion, which is exactly what the player reads next to the ~1.6 m builder.
+		var fnative: float = maxf(full.size.y, 0.001)
 		var fs: float = target_h / fnative
 		root.scale = Vector3.ONE * fs
 		# Meshy models are authored facing +Z, but the body's look_at() points its -Z at the
@@ -931,6 +948,15 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 	# a top-down render per creature; default 180 matches the prior facing.
 	var yaw_deg: float = float(_YAW_OVERRIDE.get(kind, 180.0))
 	var orient := Basis.from_euler(Vector3(deg_to_rad(-90.0), deg_to_rad(yaw_deg), 0.0))
+
+	# Scale by the ORIENTED HEIGHT (Y after the -90X stand-up), NOT the raw max extent. The
+	# `native`/`s` above used max(x,y,z); for a creature that is longer than tall (most of them)
+	# that scaled the body LENGTH to the target and left the rendered HEIGHT a fraction of it
+	# (the "extremely small" bug — scorpion/lizard/desert_mouse were ~0.5x). Measure the AABB in
+	# the UPRIGHT orientation and size its Y span to the target so the on-screen height matches.
+	var oriented_aabb: AABB = Transform3D(orient, Vector3.ZERO) * mesh.get_aabb()
+	var oriented_h: float = maxf(oriented_aabb.size.y, 0.001)
+	s = target_h / oriented_h
 
 	# Compose rotation + uniform scale on the single art surface, then recentre. Without
 	# recentring the mesh pivots about the glb origin (mid-body, not the feet) and ends
