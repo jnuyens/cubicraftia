@@ -146,6 +146,22 @@ var _ground_cast_hit_once: bool = false
 var _reground_accum: float = 0.0
 var _last_ground_xz: Vector3 = Vector3.ZERO
 
+## The formula spawn Y captured in _ready (before gravity moves the body). Used as the fall-through
+## safety floor: if the body ever falls more than _FALLTHROUGH_LIMIT_M below this without a successful
+## ground cast (terrain collision still not meshed under it), we lift it back to the spawn Y and keep
+## retrying rather than letting it drop out of the world forever (the "villager vanished" live bug a
+## synthetic-floor probe can never reproduce). Set on the first _physics_process tick.
+var _spawn_anchor_y: float = INF
+
+## How far (m) below the spawn anchor the body may fall before we re-lift it to retry grounding.
+const _FALLTHROUGH_LIMIT_M: float = 8.0
+
+## Concise per-instance diagnostics: prints this villager's grounding lifecycle to the console once
+## (first successful ground cast + the first fall-through rescue). Kept lightweight so the live
+## playtest log reveals whether villagers ground, fall through, or never get terrain under them.
+var _logged_ground: bool = false
+var _logged_fallthrough: bool = false
+
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 ## Inject the MainScene so the grounding raycast can reject tree-voxel hits via the terrain
@@ -258,6 +274,24 @@ func _ready() -> void:
 	call_deferred("_ground_to_collision")
 	# Stagger the initial idle so not all village NPCs step simultaneously.
 	_idle_timer = randf_range(IDLE_PAUSE_MIN, IDLE_PAUSE_MAX)
+	# Starter villagers: report their settled position a few seconds in so the live playtest log
+	# proves whether they are standing on the ground near spawn, sank, or drifted away.
+	if is_in_group("starter_village_npc"):
+		_report_position_later()
+
+
+## One-shot delayed position/visibility report for starter villagers (diagnostics only).
+func _report_position_later() -> void:
+	if not is_inside_tree():
+		return
+	var tree := get_tree()
+	if tree == null:
+		return
+	await tree.create_timer(4.0).timeout
+	if not is_instance_valid(self):
+		return
+	var fig_min: float = _visible_figure_min_world_y()
+	print("[village] STARTER villager @4s pos=", global_position, " visible_figure_min_y=", fig_min, " grounded=", _ground_cast_hit_once, " on_floor=", is_on_floor())
 
 
 ## Swap the placeholder capsule for a real figure model. Prefers a RIGGED + animated figure
@@ -569,7 +603,13 @@ func _ground_to_collision() -> void:
 	# Place the body so the figure's feet sit ON the surface, regardless of the body origin vs feet.
 	global_position.y = surface_y - foot_offset
 	velocity.y = 0.0
+	if not _logged_ground:
+		_logged_ground = true
+		print("[village] villager grounded at ", global_position, " (surface_y=", surface_y, " starter=", is_in_group("starter_village_npc"), ")")
 	_ground_cast_hit_once = true
+	# Re-anchor the fall-through floor to where we actually grounded, so subsequent slope walking
+	# never trips the rescue.
+	_spawn_anchor_y = global_position.y
 	_last_ground_xz = Vector3(global_position.x, 0.0, global_position.z)
 	_reground_accum = 0.0
 
@@ -646,6 +686,22 @@ func _physics_process(delta: float) -> void:
 	# onto the terrain — it floated at its spawn estimate (the "14 pre-stamped but the player
 	# sees none / they hover" report). Applying gravity + move_and_slide() in every branch makes
 	# every villager fall onto and rest on the real surface, standing visibly on the ground.
+
+	# Fall-through safety net: capture the formula spawn Y on the first tick, then rescue the body if
+	# gravity drags it far below that before terrain collision is ever found under it. Without this a
+	# villager spawned over a chunk whose collision never meshes (or meshes far below the formula
+	# estimate) drops out of the world and the player sees nobody, exactly the live-only failure the
+	# synthetic-floor headless probe cannot reproduce.
+	if _spawn_anchor_y == INF:
+		_spawn_anchor_y = global_position.y
+	if not _ground_cast_hit_once and global_position.y < _spawn_anchor_y - _FALLTHROUGH_LIMIT_M:
+		if not _logged_fallthrough:
+			_logged_fallthrough = true
+			print("[village] villager FELL THROUGH (no terrain collision yet), rescuing to anchor_y=", _spawn_anchor_y, " starter=", is_in_group("starter_village_npc"))
+		global_position.y = _spawn_anchor_y
+		velocity.y = 0.0
+		# Force an immediate re-cast attempt next _maybe_reground tick.
+		_reground_accum = _REGROUND_INTERVAL_S
 
 	# No patrol path → NPC stands idle, but STILL settles onto the floor under gravity.
 	if patrol_path.is_empty():
