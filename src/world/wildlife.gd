@@ -100,65 +100,70 @@ const _KIND_TYPE: Dictionary = {
 	"stingray":          _TYPE_WATER,
 }
 
-## Target in-world HEIGHT (metres) per creature, against a ~1.8 m builder. The mesh
-## is scaled so its tallest extent equals this — independent of the source mesh's
-## native size (the .glb meshes vary wildly, e.g. elephant.glb is 2.7 u, panda 1 u).
+## Target RENDERED HEIGHT (metres) per creature, against a ~1.6 m builder. The mesh is scaled
+## so its on-screen Y (height) extent equals this — NOT its largest extent (see
+## _normalise_creature_mesh; scaling max(x,y,z) made longer-than-tall animals render far too
+## small). Values are real-world standing heights (at the shoulder/back for quadrupeds, full
+## height for bipeds/birds) tuned to read right beside the builder: a panda/wolf is knee-to-hip
+## high, a camel/caribou towers over the builder, a polar bear looms, a mouse/scorpion is a
+## low scurrying thing. Long flat swimmers (whales, rays, eels) use their (small) body HEIGHT,
+## so they read as long low shapes in the water rather than absurdly tall.
 const _TARGET_HEIGHT: Dictionary = {
-	"panda":        2.0,
-	"monkey":       1.0,
-	"toucan":       0.8,
-	"elephant":     3.6,
-	"giraffe":      5.0,
-	"gnu":          2.6,
-	"desert_mouse": 0.7,
-	"reindeer":     2.1,
-	"snowman":      1.9,
-	"pig":          1.3,
-	"dog":          0.7,
-	"sheep":        1.0,
+	"panda":        1.1,   # giant panda ~0.9-1.0 m at shoulder (self-sized rig; informs hurtbox)
+	"monkey":       0.7,   # small monkey upright
+	"toucan":       0.6,   # perched toucan body height
+	"elephant":     3.2,   # African elephant ~3 m at shoulder — looms over the builder
+	"giraffe":      5.0,   # 4.5-5.5 m — reference creature, unchanged
+	"gnu":          1.4,   # wildebeest ~1.4 m at shoulder (was 2.6 — far too tall)
+	"desert_mouse": 0.25,  # a mouse is tiny; small but still visible (was 0.7 — huge)
+	"reindeer":     1.4,   # reindeer ~1.0-1.4 m at shoulder, antlers add a little
+	"snowman":      1.6,   # roughly builder-height snow figure
+	"pig":          0.8,   # domestic pig ~0.8 m at shoulder
+	"dog":          0.6,   # medium dog ~0.5-0.6 m at shoulder
+	"sheep":        0.9,   # sheep ~0.9 m at shoulder
 	# Desert-biome wildlife.
-	"camel":        2.0,
-	"fennec_fox":   0.5,
-	"desert_lizard":0.5,
-	"scorpion":     0.4,
-	"meerkat":      0.55,
-	"rattlesnake":  0.6,
-	"vulture":      0.9,
+	"camel":        2.1,   # dromedary ~1.85 m shoulder, hump higher — towers over the builder
+	"fennec_fox":   0.25,  # tiny desert fox
+	"desert_lizard":0.2,   # low ground lizard
+	"scorpion":     0.2,   # low to the ground
+	"meerkat":      0.35,  # standing meerkat ~0.3 m
+	"rattlesnake":  0.35,  # raised-head height of a coiled snake
+	"vulture":      1.0,   # large vulture standing ~0.9-1.1 m
 	# Snow-biome wildlife.
-	"polar_bear":   1.4,
-	"caribou":      2.0,
-	"husky_dog":    0.8,
-	"arctic_wolf":  1.0,
-	"arctic_fox":   0.5,
-	"snow_rabbit":  0.45,
-	"penguin":      0.8,
-	"snowy_owl":    0.5,
-	"fish_blue":    0.6,
-	"fish_orange":  0.6,
-	"fish_yellow":  0.6,
-	"orca":         3.8,
-	"manta":        1.6,
-	"jellyfish":    1.0,
+	"polar_bear":   1.8,   # polar bear ~1.6 m at shoulder on all fours, rears to 2.5+ — looms
+	"caribou":      1.5,   # caribou ~1.2-1.5 m at shoulder
+	"husky_dog":    0.6,   # husky ~0.55-0.6 m at shoulder (was 0.8)
+	"arctic_wolf":  0.85,  # wolf ~0.7-0.85 m at shoulder
+	"arctic_fox":   0.3,   # small fox
+	"snow_rabbit":  0.35,  # rabbit
+	"penguin":      0.9,   # emperor-style penguin reads charming at ~0.9 m
+	"snowy_owl":    0.6,   # large owl
+	"fish_blue":    0.35,  # small reef fish (self-sized wobble; informs hurtbox)
+	"fish_orange":  0.35,
+	"fish_yellow":  0.35,
+	"orca":         2.2,   # orca ~2 m tall dorsal-fin-up — reads big in the water
+	"manta":        0.8,   # manta is flat; low body height, wide span
+	"jellyfish":    0.8,   # bell + trailing tentacles
 	# Beach/ocean wildlife.
-	"dolphin":      1.6,
-	"turtle_sea":   0.9,
-	"flamingo":     1.7,
-	"seagull":      0.55,
-	"crab_red":     0.5,
-	"crab_hermit":  0.5,
-	# Deep-ocean wildlife (art-ocean set). _TARGET_HEIGHT scales the LARGEST extent to this,
-	# so the long whales/shark/stingray read big relative to the ~1.8 m builder, and the
-	# seahorse/pufferfish stay small. Tuned per creature against the brick-built reference.
-	"shark_great_white": 2.5,
-	"whale_blue":        5.0,
-	"whale_sperm":       4.5,
-	"squid":             1.8,
-	"octopus_red":       1.4,
-	"seahorse":          0.7,
-	"pufferfish":        0.6,
-	"hammerhead":        2.2,
-	"eel":               1.3,
-	"stingray":          1.8,
+	"dolphin":      1.0,   # dolphin body height (long, low swimmer)
+	"turtle_sea":   0.5,   # sea turtle shell height
+	"flamingo":     1.3,   # flamingo ~1.2-1.4 m standing
+	"seagull":      0.45,  # gull
+	"crab_red":     0.3,   # low crab
+	"crab_hermit":  0.3,
+	# Deep-ocean wildlife (art-ocean set). HEIGHT (Y) values: the whales/shark/rays are LONG but
+	# not tall, so a modest height target keeps their proportions right while still reading big
+	# in the water; the seahorse/pufferfish stay small.
+	"shark_great_white": 1.5,   # great white body height (long, low)
+	"whale_blue":        4.0,   # blue whale — by far the biggest silhouette
+	"whale_sperm":       3.5,   # sperm whale
+	"squid":             1.2,   # squid mantle + arms
+	"octopus_red":       0.9,
+	"seahorse":          0.5,
+	"pufferfish":        0.45,
+	"hammerhead":        1.4,   # hammerhead body height (long, low)
+	"eel":               0.6,   # eel is long and thin — low body height
+	"stingray":          0.4,   # ray is flat — low body height, wide span
 }
 
 ## Fallback target height when a kind isn't in the map above.
