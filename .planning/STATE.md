@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Content & Polish
 status: executing
-stopped_at: "Completed 08-05: cube_slime (3 tiers) + ghost re-wired to ShaderWobbleAnimator (SLIME/GHOST); procedural calls removed; full unit suite 340 tests 0 failing; combat preserved; in-viewport visual + combat-coexistence verify auto-approved-but-deferred"
-last_updated: "2026-06-10T22:27:00.000Z"
-last_activity: "2026-06-10 -- 08-05 gap-closure: cube_slime + ghost hostile soft-body wobble (ShaderWobbleAnimator SLIME/GHOST) re-wired; SC1 soft-body set complete"
+stopped_at: Phase 9 planned (3 plans, plan-checker passed)
+last_updated: "2026-06-21T19:25:39.841Z"
+last_activity: 2026-06-21 -- Phase 09 execution started
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 10
-  completed_plans: 9
+  total_plans: 13
+  completed_plans: 10
   percent: 20
 ---
 
@@ -38,10 +38,10 @@ progress:
 
 ## Current Position
 
-Phase: 08 (creature-builder-animation) — EXECUTING
-Plan: 08-05 complete (gap-closure: cube_slime + ghost hostile soft-body wobble re-wired)
-Status: Executing Phase 08
-Last activity: 2026-06-11 -- quick 260611-qyz: export include_filter fix (non-resource data files now bundled in .pck on all platforms)
+Phase: 09 (nl-localisation-review) — EXECUTING
+Plan: 2 of 3
+Status: Executing Phase 09
+Last activity: 2026-06-21 -- Phase 09 execution started
 
 ## Quick Tasks Completed
 
@@ -338,7 +338,7 @@ None — v1.1 roadmap authored. Ready for `/gsd:plan-phase 7`.
 
 - **Last workflow:** `/gsd:execute-phase` (08-05: cube_slime + ghost hostile soft-body wobble re-wire, gap closure)
 - **Last update:** 2026-06-10
-- **Stopped at:** Completed 08-05: cube_slime (3 tiers) + ghost re-wired to ShaderWobbleAnimator (SLIME/GHOST); procedural calls removed; full unit suite 340 tests 0 failing; combat preserved; in-viewport visual + combat-coexistence verify auto-approved-but-deferred
+- **Stopped at:** Phase 9 planned (3 plans, plan-checker passed)
 - **Next workflow:** `/gsd:execute-phase 08 06` (or phase verification)
 
 ## Deferred Items

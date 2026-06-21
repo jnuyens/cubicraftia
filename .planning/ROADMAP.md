@@ -99,7 +99,7 @@ Wave 2 (blocked on 08-04 + 08-05):
 
 Plans:
 
-- [ ] 09-01-PLAN.md — AI first-pass review: correct nl.po (72 missing strings, terminology, empty strings) + fix profanity wordlist + produce side-by-side review artifact (Wave 1)
+- [x] 09-01-PLAN.md — AI first-pass review: correct nl.po (72 missing strings, terminology, empty strings) + fix profanity wordlist + produce side-by-side review artifact (Wave 1)
 - [ ] 09-02-PLAN.md — Human native-speaker sign-off on corrected nl.po and wordlist_nl.txt (Wave 2, autonomous: false)
 - [ ] 09-03-PLAN.md — Profanity filter regression tests + in-game NL screenshot pass across all 12 text surfaces (Wave 3)
 
@@ -115,7 +115,7 @@ Plans:
 | 6. First five minutes | v1.0 | 11/11 | Complete | 2026-05-30 |
 | 7. Asset Integration | v1.1 | 4/4 | Complete   | 2026-06-01 |
 | 8. Creature & Builder Animation | v1.1 | 5/6 | In Progress|  |
-| 9. NL Localisation Review | v1.1 | 0/? | Not started | - |
+| 9. NL Localisation Review | v1.1 | 1/3 | In Progress|  |
 
 ## Backlog
 
