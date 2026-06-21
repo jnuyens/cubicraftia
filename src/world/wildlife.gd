@@ -804,12 +804,19 @@ func _ground_skinned_to_target() -> void:
 	# one-frame-deferred call, BEFORE the idle ProceduralCreatureAnimator bob starts perturbing the
 	# mesh each frame, so it is the clean rest height (the bob would otherwise jitter the reading).
 	# Sizing the walk rig to this same rendered height is what makes idle and walk match (~1.0 ratio)
-	# and kills the "slightly different size idle-vs-walking" pop. Fall back to _TARGET_HEIGHT only
-	# when there is no static idle mesh.
+	# and kills the "slightly different size idle-vs-walking" pop. The idle _mesh_root is now itself
+	# normalised so its rendered Y == _TARGET_HEIGHT (see _normalise_creature_mesh — scale by Y, not
+	# max extent), so matching it ALSO makes the walk rig render at _TARGET_HEIGHT. Fall back to
+	# _TARGET_HEIGHT directly only when there is no static idle mesh. clampf guards against a
+	# degenerate idle reading (e.g. a hidden/zero-AABB mesh) snapping the rig to an absurd scale.
 	var idle_rendered_h: float = 0.0
 	if _mesh_root != null and is_instance_valid(_mesh_root):
 		idle_rendered_h = _idle_rendered_height_y(_mesh_root)
-	var want_h: float = idle_rendered_h if idle_rendered_h > 0.001 else target_h
+	# Reject an idle reading that is wildly off the target (it would be a measurement glitch, not a
+	# real proportion) so the walk rig can never inherit a degenerate idle scale.
+	var idle_ok: bool = idle_rendered_h > 0.001 \
+		and idle_rendered_h >= target_h * 0.5 and idle_rendered_h <= target_h * 2.0
+	var want_h: float = idle_rendered_h if idle_ok else target_h
 	var posed_y: float = maxf(ab.size.y, 0.0001)
 	var sc: float = want_h / posed_y
 	glb.scale = Vector3.ONE * sc
@@ -888,12 +895,11 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 			mat.roughness = 1.0
 			mat.cull_mode = BaseMaterial3D.CULL_BACK  # single-sided (see _force_backface_culling)
 			mi.set_surface_override_material(s, mat)
-	# Scale by the LARGEST extent so size is correct regardless of orientation.
-	var sz: Vector3 = mesh.get_aabb().size
-	var native: float = maxf(sz.x, maxf(sz.y, sz.z))
-	native = maxf(native, 0.001)
+	# Target rendered HEIGHT for this kind. Each branch below derives a uniform scale from the
+	# relevant Y (height) extent so the on-screen height equals this — NOT from the max extent,
+	# which sized longer-than-tall animals too small (see the per-branch notes / probe data).
 	var target_h: float = _TARGET_HEIGHT.get(kind, _TARGET_HEIGHT_DEFAULT)
-	var s: float = target_h / native
+	var s: float = 1.0
 
 	if not is_art_mesh:
 		# Clean multi-surface stylised model: authored UPRIGHT with real materials, so
@@ -901,8 +907,14 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 		# a multi-part model's first-mesh AABB is NOT the whole creature, so deriving the
 		# scale from it (the `native`/`s` above) sized animals wrong and left them floating.
 		var full: AABB = _subtree_local_aabb(root)
-		var fnative: float = maxf(full.size.x, maxf(full.size.y, full.size.z))
-		fnative = maxf(fnative, 0.001)
+		# Scale by the HEIGHT (Y extent), NOT the largest extent. _TARGET_HEIGHT is a HEIGHT,
+		# and most land animals are LONGER than they are tall (a polar bear / dog / wolf on all
+		# fours, a low scorpion/lizard): scaling the max extent (= body length) to the target
+		# made the rendered HEIGHT a fraction of it — the "polar bear / husky extremely small"
+		# bug (probe: polar_bear rendered 0.54x of target, dog 0.66x, scorpion 0.58x). Sizing
+		# the Y extent to the target makes the on-screen HEIGHT equal _TARGET_HEIGHT for every
+		# proportion, which is exactly what the player reads next to the ~1.6 m builder.
+		var fnative: float = maxf(full.size.y, 0.001)
 		var fs: float = target_h / fnative
 		root.scale = Vector3.ONE * fs
 		# Meshy models are authored facing +Z, but the body's look_at() points its -Z at the
@@ -931,6 +943,15 @@ func _normalise_creature_mesh(root: Node3D) -> void:
 	# a top-down render per creature; default 180 matches the prior facing.
 	var yaw_deg: float = float(_YAW_OVERRIDE.get(kind, 180.0))
 	var orient := Basis.from_euler(Vector3(deg_to_rad(-90.0), deg_to_rad(yaw_deg), 0.0))
+
+	# Scale by the ORIENTED HEIGHT (Y after the -90X stand-up), NOT the raw max extent. The
+	# `native`/`s` above used max(x,y,z); for a creature that is longer than tall (most of them)
+	# that scaled the body LENGTH to the target and left the rendered HEIGHT a fraction of it
+	# (the "extremely small" bug — scorpion/lizard/desert_mouse were ~0.5x). Measure the AABB in
+	# the UPRIGHT orientation and size its Y span to the target so the on-screen height matches.
+	var oriented_aabb: AABB = Transform3D(orient, Vector3.ZERO) * mesh.get_aabb()
+	var oriented_h: float = maxf(oriented_aabb.size.y, 0.001)
+	s = target_h / oriented_h
 
 	# Compose rotation + uniform scale on the single art surface, then recentre. Without
 	# recentring the mesh pivots about the glb origin (mid-body, not the feet) and ends
