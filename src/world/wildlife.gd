@@ -182,6 +182,11 @@ const _GROUND_LIFT: Dictionary = {}
 ## quarter of a 0.9 m capsule. Dropped to a 2 cm contact bias so feet rest flush, not buried.
 const _GROUND_SETTLE: float = 0.02
 
+## Whale kinds that get a StaticBody3D walkable platform (collision layer 1 so the
+## builder's CharacterBody3D collision_mask=1 detects them). Sized to the rendered
+## whale body. Other water animals (fish, jellyfish, squid, etc.) remain walk-through.
+const _WHALE_KINDS: Array = ["whale_blue", "whale_sperm"]
+
 ## Half-height of the land collision capsule (height 0.9 / 2). The CapsuleShape3D is centred on
 ## its node origin; the collider is lifted by this amount so the capsule BOTTOM coincides with the
 ## body origin (= the feet plane). This makes is_on_floor() rest feet ON the surface for creatures
@@ -609,11 +614,44 @@ func _setup_floating(mesh_scene: PackedScene) -> void:
 			add_child(_mesh_root)
 			_normalise_creature_mesh(_mesh_root)
 
+	if _WHALE_KINDS.has(kind):
+		_add_whale_collision()
+
 	# Phase 8: attach the animator to self (in-tree Node3D).
 	var proc_motion: ProceduralCreatureAnimator.Motion = (
 		ProceduralCreatureAnimator.Motion.WATER if _behaviour_type == _TYPE_WATER
 		else ProceduralCreatureAnimator.Motion.AIR)
 	_setup_animator(self, proc_motion)
+
+
+## Add a StaticBody3D solid platform to a whale so the builder can stand and climb on
+## its back. Layer 1 matches the builder CharacterBody3D collision_mask=1 (terrain layer).
+## Sized to the rendered whale body: width 2.2 m, height from _TARGET_HEIGHT, depth 6 m
+## for whale_blue; 1.8 m wide x 5 m deep for whale_sperm. Centred at the whale's midpoint
+## with the top face at the bob Y (approximately 0 m, the water surface Y relative to the
+## whale's spawn origin). The whale bobs +/-_BOB_AMPLITUDE (0.4 m) around spawn Y, so the
+## platform moves with the Wildlife node naturally.
+func _add_whale_collision() -> void:
+	var body := StaticBody3D.new()
+	body.collision_layer = 1   # same as terrain -- builder's mask=1 collides with this
+	body.collision_mask  = 0   # static; never moves on its own so no scan needed
+	var shape_node := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	# Whale body proportions: long axis = Z (forward), short axis = X (width), Y = height.
+	# Scaled to the target heights; rough but correct for a large rideable back.
+	var target_h: float = _TARGET_HEIGHT.get(kind, 3.5)
+	var w: float = 2.2 if kind == "whale_blue" else 1.8   # back-width in metres
+	var d: float = 6.0 if kind == "whale_blue" else 5.0   # length in metres
+	box.size = Vector3(w, target_h, d)
+	shape_node.shape = box
+	# Centre the box: half height above the spawn origin so the top face (where the builder
+	# stands) sits at roughly target_h/2 above the whale node origin. The whale node sits at
+	# the water surface, so the bottom of the box is below the surface (the whale's body
+	# extends below water) and the top is above it (a rideable back). This is intentionally
+	# approximate -- the builder just needs something solid at the water surface.
+	shape_node.position.y = target_h * 0.5
+	body.add_child(shape_node)
+	add_child(body)
 
 
 ## Issue #17: build the attack-hurtbox so the builder's LMB attack ray can register hits.
