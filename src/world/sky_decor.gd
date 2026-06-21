@@ -436,7 +436,7 @@ func _log_balloon(tag: String) -> void:
 	var pos: Vector3 = _balloon.global_position
 	var pxz: Vector2 = _player_xz()
 	var dist: float = Vector2(pos.x, pos.z).distance_to(pxz)
-	print("[balloon] state=%s y=%.1f target_ground=%.1f land_root=%.1f dist_to_player=%.1f t=%.1f"
+	print_verbose("[balloon] state=%s y=%.1f target_ground=%.1f land_root=%.1f dist_to_player=%.1f t=%.1f"
 		% [tag, pos.y, _balloon_ground_y, _balloon_landed_root_y(), dist, _balloon_state_t])
 
 

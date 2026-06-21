@@ -291,7 +291,7 @@ func _report_position_later() -> void:
 	if not is_instance_valid(self):
 		return
 	var fig_min: float = _visible_figure_min_world_y()
-	print("[village] STARTER villager @4s pos=", global_position, " visible_figure_min_y=", fig_min, " grounded=", _ground_cast_hit_once, " on_floor=", is_on_floor())
+	print_verbose("[village] STARTER villager @4s pos=", global_position, " visible_figure_min_y=", fig_min, " grounded=", _ground_cast_hit_once, " on_floor=", is_on_floor())
 
 
 ## Swap the placeholder capsule for a real figure model. Prefers a RIGGED + animated figure
@@ -605,7 +605,7 @@ func _ground_to_collision() -> void:
 	velocity.y = 0.0
 	if not _logged_ground:
 		_logged_ground = true
-		print("[village] villager grounded at ", global_position, " (surface_y=", surface_y, " starter=", is_in_group("starter_village_npc"), ")")
+		print_verbose("[village] villager grounded at ", global_position, " (surface_y=", surface_y, " starter=", is_in_group("starter_village_npc"), ")")
 	_ground_cast_hit_once = true
 	# Re-anchor the fall-through floor to where we actually grounded, so subsequent slope walking
 	# never trips the rescue.
@@ -697,7 +697,7 @@ func _physics_process(delta: float) -> void:
 	if not _ground_cast_hit_once and global_position.y < _spawn_anchor_y - _FALLTHROUGH_LIMIT_M:
 		if not _logged_fallthrough:
 			_logged_fallthrough = true
-			print("[village] villager FELL THROUGH (no terrain collision yet), rescuing to anchor_y=", _spawn_anchor_y, " starter=", is_in_group("starter_village_npc"))
+			print_verbose("[village] villager FELL THROUGH (no terrain collision yet), rescuing to anchor_y=", _spawn_anchor_y, " starter=", is_in_group("starter_village_npc"))
 		global_position.y = _spawn_anchor_y
 		velocity.y = 0.0
 		# Force an immediate re-cast attempt next _maybe_reground tick.
