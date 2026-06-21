@@ -114,6 +114,7 @@ var _balloon_cruise_y: float = 46.0  # randomised altitude the balloon returns t
 var _balloon_ground_y: float = _BALLOON_FALLBACK_GROUND_Y  # terrain top-Y captured at descent start
 var _balloon_first_drift_done: bool = false  # false until the first (shorter) drift has elapsed
 var _balloon_anchored_to_player: bool = false  # true once the drift has been anchored to a real player
+var _balloon_diag_t: float = 0.0  # throttle for the periodic DESCEND diagnostic print
 
 ## Lazily-resolved MainScene reference (the node in group "main_scene"). Used READ-ONLY to call
 ## _terrain_surface_at(x, z) — the deterministic generator height formula — and to read the local
@@ -377,6 +378,10 @@ func _step_balloon(delta: float) -> void:
 			# Sink straight down (no drift / no bob) until the basket floor rests on the ground.
 			var target_y: float = _balloon_landed_root_y()
 			_balloon.position.y = maxf(target_y, _balloon.position.y - _BALLOON_VERTICAL_SPEED * delta)
+			_balloon_diag_t += delta
+			if _balloon_diag_t >= 0.5:
+				_balloon_diag_t = 0.0
+				_log_balloon("DESCEND")
 			if _balloon.position.y <= target_y + 0.001:
 				_balloon.position.y = target_y
 				_enter_balloon_state(BalloonState.LANDED)
@@ -403,10 +408,36 @@ func _step_balloon(delta: float) -> void:
 	_sync_basket_to_balloon()
 
 
-## Switch balloon state and reset the per-state timer.
+## Switch balloon state and reset the per-state timer. Logs every transition so a playtest log
+## reveals the live descent path (whether DESCEND is entered, what ground target it picked, etc.).
 func _enter_balloon_state(next: int) -> void:
 	_balloon_state = next
 	_balloon_state_t = 0.0
+	_balloon_diag_t = 0.0
+	_log_balloon(_balloon_state_name(next))
+
+
+## Human-readable balloon state name for diagnostics.
+func _balloon_state_name(s: int) -> String:
+	match s:
+		BalloonState.DRIFTING: return "DRIFTING"
+		BalloonState.DESCEND: return "DESCEND"
+		BalloonState.LANDED: return "LANDED"
+		BalloonState.ASCEND: return "ASCEND"
+	return "?"
+
+
+## Concise console diagnostic: current altitude, the captured ground target, the landing root-Y,
+## the horizontal distance to the player, and the per-state timer. Printed on every transition and
+## periodically during DESCEND so the next playtest log pins the live behaviour.
+func _log_balloon(tag: String) -> void:
+	if _balloon == null:
+		return
+	var pos: Vector3 = _balloon.global_position
+	var pxz: Vector2 = _player_xz()
+	var dist: float = Vector2(pos.x, pos.z).distance_to(pxz)
+	print("[balloon] state=%s y=%.1f target_ground=%.1f land_root=%.1f dist_to_player=%.1f t=%.1f"
+		% [tag, pos.y, _balloon_ground_y, _balloon_landed_root_y(), dist, _balloon_state_t])
 
 
 ## The balloon root Y at which the basket floor TOP rests on the captured ground.
@@ -437,6 +468,19 @@ func _probe_ground_y(from_world: Vector3) -> float:
 	var to := Vector3(from_world.x, ground_y - _BALLOON_GROUND_RAY_DOWN, from_world.z)
 	var q := PhysicsRayQueryParameters3D.create(from, to)
 	q.collision_mask = 1  # terrain / statics only (same layer main_scene + wildlife probe ground).
+	# CRITICAL (live-bug fix): the balloon's OWN invisible basket carrier is an AnimatableBody3D on
+	# collision layer 1, parked at the balloon's high cruise position. The downward refine ray starts
+	# ABOVE the formula surface and so passes straight through that carrier first — hitting it and
+	# reporting the cruise altitude as "ground". That made target_y land ABOVE the balloon, so DESCEND
+	# instantly satisfied its exit test and jumped to LANDED at cruise height: the balloon "stopped
+	# near the player but never came down". Exclude the carrier (and a builder riding in it) from the
+	# probe so the ray only ever reports real terrain/structures. The headless probe never built the
+	# carrier, which is why it passed while the live game failed.
+	var excludes: Array[RID] = []
+	if _balloon_basket != null:
+		excludes.append(_balloon_basket.get_rid())
+	if not excludes.is_empty():
+		q.exclude = excludes
 	var hit: Dictionary = space.intersect_ray(q)
 	if hit.is_empty():
 		return ground_y  # unmeshed chunk: trust the deterministic formula (the real fix).
