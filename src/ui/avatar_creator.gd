@@ -363,6 +363,7 @@ func _on_character_pressed(index: int) -> void:
 	_cfg["character"] = str(CHARACTERS[index].get("id", DEFAULT_CHARACTER))
 	_refresh_ui_selection()
 	_write_avatar_cfg_silent()
+	_apply_config_to_preview(_cfg)  # re-render the preview on base-figure change
 
 
 # ─── Preset / Randomise ───────────────────────────────────────────────────────

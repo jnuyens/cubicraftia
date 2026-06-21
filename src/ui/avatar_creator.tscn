@@ -1,8 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://b_avatar_creator"]
 
 [ext_resource type="Script" path="res://src/ui/avatar_creator.gd" id="1_creator"]
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_preview"]
+[ext_resource type="PackedScene" path="res://src/ui/builder_preview.tscn" id="2_preview"]
 
 [node name="AvatarCreator" type="CanvasLayer"]
 layer = 10
@@ -431,8 +430,7 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 1.5, 2.5)
 current = true
 
-[node name="BuilderPreview" type="MeshInstance3D" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxPreview/AvatarSubViewportContainer/AvatarSubViewport"]
-mesh = SubResource("CapsuleMesh_preview")
+[node name="BuilderPreview" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxPreview/AvatarSubViewportContainer/AvatarSubViewport" instance=ExtResource("2_preview")]
 
 [node name="FooterRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter"]
 layout_mode = 2
