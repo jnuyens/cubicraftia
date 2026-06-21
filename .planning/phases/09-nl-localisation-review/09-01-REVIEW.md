@@ -1,6 +1,11 @@
 # Phase 9 NL Localisation Review — Side-by-Side Sign-Off Document
 
-**Generated:** 2026-06-21  **Status:** Awaiting human sign-off (Plan 09-02)
+**Generated:** 2026-06-21  **Status:** Human sign-off COMPLETE — 2026-06-21 (jnuyens, native Flemish/Dutch)
+
+**Reviewer corrections applied (09-02):**
+- `ui.ftue.night_hint`: "Tijd om te slapen. Loop naar het bed." → "Slapenstijd! Loop naar het bed."
+- `ui.bed.too_early_prompt`: "Slapen is voor 's nachts" → "Overdag slapen we niet."
+- All other sections approved as-is.
 
 ---
 

@@ -4,6 +4,7 @@
 # Cubicraftia — Dutch (Nederlands) translation
 # Phase 6: Complete NL string set — all Phase 1-6 msgids
 # Terminology: brick = 'brick' (brand term, keep untranslated), stud = 'stud' (brand term, keep untranslated), builder -> bouwer
+# Human sign-off: jnuyens — 2026-06-21 — native Flemish/Dutch review complete; approved with 2 corrections (ui.ftue.night_hint, ui.bed.too_early_prompt)
 #
 msgid ""
 msgstr ""
@@ -494,7 +495,7 @@ msgid "ui.sleep.cancelled_unsafe"
 msgstr "Je kunt niet slapen — het is te gevaarlijk."
 
 msgid "ui.bed.too_early_prompt"
-msgstr "Slapen is voor 's nachts"
+msgstr "Overdag slapen we niet."
 
 msgid "ui.hp.gained_tick"
 msgstr "+{n} HP"
@@ -1509,7 +1510,7 @@ msgid "ui.ftue.complete"
 msgstr "Dat is het. De wereld is van jou."
 
 msgid "ui.ftue.night_hint"
-msgstr "Tijd om te slapen. Loop naar het bed."
+msgstr "Slapenstijd! Loop naar het bed."
 
 msgid "ui.ftue.progress_label"
 msgstr "Stap {n}/{total}"
