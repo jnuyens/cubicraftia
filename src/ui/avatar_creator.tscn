@@ -42,362 +42,368 @@ layout_mode = 2
 theme_override_constants/separation = 16
 size_flags_vertical = 3
 
-[node name="VBoxParts" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain"]
+[node name="PartsScroll" type="ScrollContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="VBoxParts" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 16
 
-[node name="PresetsSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts"]
+[node name="PresetsSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="PresetsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection"]
+[node name="PresetsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection"]
 layout_mode = 2
 text = "ui.avatar.presets_label"
 
-[node name="PresetGridRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection"]
+[node name="PresetGridRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection"]
 layout_mode = 2
 
-[node name="PresetGrid" type="GridContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow"]
+[node name="PresetGrid" type="GridContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
 columns = 4
 
-[node name="Preset1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
+[node name="Preset1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = "ui.avatar.preset_1"
 
-[node name="Preset2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
+[node name="Preset2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = "ui.avatar.preset_2"
 
-[node name="Preset3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
+[node name="Preset3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = "ui.avatar.preset_3"
 
-[node name="Preset4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
+[node name="Preset4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = "ui.avatar.preset_4"
 
-[node name="Preset5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
+[node name="Preset5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = "ui.avatar.preset_5"
 
-[node name="Preset6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
+[node name="Preset6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = "ui.avatar.preset_6"
 
-[node name="Preset7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
+[node name="Preset7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = "ui.avatar.preset_7"
 
-[node name="Preset8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
+[node name="Preset8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
 custom_minimum_size = Vector2(72, 72)
 layout_mode = 2
 text = "ui.avatar.preset_8"
 
-[node name="RandomiseButton" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/PresetsSection/PresetGridRow"]
+[node name="RandomiseButton" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow"]
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 text = "ui.avatar.randomise"
 
-[node name="SkinSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts"]
+[node name="SkinSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="SkinLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/SkinSection"]
+[node name="SkinLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection"]
 layout_mode = 2
 text = "ui.avatar.section_skin"
 
-[node name="SkinRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/SkinSection"]
+[node name="SkinRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Skin0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/SkinSection/SkinRow"]
+[node name="Skin0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 modulate = Color(0.992157, 0.862745, 0.709804, 1)
 
-[node name="Skin1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/SkinSection/SkinRow"]
+[node name="Skin1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 modulate = Color(0.831373, 0.584314, 0.415686, 1)
 
-[node name="Skin2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/SkinSection/SkinRow"]
+[node name="Skin2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 modulate = Color(0.627451, 0.380392, 0.290196, 1)
 
-[node name="Skin3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/SkinSection/SkinRow"]
+[node name="Skin3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 modulate = Color(0.419608, 0.227451, 0.164706, 1)
 
-[node name="Skin4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/SkinSection/SkinRow"]
+[node name="Skin4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
 custom_minimum_size = Vector2(44, 44)
 layout_mode = 2
 modulate = Color(0.231373, 0.121569, 0.0862745, 1)
 
-[node name="HeadSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts"]
+[node name="HeadSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HeadLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection"]
+[node name="HeadLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection"]
 layout_mode = 2
 text = "ui.avatar.section_head"
 
-[node name="HeadShapeRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection"]
+[node name="HeadShapeRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HeadSquare" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection/HeadShapeRow"]
+[node name="HeadSquare" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/HeadShapeRow"]
 custom_minimum_size = Vector2(72, 48)
 layout_mode = 2
 text = "ui.avatar.shape_square"
 
-[node name="HeadRound" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection/HeadShapeRow"]
+[node name="HeadRound" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/HeadShapeRow"]
 custom_minimum_size = Vector2(72, 48)
 layout_mode = 2
 text = "ui.avatar.shape_round"
 
-[node name="HeadTall" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection/HeadShapeRow"]
+[node name="HeadTall" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/HeadShapeRow"]
 custom_minimum_size = Vector2(72, 48)
 layout_mode = 2
 text = "ui.avatar.shape_tall"
 
-[node name="FaceExprRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection"]
+[node name="FaceExprRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="ExprNeutral" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection/FaceExprRow"]
+[node name="ExprNeutral" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 text = "ui.avatar.expr_neutral"
 
-[node name="ExprHappy" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection/FaceExprRow"]
+[node name="ExprHappy" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 text = "ui.avatar.expr_happy"
 
-[node name="ExprCool" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection/FaceExprRow"]
+[node name="ExprCool" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 text = "ui.avatar.expr_cool"
 
-[node name="ExprSurprised" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection/FaceExprRow"]
+[node name="ExprSurprised" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 text = "ui.avatar.expr_surprised"
 
-[node name="ExprSleepy" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HeadSection/FaceExprRow"]
+[node name="ExprSleepy" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 text = "ui.avatar.expr_sleepy"
 
-[node name="BodySection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts"]
+[node name="BodySection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BodyLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection"]
+[node name="BodyLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection"]
 layout_mode = 2
 text = "ui.avatar.section_body"
 
-[node name="BodyColourRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection"]
+[node name="BodyColourRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BodyCol0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.788235, 0.0666667, 0.0666667, 1)
 
-[node name="BodyCol1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.909804, 0.537255, 0.0470588, 1)
 
-[node name="BodyCol2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.960784, 0.764706, 0.0509804, 1)
 
-[node name="BodyCol3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.592157, 0.772549, 0.0823529, 1)
 
-[node name="BodyCol4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.239216, 0.709804, 0.376471, 1)
 
-[node name="BodyCol5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.0823529, 0.568627, 0.584314, 1)
 
-[node name="BodyCol6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.105882, 0.447059, 0.847059, 1)
 
-[node name="BodyCol7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.482353, 0.176471, 0.709804, 1)
 
-[node name="BodyCol8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.831373, 0.207843, 0.509804, 1)
 
-[node name="BodyCol9" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyColourRow"]
+[node name="BodyCol9" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.945098, 0.941176, 0.917647, 1)
 
-[node name="BodyAccRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection"]
+[node name="BodyAccRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BodyAccNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyAccRow"]
+[node name="BodyAccNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyAccRow"]
 custom_minimum_size = Vector2(64, 48)
 layout_mode = 2
 text = "ui.avatar.accessory_none"
 
-[node name="BodyAccBackpack" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyAccRow"]
+[node name="BodyAccBackpack" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyAccRow"]
 custom_minimum_size = Vector2(64, 48)
 layout_mode = 2
 text = "ui.avatar.accessory_backpack"
 
-[node name="BodyAccCape" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/BodySection/BodyAccRow"]
+[node name="BodyAccCape" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyAccRow"]
 custom_minimum_size = Vector2(64, 48)
 layout_mode = 2
 text = "ui.avatar.accessory_cape"
 
-[node name="LegsSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts"]
+[node name="LegsSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="LegsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection"]
+[node name="LegsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection"]
 layout_mode = 2
 text = "ui.avatar.section_legs"
 
-[node name="LegColourRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection"]
+[node name="LegColourRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="LegCol0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.788235, 0.0666667, 0.0666667, 1)
 
-[node name="LegCol1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.909804, 0.537255, 0.0470588, 1)
 
-[node name="LegCol2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.960784, 0.764706, 0.0509804, 1)
 
-[node name="LegCol3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.592157, 0.772549, 0.0823529, 1)
 
-[node name="LegCol4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.239216, 0.709804, 0.376471, 1)
 
-[node name="LegCol5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.0823529, 0.568627, 0.584314, 1)
 
-[node name="LegCol6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.105882, 0.447059, 0.847059, 1)
 
-[node name="LegCol7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.482353, 0.176471, 0.709804, 1)
 
-[node name="LegCol8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.831373, 0.207843, 0.509804, 1)
 
-[node name="LegCol9" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegColourRow"]
+[node name="LegCol9" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
 custom_minimum_size = Vector2(32, 32)
 layout_mode = 2
 modulate = Color(0.945098, 0.941176, 0.917647, 1)
 
-[node name="LegShoeRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection"]
+[node name="LegShoeRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="LegShoeNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegShoeRow"]
+[node name="LegShoeNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegShoeRow"]
 custom_minimum_size = Vector2(64, 48)
 layout_mode = 2
 text = "ui.avatar.shoes_none"
 
-[node name="LegShoeBoots" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegShoeRow"]
+[node name="LegShoeBoots" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegShoeRow"]
 custom_minimum_size = Vector2(64, 48)
 layout_mode = 2
 text = "ui.avatar.shoes_boots"
 
-[node name="LegShoeSneakers" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/LegsSection/LegShoeRow"]
+[node name="LegShoeSneakers" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegShoeRow"]
 custom_minimum_size = Vector2(64, 48)
 layout_mode = 2
 text = "ui.avatar.shoes_sneakers"
 
-[node name="HandSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts"]
+[node name="HandSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HandLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HandSection"]
+[node name="HandLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection"]
 layout_mode = 2
 text = "ui.avatar.section_hand"
 
-[node name="HandAccRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HandSection"]
+[node name="HandAccRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HandNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HandSection/HandAccRow"]
+[node name="HandNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 text = "ui.avatar.hand_none"
 
-[node name="HandPickaxe" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HandSection/HandAccRow"]
+[node name="HandPickaxe" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 text = "ui.avatar.hand_pickaxe"
 
-[node name="HandLantern" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HandSection/HandAccRow"]
+[node name="HandLantern" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 text = "ui.avatar.hand_lantern"
 
-[node name="HandFlower" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HandSection/HandAccRow"]
+[node name="HandFlower" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 text = "ui.avatar.hand_flower"
 
-[node name="HandBlank" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxParts/HandSection/HandAccRow"]
+[node name="HandBlank" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
 custom_minimum_size = Vector2(56, 56)
 layout_mode = 2
 text = "ui.avatar.hand_blank"
