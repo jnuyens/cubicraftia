@@ -95,7 +95,13 @@ Wave 2 (blocked on 08-04 + 08-05):
   2. All ~478 NL msgid translations have been reviewed and any corrections applied by a native Dutch speaker
   3. The NL locale displays correctly in-game with no untranslated, truncated, or garbled strings across all surfaces (title, avatar creator, world select, FTUE, HUD, chat, modals)
 
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+
+- [ ] 09-01-PLAN.md — AI first-pass review: correct nl.po (72 missing strings, terminology, empty strings) + fix profanity wordlist + produce side-by-side review artifact (Wave 1)
+- [ ] 09-02-PLAN.md — Human native-speaker sign-off on corrected nl.po and wordlist_nl.txt (Wave 2, autonomous: false)
+- [ ] 09-03-PLAN.md — Profanity filter regression tests + in-game NL screenshot pass across all 12 text surfaces (Wave 3)
 
 ## Progress
 
