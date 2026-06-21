@@ -1755,6 +1755,21 @@ func spawn_starter_chest_and_bed(world_spawn: Vector3) -> void:
 func spawn_starter_village(world_spawn: Vector3) -> void:
 	if not Features.is_survival_mode():
 		return  # D-01 sandbox row: no starter content (matches chest/bed gating).
+	# Only place starter villagers in biomes that have village templates. The streaming
+	# system (_dispatch_village_npcs) uses the structures_intersecting_chunk biome gate
+	# (allowed_biomes on each .tres) to never place villages in GRASSLAND(0), JUNGLE(3)
+	# or OCEAN(5) — so starter villagers in those biomes would be orphans with no matching
+	# village structure. Gate to the three village biomes; all others get no starter NPCs.
+	const _VILLAGE_BIOMES: Array = [
+		BiomeMap.Biome.DESERT,    # 1 — desert_village_*.tres allowed_biomes=[1]
+		BiomeMap.Biome.SNOW,      # 2 — snow_village_*.tres   allowed_biomes=[2]
+		BiomeMap.Biome.SAVANNAH,  # 4 — savannah_village_*.tres allowed_biomes=[4]
+	]
+	if _biome_map != null and _biome_map.has_method("biome_at"):
+		var spawn_biome: int = int(_biome_map.biome_at(world_spawn.x, world_spawn.z))
+		if not _VILLAGE_BIOMES.has(spawn_biome):
+			print_verbose("[village] spawn_starter_village skipped — spawn biome %d is not a village biome" % spawn_biome)
+			return
 	# Skin variant themed to the spawn biome (only affects the static-figure fallback tint/pick; the
 	# rigged biped roster used by villagers is biome-independent). Map every biome onto one of the
 	# three variants VillageNpc.SKIN_COLOURS knows so the fallback never warns.
