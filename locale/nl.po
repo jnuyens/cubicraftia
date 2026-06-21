@@ -3,7 +3,7 @@
 #
 # Cubicraftia — Dutch (Nederlands) translation
 # Phase 6: Complete NL string set — all Phase 1-6 msgids
-# Terminology: brick = "brick" (merknaam), nop = stud, bouwer = builder
+# Terminology: brick = 'brick' (brand term, keep untranslated), stud = 'stud' (brand term, keep untranslated), builder -> bouwer
 #
 msgid ""
 msgstr ""
@@ -399,7 +399,7 @@ msgid "ui.hud.mode.survival"
 msgstr "Overleving"
 
 msgid "ui.hud.mode.sandbox"
-msgstr "Creatief"
+msgstr "Sandbox"
 
 # ─── Brick palette UI (Plan 02-12) ───────────────────────────────────────────
 
@@ -688,7 +688,7 @@ msgid "ui.signin.submit_create"
 msgstr "Account aanmaken"
 
 msgid "ui.signin.age_checkbox"
-msgstr ""
+msgstr "Ik ben 13 jaar of ouder."
 
 msgid "ui.signin.apple"
 msgstr "Inloggen met Apple"
@@ -1560,3 +1560,225 @@ msgstr "English"
 
 msgid "ui.settings.locale_nl"
 msgstr "Nederlands"
+
+# ─── Phase 9 additions: missing brick names ──────────────────────────────────
+
+msgid "bricks.raw_meat.name"
+msgstr "Rauw vlees"
+
+msgid "bricks.sashimi.name"
+msgstr "Sashimi"
+
+msgid "bricks.gold_ingot.name"
+msgstr "Goudstaaf"
+
+msgid "bricks.coal.name"
+msgstr "Steenkool"
+
+msgid "bricks.leather.name"
+msgstr "Leer"
+
+msgid "bricks.string.name"
+msgstr "Touw"
+
+msgid "bricks.wheat.name"
+msgstr "Tarwe"
+
+msgid "bricks.sugar_cane.name"
+msgstr "Suikerriet"
+
+msgid "bricks.obsidian.name"
+msgstr "Obsidiaan"
+
+msgid "bricks.furnace.name"
+msgstr "Oven"
+
+msgid "bricks.bucket.name"
+msgstr "Emmer"
+
+msgid "bricks.sugar.name"
+msgstr "Suiker"
+
+msgid "bricks.bread.name"
+msgstr "Brood"
+
+msgid "bricks.campfire.name"
+msgstr "Kampvuur"
+
+msgid "bricks.coal_block.name"
+msgstr "Steenkoolblok"
+
+msgid "bricks.bow.name"
+msgstr "Boog"
+
+msgid "bricks.flint_and_steel.name"
+msgstr "Vuursteen en staal"
+
+msgid "bricks.chestplate_iron.name"
+msgstr "IJzeren borstplaat"
+
+msgid "bricks.chestplate_leather.name"
+msgstr "Leren borstplaat"
+
+msgid "bricks.helmet_diamond.name"
+msgstr "Diamanten helm"
+
+msgid "bricks.helmet_gold.name"
+msgstr "Gouden helm"
+
+msgid "bricks.nether_portal.name"
+msgstr "Portaal"
+
+msgid "bricks.axe.name"
+msgstr "Bijl"
+
+msgid "bricks.hammer.name"
+msgstr "Hamer"
+
+msgid "bricks.fishing_rod.name"
+msgstr "Hengel"
+
+msgid "bricks.compass.name"
+msgstr "Kompas"
+
+msgid "bricks.map.name"
+msgstr "Kaart"
+
+msgid "bricks.crafting_table_advanced.name"
+msgstr "Geavanceerde werkbank"
+
+msgid "bricks.painting_small_1.name"
+msgstr "Schilderij (Berg)"
+
+msgid "bricks.painting_small_2.name"
+msgstr "Schilderij (Nacht)"
+
+msgid "bricks.flower_pot.name"
+msgstr "Bloempot"
+
+msgid "bricks.pot_red_flower.name"
+msgstr "Rode bloempot"
+
+msgid "bricks.pot_blue_flower.name"
+msgstr "Blauwe bloempot"
+
+msgid "bricks.pot_yellow_flower.name"
+msgstr "Gele bloempot"
+
+msgid "bricks.pot_white_flower.name"
+msgstr "Witte bloempot"
+
+msgid "bricks.pot_pink_flower.name"
+msgstr "Roze bloempot"
+
+msgid "bricks.well.name"
+msgstr "Waterput"
+
+msgid "bricks.barrel.name"
+msgstr "Ton"
+
+msgid "bricks.bookshelf.name"
+msgstr "Boekenkast"
+
+msgid "bricks.crate.name"
+msgstr "Krat"
+
+msgid "bricks.chair_wood.name"
+msgstr "Houten stoel"
+
+msgid "bricks.anvil.name"
+msgstr "Aambeeld"
+
+msgid "bricks.table_wood.name"
+msgstr "Houten tafel"
+
+# ─── Phase 9 additions: missing recipe names ─────────────────────────────────
+
+msgid "recipes.pickaxe_stone.name"
+msgstr "Stenen houweel"
+
+msgid "recipes.pickaxe_iron.name"
+msgstr "IJzeren houweel"
+
+msgid "recipes.pickaxe_diamond.name"
+msgstr "Diamanten houweel"
+
+msgid "recipes.pickaxe_gold.name"
+msgstr "Gouden houweel"
+
+msgid "recipes.shovel_stone.name"
+msgstr "Stenen schop"
+
+msgid "recipes.shovel_iron.name"
+msgstr "IJzeren schop"
+
+msgid "recipes.shovel_diamond.name"
+msgstr "Diamanten schop"
+
+msgid "recipes.shovel_gold.name"
+msgstr "Gouden schop"
+
+msgid "recipes.sword_diamond.name"
+msgstr "Diamanten zwaard"
+
+msgid "recipes.stone_block.name"
+msgstr "Steenblok"
+
+msgid "recipes.glass_block.name"
+msgstr "Glasblok"
+
+msgid "recipes.furnace.name"
+msgstr "Oven"
+
+msgid "recipes.bucket.name"
+msgstr "Emmer"
+
+msgid "recipes.bread.name"
+msgstr "Brood"
+
+msgid "recipes.sugar.name"
+msgstr "Suiker"
+
+msgid "recipes.campfire.name"
+msgstr "Kampvuur"
+
+msgid "recipes.coal_block.name"
+msgstr "Steenkoolblok"
+
+msgid "recipes.bow.name"
+msgstr "Boog"
+
+msgid "recipes.flint_and_steel.name"
+msgstr "Vuursteen en staal"
+
+msgid "recipes.chestplate_iron.name"
+msgstr "IJzeren borstplaat"
+
+msgid "recipes.chestplate_leather.name"
+msgstr "Leren borstplaat"
+
+msgid "recipes.helmet_diamond.name"
+msgstr "Diamanten helm"
+
+msgid "recipes.helmet_gold.name"
+msgstr "Gouden helm"
+
+msgid "recipes.nether_portal.name"
+msgstr "Portaal"
+
+# ─── Phase 9 additions: missing UI strings ───────────────────────────────────
+
+msgid "ui.builder.placed"
+msgstr "Geplaatst!"
+
+msgid "ui.bed.picked_up"
+msgstr "Bed opgeraapt"
+
+msgid "ui.crop.harvest_prompt"
+msgstr "Houd SHIFT ingedrukt om te oogsten"
+
+msgid "ui.title.customize"
+msgstr "Bouwer aanpassen"
+
+msgid "ui.mystery.orb"
+msgstr "Een groene bol schiet door de lucht… en laat alleen vragen achter."
