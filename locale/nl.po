@@ -1275,6 +1275,18 @@ msgstr "Instellingen"
 msgid "ui.avatar.title"
 msgstr "Kies je bouwer"
 
+msgid "ui.avatar.section_character"
+msgstr "Bouwer"
+
+msgid "ui.avatar.character_builder"
+msgstr "Bouwer"
+
+msgid "ui.avatar.character_adventurer"
+msgstr "Avonturier"
+
+msgid "ui.avatar.character_explorer"
+msgstr "Verkenner"
+
 msgid "ui.avatar.section_skin"
 msgstr "Huid"
 

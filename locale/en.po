@@ -1295,6 +1295,18 @@ msgstr "Customize Builder"
 msgid "ui.avatar.title"
 msgstr "Choose your builder"
 
+msgid "ui.avatar.section_character"
+msgstr "Character"
+
+msgid "ui.avatar.character_builder"
+msgstr "Builder"
+
+msgid "ui.avatar.character_adventurer"
+msgstr "Adventurer"
+
+msgid "ui.avatar.character_explorer"
+msgstr "Explorer"
+
 msgid "ui.avatar.section_skin"
 msgstr "Skin"
 

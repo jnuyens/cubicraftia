@@ -164,9 +164,9 @@ const AVATAR_SECTION: String = "avatar"
 ## The "id" is written to avatar.cfg "character"; builder.gd loads the matching skin GLB
 ## (see Builder._AVATAR_SKINS) on spawn. Default is "builder1".
 const CHARACTERS: Array[Dictionary] = [
-	{"id": "builder1", "label": "Builder"},
-	{"id": "red", "label": "Adventurer"},
-	{"id": "fem", "label": "Explorer"},
+	{"id": "builder1", "label": "Builder", "label_key": "ui.avatar.character_builder"},
+	{"id": "red", "label": "Adventurer", "label_key": "ui.avatar.character_adventurer"},
+	{"id": "fem", "label": "Explorer", "label_key": "ui.avatar.character_explorer"},
 ]
 const DEFAULT_CHARACTER: String = "builder1"
 
@@ -339,14 +339,15 @@ func _build_character_section() -> void:
 	var section := VBoxContainer.new()
 	section.name = "CharacterSection"
 	var label := Label.new()
-	label.text = "Character"
+	label.text = tr("ui.avatar.section_character")
 	section.add_child(label)
 	var row := HBoxContainer.new()
 	row.name = "CharacterRow"
 	section.add_child(row)
 	for i: int in CHARACTERS.size():
 		var btn := Button.new()
-		btn.text = str(CHARACTERS[i].get("label", "?"))
+		var lk: String = str(CHARACTERS[i].get("label_key", ""))
+		btn.text = tr(lk) if lk != "" else str(CHARACTERS[i].get("label", "?"))
 		btn.custom_minimum_size = Vector2(96, 36)
 		btn.pressed.connect(func() -> void: _on_character_pressed(i))
 		row.add_child(btn)
