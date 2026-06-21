@@ -93,3 +93,59 @@ func test_filter_clean_through_after_set_word_list() -> void:
 	ProfanityFilter.set_word_list(["onlyblock"])
 	var result: String = ProfanityFilter.filter("this is clean text")
 	assert_eq(result, "this is clean text", "filter() must not alter clean text")
+
+
+# --- Phase 9 NL wordlist correction regression tests (09-03) ---
+
+func test_corrected_homosexueel_is_blocked() -> void:
+	# "homosexueel" was previously mistyped as "homseksueel" in the wordlist.
+	# After the Phase 9 correction, the correct spelling must be blocked.
+	ProfanityFilter.load_word_lists()
+	var rejected := ProfanityFilter.filter_reject("homosexueel")
+	assert_true(rejected, "homosexueel (corrected from homseksueel) must be blocked by NL filter")
+
+
+func test_corrected_smeerlap_is_blocked() -> void:
+	# "smeerlap" was previously mistyped as "smerla" in the wordlist.
+	# After the Phase 9 correction, the correct spelling must be blocked.
+	ProfanityFilter.load_word_lists()
+	var rejected := ProfanityFilter.filter_reject("smeerlap")
+	assert_true(rejected, "smeerlap (corrected from smerla) must be blocked by NL filter")
+
+
+func test_removed_false_positive_vent_passes() -> void:
+	# "vent" was a false positive (means "guy/fellow" in Dutch, not profanity).
+	# After the Phase 9 review it was removed; it must now pass through unblocked.
+	ProfanityFilter.load_word_lists()
+	var rejected := ProfanityFilter.filter_reject("vent")
+	assert_false(rejected, "vent (removed false positive) must NOT be blocked")
+
+
+func test_new_godverdomme_is_blocked() -> void:
+	# "godverdomme" is a common Flemish/Dutch expletive added in Phase 9 coverage expansion.
+	ProfanityFilter.load_word_lists()
+	var rejected := ProfanityFilter.filter_reject("godverdomme")
+	assert_true(rejected, "godverdomme (new addition) must be blocked by NL filter")
+
+
+func test_new_eikel_is_blocked() -> void:
+	# "eikel" (lit. acorn; used as insult) added in Phase 9 coverage expansion.
+	ProfanityFilter.load_word_lists()
+	var rejected := ProfanityFilter.filter_reject("eikel")
+	assert_true(rejected, "eikel (new addition) must be blocked by NL filter")
+
+
+func test_filter_replaces_tering_in_sentence() -> void:
+	# "tering" (disease-insult) added in Phase 9 coverage expansion.
+	# filter() must replace it in context with "[filtered]".
+	ProfanityFilter.load_word_lists()
+	var result := ProfanityFilter.filter("Wat een tering zet.")
+	assert_eq(result, "Wat een [filtered] zet.", "filter() must replace NL disease-insult with [filtered]")
+
+
+func test_removed_stomaak_typo_not_blocking_innocent_word() -> void:
+	# "stomaak" was an invalid entry (typo, not a real Dutch word) removed in Phase 9.
+	# It must not cause any word to be incorrectly blocked.
+	ProfanityFilter.load_word_lists()
+	var rejected := ProfanityFilter.filter_reject("stomaak")
+	assert_false(rejected, "stomaak (removed invalid entry) must NOT be blocked")
