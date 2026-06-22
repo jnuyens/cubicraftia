@@ -3,65 +3,78 @@
 #
 # render_ui_scene.gd — Render a UI .tscn under a forced locale to a PNG.
 #
-# Instances any Control/UI scene, forces the TranslationServer locale BEFORE the
-# scene is loaded (so auto-translated Control.text resolves in the target language),
-# sizes the root window so overflow/clipping reproduces, lets layout + translation
-# settle, then screenshots the root viewport to a PNG. Built so the AI can self-verify
+# Instances any Control/UI scene, forces the TranslationServer locale, sizes the
+# root window so overflow/clipping reproduces, lets layout + translation settle,
+# then screenshots the root viewport to a PNG. Built so the AI can self-verify
 # localisation/layout UATs (e.g. the Phase 9 avatar-creator screen: English labels,
 # dead preview, content running off the bottom).
 #
-# Godot --headless has NO rendering, so run this WITH a rendering display:
-#   godot -s tools/render_ui_scene.gd -- <scene_res_path> <out_png> [locale] [WxH]
+# IMPORTANT — runs as a MAIN SCENE, not via `-s`:
+#   godot --path . res://tools/render_ui_scene.tscn -- <scene_res_path> <out_png> [locale] [WxH]
 #
 #   <scene_res_path>  required, e.g. res://src/ui/avatar_creator.tscn
 #   <out_png>         required, absolute output path
 #   [locale]          optional, default "nl"
 #   [WxH]             optional, default "1280x720" (e.g. 1920x1080)
 #
-# Running --headless yields a blank buffer, so always run with a real display.
+# Why a main scene and NOT `godot -s render_ui_scene.gd`: the `-s` form replaces the
+# main loop, so the project's autoloads (the custom `Translations` registrar, plus
+# singletons UI scripts reference like `OnboardingTelemetry`) never initialise — the
+# scene then shows raw `ui.*` locale keys and runtime-built sections fail to compile.
+# Booting this as the main scene keeps every autoload and the registered translations
+# live, so the captured PNG matches what a player actually sees.
+#
+# Godot --headless has NO rendering and yields a blank buffer — always run WITH a
+# real display.
 
-extends SceneTree
-
-var _scene_res_path := ""
-var _out := ""
-var _locale := "nl"
-var _size := Vector2i(1280, 720)
+extends Node
 
 
-func _init() -> void:
+func _ready() -> void:
 	var ua := OS.get_cmdline_user_args()
-	if ua.size() >= 1:
-		_scene_res_path = ua[0]
-	if ua.size() >= 2:
-		_out = ua[1]
-	if ua.size() >= 3:
-		_locale = ua[2]
-	if ua.size() >= 4:
-		_size = _parse_size(ua[3])
+	var scene_res_path := ua[0] if ua.size() >= 1 else ""
+	var out := ua[1] if ua.size() >= 2 else ""
+	var locale := ua[2] if ua.size() >= 3 else "nl"
+	var size := _parse_size(ua[3]) if ua.size() >= 4 else Vector2i(1280, 720)
 
-	if _scene_res_path.is_empty() or _out.is_empty():
+	if scene_res_path.is_empty() or out.is_empty():
 		push_error("[render_ui_scene] usage: -- <scene_res_path> <out_png> [locale] [WxH]")
-		quit(1)
+		get_tree().quit(1)
 		return
 
-	# Force the locale BEFORE loading/instancing so auto-translated Control.text
-	# resolves in the target language at layout time.
-	TranslationServer.set_locale(_locale)
+	# Force the locale; autoloads + registered translations are already live because
+	# this runs as the main scene, so auto-translated Control.text resolves to nl.
+	TranslationServer.set_locale(locale)
 
 	# Size the root window so Control scenes lay out against the real resolution —
 	# overflow/clipping (e.g. content running off the bottom) reproduces faithfully.
-	get_root().set_size(_size)
+	var win := get_window()
+	win.size = size
 
-	var scene: PackedScene = load(_scene_res_path) as PackedScene
+	var scene: PackedScene = load(scene_res_path) as PackedScene
 	if scene == null:
-		push_error("[render_ui_scene] failed to load: %s" % _scene_res_path)
-		quit(1)
+		push_error("[render_ui_scene] failed to load: %s" % scene_res_path)
+		get_tree().quit(1)
 		return
 	var inst: Node = scene.instantiate()
-	get_root().add_child(inst)
+	# Deferred: the root is still busy setting up children during the runner's _ready,
+	# so a direct add_child() is rejected.
+	get_tree().root.add_child.call_deferred(inst)
 
-	# Give layout + translation a moment to settle before screenshotting.
-	create_timer(0.4).timeout.connect(_save)
+	# Give layout + translation a couple of frames, then a short settle for any
+	# deferred SubViewport/preview rendering, before screenshotting.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	await get_tree().create_timer(0.6).timeout
+
+	var img: Image = get_viewport().get_texture().get_image()
+	var err := img.save_png(out)
+	if err != OK:
+		push_error("[render_ui_scene] save_png failed (%d) -> %s" % [err, out])
+		get_tree().quit(1)
+		return
+	print("[render_ui_scene] saved -> %s" % out)
+	get_tree().quit(0)
 
 
 ## Parse a "WxH" command-line size token into a Vector2i (defaults each malformed
@@ -77,14 +90,3 @@ func _parse_size(token: String) -> Vector2i:
 	v.x = maxi(v.x, 1)
 	v.y = maxi(v.y, 1)
 	return v
-
-
-func _save() -> void:
-	var img: Image = get_root().get_texture().get_image()
-	var err := img.save_png(_out)
-	if err != OK:
-		push_error("[render_ui_scene] save_png failed (%d) -> %s" % [err, _out])
-		quit(1)
-		return
-	print("[render_ui_scene] saved -> %s" % _out)
-	quit(0)
