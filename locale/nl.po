@@ -1288,7 +1288,7 @@ msgid "ui.avatar.character_explorer"
 msgstr "Verkenner"
 
 msgid "ui.avatar.section_skin"
-msgstr "Huid"
+msgstr "Huidskleur"
 
 msgid "ui.avatar.section_head"
 msgstr "Hoofd"
@@ -1394,6 +1394,44 @@ msgstr "Klaar"
 
 msgid "ui.avatar.back"
 msgstr "Terug"
+
+# ─── Quick 260622-tkz: builder-card creator redesign ─────────────────────────
+
+msgid "ui.avatar.header"
+msgstr "Kies je bouwer"
+
+msgid "ui.avatar.card_forester"
+msgstr "Boswachter"
+
+msgid "ui.avatar.card_explorer"
+msgstr "Verkenner"
+
+msgid "ui.avatar.card_pathfinder"
+msgstr "Padvinder"
+
+msgid "ui.avatar.card_forester_sub"
+msgstr "Avontuurlijk en slim"
+
+msgid "ui.avatar.card_explorer_sub"
+msgstr "Nieuwsgierig en dapper"
+
+msgid "ui.avatar.card_pathfinder_sub"
+msgstr "Stoer en vastberaden"
+
+msgid "ui.avatar.coming_soon"
+msgstr "Meer binnenkort"
+
+msgid "ui.avatar.section_hairstyle"
+msgstr "Kapsel"
+
+msgid "ui.avatar.section_outfit"
+msgstr "Outfitkleur"
+
+msgid "ui.avatar.section_accessory"
+msgstr "Accessoire"
+
+msgid "ui.avatar.lets_build"
+msgstr "Laten we bouwen!"
 
 # ─── Phase 6: World select / home screen (Surface 3) ─────────────────────────
 

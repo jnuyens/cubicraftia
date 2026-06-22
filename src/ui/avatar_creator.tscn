@@ -1,447 +1,459 @@
-[gd_scene load_steps=3 format=3 uid="uid://b_avatar_creator"]
+[gd_scene load_steps=11 format=3 uid="uid://b_avatar_creator"]
 
 [ext_resource type="Script" path="res://src/ui/avatar_creator.gd" id="1_creator"]
 [ext_resource type="PackedScene" path="res://src/ui/builder_preview.tscn" id="2_preview"]
+[ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/backdrop.png" id="3_backdrop"]
+[ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_forester.png" id="4_card_forester"]
+[ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_explorer.png" id="5_card_explorer"]
+[ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_pathfinder.png" id="6_card_pathfinder"]
+
+[sub_resource type="StyleBoxFlat" id="SB_LeftPanel"]
+bg_color = Color(0.101961, 0.168627, 0.290196, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.207843, 0.301961, 0.470588, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="SB_Card"]
+bg_color = Color(0.137255, 0.211765, 0.345098, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="SB_ComingSoon"]
+bg_color = Color(0.0784314, 0.121569, 0.207843, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.180392, 0.247059, 0.388235, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="SB_DoneButton"]
+bg_color = Color(0.239216, 0.709804, 0.376471, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 18.0
+content_margin_top = 12.0
+content_margin_right = 18.0
+content_margin_bottom = 12.0
 
 [node name="AvatarCreator" type="CanvasLayer"]
 layer = 10
 script = ExtResource("1_creator")
 
-[node name="PanelContainer" type="PanelContainer" parent="."]
+[node name="Root" type="HBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="LeftMargin" type="MarginContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.5
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="LeftPanel" type="PanelContainer" parent="Root/LeftMargin"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SB_LeftPanel")
+
+[node name="LeftInner" type="MarginContainer" parent="Root/LeftMargin/LeftPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 24
+
+[node name="LeftColumn" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner"]
+layout_mode = 2
+theme_override_constants/separation = 18
+
+[node name="HeaderLabel" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 34
+text = "ui.avatar.header"
+
+[node name="CardRow" type="HBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="CardForester" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="CardForesterFrame" type="PanelContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardForester"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SB_Card")
+
+[node name="CardForesterButton" type="TextureButton" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardForester/CardForesterFrame"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+texture_normal = ExtResource("4_card_forester")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="CardForesterName" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardForester"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "ui.avatar.card_forester"
+horizontal_alignment = 1
+
+[node name="CardForesterSub" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardForester"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.654902, 0.733333, 0.85098, 1)
+theme_override_font_sizes/font_size = 11
+text = "ui.avatar.card_forester_sub"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="CardExplorer" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="CardExplorerFrame" type="PanelContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardExplorer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SB_Card")
+
+[node name="CardExplorerButton" type="TextureButton" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardExplorer/CardExplorerFrame"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+texture_normal = ExtResource("5_card_explorer")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="CardExplorerName" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardExplorer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "ui.avatar.card_explorer"
+horizontal_alignment = 1
+
+[node name="CardExplorerSub" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardExplorer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.654902, 0.733333, 0.85098, 1)
+theme_override_font_sizes/font_size = 11
+text = "ui.avatar.card_explorer_sub"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="CardPathfinder" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="CardPathfinderFrame" type="PanelContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardPathfinder"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("SB_Card")
+
+[node name="CardPathfinderButton" type="TextureButton" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardPathfinder/CardPathfinderFrame"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+texture_normal = ExtResource("6_card_pathfinder")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="CardPathfinderName" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardPathfinder"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "ui.avatar.card_pathfinder"
+horizontal_alignment = 1
+
+[node name="CardPathfinderSub" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardPathfinder"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.654902, 0.733333, 0.85098, 1)
+theme_override_font_sizes/font_size = 11
+text = "ui.avatar.card_pathfinder_sub"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="CardComingSoon" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="CardComingSoonFrame" type="PanelContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardComingSoon"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+theme_override_styles/panel = SubResource("SB_ComingSoon")
+
+[node name="ComingSoonLabel" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardComingSoon/CardComingSoonFrame"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.435294, 0.501961, 0.611765, 1)
+theme_override_font_sizes/font_size = 13
+text = "ui.avatar.coming_soon"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="CardComingSoonSpacer" type="Control" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CardRow/CardComingSoon"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="PartsScroll" type="ScrollContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="VBoxParts" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="SkinSection" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SkinLabel" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/SkinSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85098, 0.882353, 0.945098, 1)
+text = "ui.avatar.section_skin"
+
+[node name="SkinRow" type="HBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/SkinSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Skin0" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/SkinSection/SkinRow"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+modulate = Color(0.992157, 0.862745, 0.709804, 1)
+
+[node name="Skin1" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/SkinSection/SkinRow"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+modulate = Color(0.831373, 0.584314, 0.415686, 1)
+
+[node name="Skin2" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/SkinSection/SkinRow"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+modulate = Color(0.627451, 0.380392, 0.290196, 1)
+
+[node name="Skin3" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/SkinSection/SkinRow"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+modulate = Color(0.419608, 0.227451, 0.164706, 1)
+
+[node name="Skin4" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/SkinSection/SkinRow"]
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+modulate = Color(0.231373, 0.121569, 0.0862745, 1)
+
+[node name="HairstyleSection" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HairstyleLabel" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/HairstyleSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85098, 0.882353, 0.945098, 1)
+text = "ui.avatar.section_hairstyle"
+
+[node name="HeadShapeRow" type="HBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/HairstyleSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HeadSquare" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/HairstyleSection/HeadShapeRow"]
+custom_minimum_size = Vector2(72, 48)
+layout_mode = 2
+text = "ui.avatar.shape_square"
+
+[node name="HeadRound" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/HairstyleSection/HeadShapeRow"]
+custom_minimum_size = Vector2(72, 48)
+layout_mode = 2
+text = "ui.avatar.shape_round"
+
+[node name="HeadTall" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/HairstyleSection/HeadShapeRow"]
+custom_minimum_size = Vector2(72, 48)
+layout_mode = 2
+text = "ui.avatar.shape_tall"
+
+[node name="OutfitSection" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="OutfitLabel" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85098, 0.882353, 0.945098, 1)
+text = "ui.avatar.section_outfit"
+
+[node name="BodyColourRow" type="HBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BodyCol0" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.788235, 0.0666667, 0.0666667, 1)
+
+[node name="BodyCol1" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.909804, 0.537255, 0.0470588, 1)
+
+[node name="BodyCol2" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.960784, 0.764706, 0.0509804, 1)
+
+[node name="BodyCol3" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.592157, 0.772549, 0.0823529, 1)
+
+[node name="BodyCol4" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.239216, 0.709804, 0.376471, 1)
+
+[node name="BodyCol5" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.0823529, 0.568627, 0.584314, 1)
+
+[node name="BodyCol6" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.105882, 0.447059, 0.847059, 1)
+
+[node name="BodyCol7" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.482353, 0.176471, 0.709804, 1)
+
+[node name="BodyCol8" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.831373, 0.207843, 0.509804, 1)
+
+[node name="BodyCol9" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/OutfitSection/BodyColourRow"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+modulate = Color(0.945098, 0.941176, 0.917647, 1)
+
+[node name="AccessorySection" type="VBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="AccessoryLabel" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/AccessorySection"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85098, 0.882353, 0.945098, 1)
+text = "ui.avatar.section_accessory"
+
+[node name="BodyAccRow" type="HBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/AccessorySection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BodyAccNone" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/AccessorySection/BodyAccRow"]
+custom_minimum_size = Vector2(64, 48)
+layout_mode = 2
+text = "ui.avatar.accessory_none"
+
+[node name="BodyAccBackpack" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/AccessorySection/BodyAccRow"]
+custom_minimum_size = Vector2(64, 48)
+layout_mode = 2
+text = "ui.avatar.accessory_backpack"
+
+[node name="BodyAccCape" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/PartsScroll/VBoxParts/AccessorySection/BodyAccRow"]
+custom_minimum_size = Vector2(64, 48)
+layout_mode = 2
+text = "ui.avatar.accessory_cape"
+
+[node name="CtaRow" type="HBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="DoneButton" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CtaRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("SB_DoneButton")
+theme_override_styles/hover = SubResource("SB_DoneButton")
+theme_override_styles/pressed = SubResource("SB_DoneButton")
+text = "ui.avatar.lets_build"
+
+[node name="BackButton" type="Button" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn/CtaRow"]
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+text = "ui.avatar.back"
+
+[node name="RightPanel" type="Control" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 1.0
+
+[node name="Backdrop" type="TextureRect" parent="Root/RightPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_backdrop")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="AvatarSubViewportContainer" type="SubViewportContainer" parent="Root/RightPanel"]
+layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -280.0
-offset_top = -360.0
-offset_right = 280.0
-offset_bottom = 360.0
+offset_left = -220.0
+offset_top = -260.0
+offset_right = 220.0
+offset_bottom = 260.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
-layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_bottom = 16
-
-[node name="VBoxOuter" type="VBoxContainer" parent="PanelContainer/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="TitleLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter"]
-layout_mode = 2
-text = "ui.avatar.title"
-horizontal_alignment = 0
-
-[node name="HBoxMain" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter"]
-layout_mode = 2
-theme_override_constants/separation = 16
-size_flags_vertical = 3
-
-[node name="PartsScroll" type="ScrollContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain"]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-horizontal_scroll_mode = 0
-
-[node name="VBoxParts" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 16
-
-[node name="PresetsSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="PresetsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection"]
-layout_mode = 2
-text = "ui.avatar.presets_label"
-
-[node name="PresetGridRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection"]
-layout_mode = 2
-
-[node name="PresetGrid" type="GridContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
-columns = 4
-
-[node name="Preset1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-text = "ui.avatar.preset_1"
-
-[node name="Preset2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-text = "ui.avatar.preset_2"
-
-[node name="Preset3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-text = "ui.avatar.preset_3"
-
-[node name="Preset4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-text = "ui.avatar.preset_4"
-
-[node name="Preset5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-text = "ui.avatar.preset_5"
-
-[node name="Preset6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-text = "ui.avatar.preset_6"
-
-[node name="Preset7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-text = "ui.avatar.preset_7"
-
-[node name="Preset8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow/PresetGrid"]
-custom_minimum_size = Vector2(72, 72)
-layout_mode = 2
-text = "ui.avatar.preset_8"
-
-[node name="RandomiseButton" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/PresetsSection/PresetGridRow"]
-custom_minimum_size = Vector2(120, 0)
-layout_mode = 2
-text = "ui.avatar.randomise"
-
-[node name="SkinSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="SkinLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection"]
-layout_mode = 2
-text = "ui.avatar.section_skin"
-
-[node name="SkinRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="Skin0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
-custom_minimum_size = Vector2(44, 44)
-layout_mode = 2
-modulate = Color(0.992157, 0.862745, 0.709804, 1)
-
-[node name="Skin1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
-custom_minimum_size = Vector2(44, 44)
-layout_mode = 2
-modulate = Color(0.831373, 0.584314, 0.415686, 1)
-
-[node name="Skin2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
-custom_minimum_size = Vector2(44, 44)
-layout_mode = 2
-modulate = Color(0.627451, 0.380392, 0.290196, 1)
-
-[node name="Skin3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
-custom_minimum_size = Vector2(44, 44)
-layout_mode = 2
-modulate = Color(0.419608, 0.227451, 0.164706, 1)
-
-[node name="Skin4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/SkinSection/SkinRow"]
-custom_minimum_size = Vector2(44, 44)
-layout_mode = 2
-modulate = Color(0.231373, 0.121569, 0.0862745, 1)
-
-[node name="HeadSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="HeadLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection"]
-layout_mode = 2
-text = "ui.avatar.section_head"
-
-[node name="HeadShapeRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="HeadSquare" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/HeadShapeRow"]
-custom_minimum_size = Vector2(72, 48)
-layout_mode = 2
-text = "ui.avatar.shape_square"
-
-[node name="HeadRound" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/HeadShapeRow"]
-custom_minimum_size = Vector2(72, 48)
-layout_mode = 2
-text = "ui.avatar.shape_round"
-
-[node name="HeadTall" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/HeadShapeRow"]
-custom_minimum_size = Vector2(72, 48)
-layout_mode = 2
-text = "ui.avatar.shape_tall"
-
-[node name="FaceExprRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="ExprNeutral" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-text = "ui.avatar.expr_neutral"
-
-[node name="ExprHappy" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-text = "ui.avatar.expr_happy"
-
-[node name="ExprCool" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-text = "ui.avatar.expr_cool"
-
-[node name="ExprSurprised" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-text = "ui.avatar.expr_surprised"
-
-[node name="ExprSleepy" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HeadSection/FaceExprRow"]
-custom_minimum_size = Vector2(48, 48)
-layout_mode = 2
-text = "ui.avatar.expr_sleepy"
-
-[node name="BodySection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="BodyLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection"]
-layout_mode = 2
-text = "ui.avatar.section_body"
-
-[node name="BodyColourRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="BodyCol0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.788235, 0.0666667, 0.0666667, 1)
-
-[node name="BodyCol1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.909804, 0.537255, 0.0470588, 1)
-
-[node name="BodyCol2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.960784, 0.764706, 0.0509804, 1)
-
-[node name="BodyCol3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.592157, 0.772549, 0.0823529, 1)
-
-[node name="BodyCol4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.239216, 0.709804, 0.376471, 1)
-
-[node name="BodyCol5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.0823529, 0.568627, 0.584314, 1)
-
-[node name="BodyCol6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.105882, 0.447059, 0.847059, 1)
-
-[node name="BodyCol7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.482353, 0.176471, 0.709804, 1)
-
-[node name="BodyCol8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.831373, 0.207843, 0.509804, 1)
-
-[node name="BodyCol9" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.945098, 0.941176, 0.917647, 1)
-
-[node name="BodyAccRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="BodyAccNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyAccRow"]
-custom_minimum_size = Vector2(64, 48)
-layout_mode = 2
-text = "ui.avatar.accessory_none"
-
-[node name="BodyAccBackpack" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyAccRow"]
-custom_minimum_size = Vector2(64, 48)
-layout_mode = 2
-text = "ui.avatar.accessory_backpack"
-
-[node name="BodyAccCape" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/BodySection/BodyAccRow"]
-custom_minimum_size = Vector2(64, 48)
-layout_mode = 2
-text = "ui.avatar.accessory_cape"
-
-[node name="LegsSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LegsLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection"]
-layout_mode = 2
-text = "ui.avatar.section_legs"
-
-[node name="LegColourRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LegCol0" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.788235, 0.0666667, 0.0666667, 1)
-
-[node name="LegCol1" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.909804, 0.537255, 0.0470588, 1)
-
-[node name="LegCol2" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.960784, 0.764706, 0.0509804, 1)
-
-[node name="LegCol3" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.592157, 0.772549, 0.0823529, 1)
-
-[node name="LegCol4" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.239216, 0.709804, 0.376471, 1)
-
-[node name="LegCol5" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.0823529, 0.568627, 0.584314, 1)
-
-[node name="LegCol6" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.105882, 0.447059, 0.847059, 1)
-
-[node name="LegCol7" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.482353, 0.176471, 0.709804, 1)
-
-[node name="LegCol8" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.831373, 0.207843, 0.509804, 1)
-
-[node name="LegCol9" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegColourRow"]
-custom_minimum_size = Vector2(32, 32)
-layout_mode = 2
-modulate = Color(0.945098, 0.941176, 0.917647, 1)
-
-[node name="LegShoeRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LegShoeNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegShoeRow"]
-custom_minimum_size = Vector2(64, 48)
-layout_mode = 2
-text = "ui.avatar.shoes_none"
-
-[node name="LegShoeBoots" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegShoeRow"]
-custom_minimum_size = Vector2(64, 48)
-layout_mode = 2
-text = "ui.avatar.shoes_boots"
-
-[node name="LegShoeSneakers" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/LegsSection/LegShoeRow"]
-custom_minimum_size = Vector2(64, 48)
-layout_mode = 2
-text = "ui.avatar.shoes_sneakers"
-
-[node name="HandSection" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="HandLabel" type="Label" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection"]
-layout_mode = 2
-text = "ui.avatar.section_hand"
-
-[node name="HandAccRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="HandNone" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-text = "ui.avatar.hand_none"
-
-[node name="HandPickaxe" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-text = "ui.avatar.hand_pickaxe"
-
-[node name="HandLantern" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-text = "ui.avatar.hand_lantern"
-
-[node name="HandFlower" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-text = "ui.avatar.hand_flower"
-
-[node name="HandBlank" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/PartsScroll/VBoxParts/HandSection/HandAccRow"]
-custom_minimum_size = Vector2(56, 56)
-layout_mode = 2
-text = "ui.avatar.hand_blank"
-
-[node name="VBoxPreview" type="VBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="AvatarSubViewportContainer" type="SubViewportContainer" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxPreview"]
-custom_minimum_size = Vector2(256, 256)
-layout_mode = 2
 stretch = true
 
-[node name="AvatarSubViewport" type="SubViewport" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxPreview/AvatarSubViewportContainer"]
-size = Vector2i(256, 256)
-update_mode = 1
+[node name="AvatarSubViewport" type="SubViewport" parent="Root/RightPanel/AvatarSubViewportContainer"]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(440, 520)
+render_target_update_mode = 4
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxPreview/AvatarSubViewportContainer/AvatarSubViewport"]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Root/RightPanel/AvatarSubViewportContainer/AvatarSubViewport"]
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxPreview/AvatarSubViewportContainer/AvatarSubViewport"]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Root/RightPanel/AvatarSubViewportContainer/AvatarSubViewport"]
 transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 0, 3, 0)
 shadow_enabled = true
 
-[node name="Camera3D" type="Camera3D" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxPreview/AvatarSubViewportContainer/AvatarSubViewport"]
-transform = Transform3D(1, 0, 0, 0, 0.866025, 0.5, 0, -0.5, 0.866025, 0, 1.5, 2.5)
+[node name="Camera3D" type="Camera3D" parent="Root/RightPanel/AvatarSubViewportContainer/AvatarSubViewport"]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 1.2, 3.2)
 current = true
 
-[node name="BuilderPreview" parent="PanelContainer/MarginContainer/VBoxOuter/HBoxMain/VBoxPreview/AvatarSubViewportContainer/AvatarSubViewport" instance=ExtResource("2_preview")]
+[node name="BuilderPreview" parent="Root/RightPanel/AvatarSubViewportContainer/AvatarSubViewport" instance=ExtResource("2_preview")]
 
-[node name="FooterRow" type="HBoxContainer" parent="PanelContainer/MarginContainer/VBoxOuter"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="DoneButton" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/FooterRow"]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "ui.avatar.done"
-
-[node name="BackButton" type="Button" parent="PanelContainer/MarginContainer/VBoxOuter/FooterRow"]
-custom_minimum_size = Vector2(120, 0)
-layout_mode = 2
-text = "ui.avatar.back"
+[node name="SettingsButton" type="Button" parent="Root/RightPanel"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -64.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 64.0
+grow_horizontal = 0
+text = "⚙"

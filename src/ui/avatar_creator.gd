@@ -3,8 +3,10 @@
 #
 # avatar_creator.gd — AvatarCreator CanvasLayer (layer 10).
 #
-# Surface 2 of 06-UI-SPEC: 5-part customiser, 8 presets, Randomise,
-# SubViewport 3D preview (256×256, 0.4 rad/s rotation), Done / Back buttons.
+# Surface 2 of 06-UI-SPEC (redesigned, quick task 260622-tkz): builder-card lineup
+# (forester / explorer / pathfinder + coming-soon), skin / hairstyle / outfit / accessory
+# customiser, SubViewport 3D preview (0.4 rad/s rotation) overlaid on a painted backdrop,
+# green "Let's build" CTA + Back. Cards drive the base figure; swatches drive appearance.
 #
 # Emits:
 #   avatar_complete  — Done pressed, user://avatar.cfg written, FriendsClient.save_avatar called.
@@ -62,10 +64,11 @@ const LEG_SHOES: Array[String] = ["none", "boots", "sneakers"]
 ## Hand accessory string tokens.
 const HAND_ACCESSORIES: Array[String] = ["none", "pickaxe", "lantern", "flower", "blank"]
 
-## 8 diverse preset configurations.
-## Coverage: all 5 skin tones appear (0,1,2,3,4); varied head shapes, expressions, accessories.
+## Default avatar configuration source. The card redesign retired the 8-preset
+## "Snel starten" grid; this single config is the fallback used by _load_avatar_cfg
+## when user://avatar.cfg is missing or corrupt (see DEFAULT_CFG / PRESETS[0]).
 const PRESETS: Array[Dictionary] = [
-	# 0 — Classic (light skin, square, neutral, blue body, none/none, none)
+	# 0 — Default (light skin, square, neutral, blue body, none/none, none)
 	{
 		"skin_colour_index": 0,
 		"head_shape": "square",
@@ -76,83 +79,6 @@ const PRESETS: Array[Dictionary] = [
 		"leg_shoes": "none",
 		"hand_accessory": "none",
 	},
-	# 1 — Explorer (tan skin, round, happy, green body, backpack, brown legs, boots, pickaxe)
-	{
-		"skin_colour_index": 1,
-		"head_shape": "round",
-		"face_expression": "happy",
-		"body_colour_index": 4,  # green
-		"body_accessory": "backpack",
-		"leg_colour_index": 0,  # red-brown substitute — red for now
-		"leg_shoes": "boots",
-		"hand_accessory": "pickaxe",
-	},
-	# 2 — Knight (medium skin, square, cool, red body, cape, red legs, boots, none)
-	{
-		"skin_colour_index": 2,
-		"head_shape": "square",
-		"face_expression": "cool",
-		"body_colour_index": 0,  # red
-		"body_accessory": "cape",
-		"leg_colour_index": 0,
-		"leg_shoes": "boots",
-		"hand_accessory": "none",
-	},
-	# 3 — Ninja (dark skin, tall, cool, purple body, none, purple legs, sneakers, blank)
-	{
-		"skin_colour_index": 3,
-		"head_shape": "tall",
-		"face_expression": "cool",
-		"body_colour_index": 7,  # purple
-		"body_accessory": "none",
-		"leg_colour_index": 7,
-		"leg_shoes": "sneakers",
-		"hand_accessory": "blank",
-	},
-	# 4 — Astronaut (deep skin, round, surprised, white body, backpack, white legs, none, none)
-	{
-		"skin_colour_index": 4,
-		"head_shape": "round",
-		"face_expression": "surprised",
-		"body_colour_index": 9,  # white
-		"body_accessory": "backpack",
-		"leg_colour_index": 9,
-		"leg_shoes": "none",
-		"hand_accessory": "none",
-	},
-	# 5 — Rainbow (light skin, tall, happy, yellow body, none, lime legs, sneakers, flower)
-	{
-		"skin_colour_index": 0,
-		"head_shape": "tall",
-		"face_expression": "happy",
-		"body_colour_index": 3,  # lime
-		"body_accessory": "none",
-		"leg_colour_index": 2,  # yellow
-		"leg_shoes": "sneakers",
-		"hand_accessory": "flower",
-	},
-	# 6 — Pirate (tan skin, square, surprised, orange body, cape, red legs, boots, pickaxe)
-	{
-		"skin_colour_index": 1,
-		"head_shape": "square",
-		"face_expression": "surprised",
-		"body_colour_index": 1,  # orange
-		"body_accessory": "cape",
-		"leg_colour_index": 0,
-		"leg_shoes": "boots",
-		"hand_accessory": "pickaxe",
-	},
-	# 7 — Winter (medium skin, round, sleepy, teal body, none, teal legs, boots, lantern)
-	{
-		"skin_colour_index": 2,
-		"head_shape": "round",
-		"face_expression": "sleepy",
-		"body_colour_index": 5,  # teal
-		"body_accessory": "none",
-		"leg_colour_index": 5,
-		"leg_shoes": "boots",
-		"hand_accessory": "lantern",
-	},
 ]
 
 ## Path for avatar configuration persistence.
@@ -160,15 +86,46 @@ const AVATAR_CFG_PATH: String = "user://avatar.cfg"
 ## ConfigFile section name for avatar data.
 const AVATAR_SECTION: String = "avatar"
 
-## Selectable builder figures (the textured 3D base mesh + rig the world avatar uses).
+## Selectable builder cards (portrait + name + personality subtitle).
 ## The "id" is written to avatar.cfg "character"; builder.gd loads the matching skin GLB
-## (see Builder._AVATAR_SKINS) on spawn. Default is "builder1".
-const CHARACTERS: Array[Dictionary] = [
-	{"id": "builder1", "label": "Builder", "label_key": "ui.avatar.character_builder"},
-	{"id": "red", "label": "Adventurer", "label_key": "ui.avatar.character_adventurer"},
-	{"id": "fem", "label": "Explorer", "label_key": "ui.avatar.character_explorer"},
+## (see Builder._AVATAR_SKINS) on spawn. Card order matches the CardRow TextureButton
+## order in avatar_creator.tscn (forester / explorer / pathfinder).
+const CARDS: Array[Dictionary] = [
+	{
+		"id": "fem",
+		"tex": "res://assets/textures/avatars/creator/card_forester.png",
+		"name_key": "ui.avatar.card_forester",
+		"sub_key": "ui.avatar.card_forester_sub",
+	},
+	{
+		"id": "builder1",
+		"tex": "res://assets/textures/avatars/creator/card_explorer.png",
+		"name_key": "ui.avatar.card_explorer",
+		"sub_key": "ui.avatar.card_explorer_sub",
+	},
+	{
+		"id": "red",
+		"tex": "res://assets/textures/avatars/creator/card_pathfinder.png",
+		"name_key": "ui.avatar.card_pathfinder",
+		"sub_key": "ui.avatar.card_pathfinder_sub",
+	},
 ]
 const DEFAULT_CHARACTER: String = "builder1"
+
+## Card frame (PanelContainer) node names, parallel to CARDS by index. The selection
+## glow StyleBox is toggled on the matching frame in _refresh_card_selection.
+const CARD_FRAMES: Array[String] = [
+	"CardForesterFrame",
+	"CardExplorerFrame",
+	"CardPathfinderFrame",
+]
+
+## TextureButton node names inside CardRow, parallel to CARDS by index.
+const CARD_BUTTONS: Array[String] = [
+	"CardForesterButton",
+	"CardExplorerButton",
+	"CardPathfinderButton",
+]
 
 ## SubViewport builder rotation speed in radians per second.
 const PREVIEW_ROT_SPEED: float = 0.4
@@ -190,9 +147,8 @@ var _body_acc_buttons: Array[Button] = []
 var _leg_colour_buttons: Array[Button] = []
 var _leg_shoe_buttons: Array[Button] = []
 var _hand_acc_buttons: Array[Button] = []
-var _preset_buttons: Array[Button] = []
-## Character (base figure) buttons — built programmatically in _ready.
-var _character_buttons: Array[Button] = []
+## Card TextureButtons (CardRow), parallel to CARDS by index. Resolved in _ready.
+var _card_buttons: Array[TextureButton] = []
 
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
@@ -215,7 +171,6 @@ func _ready() -> void:
 	_leg_colour_buttons = _collect_buttons("LegColourRow")
 	_leg_shoe_buttons   = _collect_buttons("LegShoeRow")
 	_hand_acc_buttons   = _collect_buttons("HandAccRow")
-	_preset_buttons     = _collect_buttons("PresetGrid")
 
 	# Wire swatch buttons.
 	for i: int in _skin_buttons.size():
@@ -242,13 +197,9 @@ func _ready() -> void:
 	for i: int in _hand_acc_buttons.size():
 		var btn: Button = _hand_acc_buttons[i]
 		btn.pressed.connect(func() -> void: _on_hand_acc_pressed(i))
-	for i: int in _preset_buttons.size():
-		var btn: Button = _preset_buttons[i]
-		btn.pressed.connect(func() -> void: _on_preset_pressed(i))
 
-	# Build the Character (base figure) selector programmatically and insert it at the top
-	# of the parts column so the chosen skin GLB is the first thing the player picks.
-	_build_character_section()
+	# Wire the builder cards (CardRow TextureButtons) to the character selector.
+	_wire_cards()
 
 	# Wire action buttons.
 	var done_btn: Button = _find_node("DoneButton")
@@ -257,9 +208,6 @@ func _ready() -> void:
 	var back_btn: Button = _find_node("BackButton")
 	if back_btn:
 		back_btn.pressed.connect(_on_back_pressed)
-	var rand_btn: Button = _find_node("RandomiseButton")
-	if rand_btn:
-		rand_btn.pressed.connect(_on_randomise_pressed)
 
 	# Apply initial config to UI controls and preview.
 	_refresh_ui_selection()
@@ -329,73 +277,27 @@ func _on_hand_acc_pressed(index: int) -> void:
 	_apply_config_to_preview(_cfg)
 
 
-## Build the Character (base figure) selector section and insert it at the top of the
-## parts column (VBoxParts). One button per CHARACTERS entry; the chosen id is persisted
-## to avatar.cfg "character" and loaded by builder.gd on spawn.
-func _build_character_section() -> void:
-	var parts: Node = _find_node("VBoxParts")
-	if parts == null:
-		return
-	var section := VBoxContainer.new()
-	section.name = "CharacterSection"
-	var label := Label.new()
-	label.text = tr("ui.avatar.section_character")
-	section.add_child(label)
-	var row := HBoxContainer.new()
-	row.name = "CharacterRow"
-	section.add_child(row)
-	for i: int in CHARACTERS.size():
-		var btn := Button.new()
-		var lk: String = str(CHARACTERS[i].get("label_key", ""))
-		btn.text = tr(lk) if lk != "" else str(CHARACTERS[i].get("label", "?"))
-		btn.custom_minimum_size = Vector2(96, 36)
-		btn.pressed.connect(func() -> void: _on_character_pressed(i))
-		row.add_child(btn)
-		_character_buttons.append(btn)
-	parts.add_child(section)
-	parts.move_child(section, 0)  # top of the parts column
+## Wire the CardRow TextureButtons (one per CARDS entry, by index) to the character
+## selector. The chosen id is persisted to avatar.cfg "character" and loaded by builder.gd
+## on spawn.
+func _wire_cards() -> void:
+	_card_buttons.clear()
+	for i: int in CARD_BUTTONS.size():
+		var node: Node = _find_node(CARD_BUTTONS[i])
+		if node is TextureButton:
+			var btn: TextureButton = node as TextureButton
+			btn.pressed.connect(func() -> void: _on_character_pressed(i))
+			_card_buttons.append(btn)
 
 
-## Select a base figure: persist immediately (force-quit resilient) and highlight it.
+## Select a builder card: persist immediately (force-quit resilient) and re-render.
 func _on_character_pressed(index: int) -> void:
-	if index < 0 or index >= CHARACTERS.size():
+	if index < 0 or index >= CARDS.size():
 		return
-	_cfg["character"] = str(CHARACTERS[index].get("id", DEFAULT_CHARACTER))
+	_cfg["character"] = str(CARDS[index].get("id", DEFAULT_CHARACTER))
 	_refresh_ui_selection()
 	_write_avatar_cfg_silent()
 	_apply_config_to_preview(_cfg)  # re-render the preview on base-figure change
-
-
-# ─── Preset / Randomise ───────────────────────────────────────────────────────
-
-## Apply preset configuration by index. Writes to disk immediately (fire-and-forget)
-## so progress survives a force-quit.
-func _on_preset_pressed(idx: int) -> void:
-	if idx < 0 or idx >= PRESETS.size():
-		return
-	var keep_character: String = str(_cfg.get("character", DEFAULT_CHARACTER))
-	_cfg = PRESETS[idx].duplicate()
-	_cfg["character"] = keep_character  # presets style the appearance, not the base figure
-	_refresh_ui_selection()
-	_apply_config_to_preview(_cfg)
-	_write_avatar_cfg_silent()
-
-
-## Generate a random valid avatar configuration.
-func _on_randomise_pressed() -> void:
-	_cfg = {
-		"character":         str(CHARACTERS[randi_range(0, CHARACTERS.size() - 1)].get("id", DEFAULT_CHARACTER)),
-		"skin_colour_index": randi_range(0, SKIN_COLOURS.size() - 1),
-		"head_shape":        HEAD_SHAPES[randi_range(0, HEAD_SHAPES.size() - 1)],
-		"face_expression":   FACE_EXPRESSIONS[randi_range(0, FACE_EXPRESSIONS.size() - 1)],
-		"body_colour_index": randi_range(0, BODY_COLOURS.size() - 1),
-		"body_accessory":    BODY_ACCESSORIES[randi_range(0, BODY_ACCESSORIES.size() - 1)],
-		"leg_colour_index":  randi_range(0, BODY_COLOURS.size() - 1),
-		"leg_shoes":         LEG_SHOES[randi_range(0, LEG_SHOES.size() - 1)],
-		"hand_accessory":    HAND_ACCESSORIES[randi_range(0, HAND_ACCESSORIES.size() - 1)],
-	}
-	_refresh_ui_selection()
-	_apply_config_to_preview(_cfg)
 
 
 # ─── Action handlers ──────────────────────────────────────────────────────────
@@ -428,7 +330,7 @@ func _return_to_caller() -> void:
 # ─── Persistence ──────────────────────────────────────────────────────────────
 
 ## Write the current _cfg to user://avatar.cfg without emitting avatar_complete.
-## Called on preset tap for force-quit resilience.
+## Called on card tap for force-quit resilience.
 func _write_avatar_cfg_silent() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value(AVATAR_SECTION, "character",         _cfg.get("character", DEFAULT_CHARACTER))
@@ -513,7 +415,7 @@ const BORDER_ACTIVE: int = 2
 
 
 func _refresh_ui_selection() -> void:
-	_set_selected_index(_character_buttons, _character_index(str(_cfg.get("character", DEFAULT_CHARACTER))))
+	_refresh_card_selection(_character_index(str(_cfg.get("character", DEFAULT_CHARACTER))))
 	_set_selected_index(_skin_buttons, int(_cfg.get("skin_colour_index", 0)))
 	_set_selected_index(_head_shape_buttons, HEAD_SHAPES.find(str(_cfg.get("head_shape", "square"))))
 	_set_selected_index(_face_expr_buttons, FACE_EXPRESSIONS.find(str(_cfg.get("face_expression", "neutral"))))
@@ -522,9 +424,6 @@ func _refresh_ui_selection() -> void:
 	_set_selected_index(_leg_colour_buttons, int(_cfg.get("leg_colour_index", 6)))
 	_set_selected_index(_leg_shoe_buttons, LEG_SHOES.find(str(_cfg.get("leg_shoes", "none"))))
 	_set_selected_index(_hand_acc_buttons, HAND_ACCESSORIES.find(str(_cfg.get("hand_accessory", "none"))))
-	# Preset grid: highlight if current config matches any preset exactly.
-	var active_preset: int = _find_matching_preset()
-	_set_selected_index(_preset_buttons, active_preset)
 
 
 ## Add a 2px accent-yellow border to the button at `active_index`, clear others.
@@ -539,26 +438,42 @@ func _set_selected_index(buttons: Array[Button], active_index: int) -> void:
 			btn.remove_theme_constant_override("outline_size")
 
 
-## Index of the character id within CHARACTERS (0 = default if unknown).
+## Build (once) a yellow accent glow StyleBox for the selected card frame.
+func _card_glow_stylebox() -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.137255, 0.211765, 0.345098, 1.0)  # matches SB_Card fill
+	sb.border_width_left = 3
+	sb.border_width_top = 3
+	sb.border_width_right = 3
+	sb.border_width_bottom = 3
+	sb.border_color = COLOR_ACCENT
+	sb.corner_radius_top_left = 10
+	sb.corner_radius_top_right = 10
+	sb.corner_radius_bottom_right = 10
+	sb.corner_radius_bottom_left = 10
+	return sb
+
+
+## Toggle the yellow glow StyleBox on the card frame at `active_index`; clear others.
+## The glow is drawn in-engine (never baked into the portrait texture) so it tracks selection.
+func _refresh_card_selection(active_index: int) -> void:
+	for i: int in CARD_FRAMES.size():
+		var node: Node = _find_node(CARD_FRAMES[i])
+		if not (node is PanelContainer):
+			continue
+		var frame: PanelContainer = node as PanelContainer
+		if i == active_index:
+			frame.add_theme_stylebox_override("panel", _card_glow_stylebox())
+		else:
+			frame.remove_theme_stylebox_override("panel")
+
+
+## Index of the character id within CARDS (0 = default if unknown).
 func _character_index(char_id: String) -> int:
-	for i: int in CHARACTERS.size():
-		if str(CHARACTERS[i].get("id", "")) == char_id:
+	for i: int in CARDS.size():
+		if str(CARDS[i].get("id", "")) == char_id:
 			return i
 	return 0
-
-
-## Return the index of the preset that matches _cfg exactly, or -1 if none matches.
-func _find_matching_preset() -> int:
-	for i: int in PRESETS.size():
-		var p: Dictionary = PRESETS[i]
-		var matches: bool = true
-		for key: String in p.keys():
-			if _cfg.get(key) != p.get(key):
-				matches = false
-				break
-		if matches:
-			return i
-	return -1
 
 
 # ─── Private helpers ──────────────────────────────────────────────────────────
