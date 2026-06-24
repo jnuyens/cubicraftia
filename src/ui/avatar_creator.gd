@@ -483,9 +483,15 @@ func _find_preview_builder() -> Node3D:
 	var viewport: SubViewport = _find_node("AvatarSubViewport") as SubViewport
 	if viewport == null:
 		return null
-	# The first Node3D child that is the builder instance.
+	# Prefer the builder preview by name. NEVER return the first Node3D child — the
+	# SubViewport also holds a DirectionalLight3D and Camera3D (both Node3D), and
+	# grabbing the light here is what stopped the preview rotating / updating.
+	var named: Node = viewport.get_node_or_null("BuilderPreview")
+	if named is Node3D:
+		return named as Node3D
+	# Fallback: the node that actually exposes the avatar API.
 	for child: Node in viewport.get_children():
-		if child is Node3D:
+		if child is Node3D and child.has_method("apply_avatar_config"):
 			return child as Node3D
 	return null
 

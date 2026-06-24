@@ -64,11 +64,13 @@ var _body_mesh: MeshInstance3D = null
 var _legs_mesh: MeshInstance3D = null
 var _skin_root: Node3D = null
 var _glb_loaded: bool = false
+## Character id whose skin GLB is currently shown — used to detect card changes.
+var _current_character: String = ""
 
 
 func _ready() -> void:
 	_build_box_figure()
-	_try_load_skin_glb()
+	_apply_skin_glb(_read_selected_character())
 
 
 # ─── Mesh build ───────────────────────────────────────────────────────────────
@@ -114,31 +116,52 @@ func _build_box_figure() -> void:
 	add_child(_legs_mesh)
 
 
-## Optionally load the selected character's skin GLB as a cosmetic overlay.
-## Non-fatal on any failure — the box figure remains the contract.
-func _try_load_skin_glb() -> void:
-	var character: String = _read_selected_character()
+## Load (or swap to) the selected character's skin GLB as a cosmetic overlay.
+## Non-fatal on any failure — the coloured box figure remains the contract and is
+## shown when no GLB is available. Safe to call repeatedly: it frees the previous
+## GLB first, so picking a different builder card swaps the model live.
+func _apply_skin_glb(character: String) -> void:
+	if character == "":
+		character = DEFAULT_CHARACTER
+	_current_character = character
+
+	# Drop any previously-loaded skin so a card change replaces (not stacks) it.
+	if _skin_root != null and is_instance_valid(_skin_root):
+		_skin_root.queue_free()
+	_skin_root = null
+	_glb_loaded = false
+
 	var skin_path: String = str(AVATAR_SKINS.get(character, AVATAR_SKINS.get(DEFAULT_CHARACTER, "")))
 	if skin_path == "" or not ResourceLoader.exists(skin_path):
+		_set_boxes_visible(true)
 		return
 	var packed: Resource = load(skin_path)
 	if packed == null or not (packed is PackedScene):
+		_set_boxes_visible(true)
 		return
 	var inst: Node = (packed as PackedScene).instantiate()
-	if inst == null:
-		return
 	if not (inst is Node3D):
-		inst.queue_free()
+		if inst != null:
+			inst.queue_free()
+		_set_boxes_visible(true)
 		return
 	_skin_root = inst as Node3D
 	_skin_root.name = "SkinGLB"
 	add_child(_skin_root)
 	_glb_loaded = true
-	# When the textured model renders, hide the box stand-ins so they do not
-	# poke through. The boxes stay as the apply_avatar_config recolour targets.
-	_head_mesh.visible = false
-	_body_mesh.visible = false
-	_legs_mesh.visible = false
+	# Textured model renders — hide the box stand-ins so they do not poke through.
+	# The boxes stay as the apply_avatar_config recolour targets.
+	_set_boxes_visible(false)
+
+
+## Toggle the box stand-ins together (null-safe).
+func _set_boxes_visible(v: bool) -> void:
+	if _head_mesh != null:
+		_head_mesh.visible = v
+	if _body_mesh != null:
+		_body_mesh.visible = v
+	if _legs_mesh != null:
+		_legs_mesh.visible = v
 
 
 ## Read the selected character id from user://avatar.cfg, defaulting to builder1.
@@ -153,6 +176,11 @@ func _read_selected_character() -> String:
 
 ## Apply avatar config to the preview. Null-safe: a missing mesh child is a no-op.
 func apply_avatar_config(cfg: Dictionary) -> void:
+	# ── Character → swap skin GLB (live model change on card select) ──────────
+	var character: String = str(cfg.get("character", _current_character))
+	if character != "" and character != _current_character:
+		_apply_skin_glb(character)
+
 	# ── Skin colour → Head ────────────────────────────────────────────────────
 	if _head_mesh != null:
 		var skin_idx: int = clampi(int(cfg.get("skin_colour_index", 0)), 0, SKIN_COLOURS.size() - 1)
