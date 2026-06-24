@@ -104,6 +104,10 @@ func _build() -> void:
 	_box(self, "FootL", Vector3(0.27, 0.10, 0.34), Vector3(-0.145, 0.05, 0.02), Color("#1C1C22"))
 	_box(self, "FootR", Vector3(0.27, 0.10, 0.34), Vector3(0.145, 0.05, 0.02), Color("#1C1C22"))
 	_box(self, "Hips", Vector3(0.56, 0.20, 0.32), Vector3(0.0, 0.72, 0.0), LEG_COLOUR)
+	# Leg detail: lighter knee panels + a centre seam between the legs.
+	_box(self, "KneeL", Vector3(0.20, 0.12, 0.02), Vector3(-0.145, 0.34, 0.16), LEG_COLOUR.lightened(0.12))
+	_box(self, "KneeR", Vector3(0.20, 0.12, 0.02), Vector3(0.145, 0.34, 0.16), LEG_COLOUR.lightened(0.12))
+	_box(self, "LegGap", Vector3(0.03, 0.58, 0.30), Vector3(0.0, 0.31, 0.0), Color("#15151A"))
 
 	# ── Torso (trapezoid: narrow chest box + wider waist box) ─────────────────
 	var chest := _box(self, "Chest", Vector3(0.58, 0.40, 0.34), Vector3(0.0, 1.18, 0.0), outfit)
@@ -115,6 +119,14 @@ func _build() -> void:
 	_box(self, "Belt", Vector3(0.66, 0.07, 0.355), Vector3(0.0, 0.84, 0.0), BELT_COLOUR)
 	_box(self, "Buckle", Vector3(0.10, 0.07, 0.02), Vector3(0.0, 0.84, 0.18), BUCKLE_COLOUR)
 	_box(self, "Seam", Vector3(0.02, 0.45, 0.02), Vector3(0.0, 1.16, 0.175), BELT_COLOUR)
+	# Chest detail: two flap pockets, a row of gold buttons, collar lapels.
+	_box(self, "PocketL", Vector3(0.15, 0.12, 0.02), Vector3(-0.16, 1.02, 0.175), BELT_COLOUR)
+	_box(self, "PocketR", Vector3(0.15, 0.12, 0.02), Vector3(0.16, 1.02, 0.175), BELT_COLOUR)
+	_box(self, "BtnA", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.30, 0.18), BUCKLE_COLOUR)
+	_box(self, "BtnB", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.18, 0.18), BUCKLE_COLOUR)
+	_box(self, "BtnC", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.06, 0.18), BUCKLE_COLOUR)
+	_box(self, "LapelL", Vector3(0.10, 0.20, 0.02), Vector3(-0.12, 1.30, 0.175), Color("#FFFFFF").lerp(outfit, 0.35), Vector3(0, 0, deg_to_rad(-14)))
+	_box(self, "LapelR", Vector3(0.10, 0.20, 0.02), Vector3(0.12, 1.30, 0.175), Color("#FFFFFF").lerp(outfit, 0.35), Vector3(0, 0, deg_to_rad(14)))
 
 	# ── Shoulders + arms (angled) + C-claw hands ──────────────────────────────
 	var sh_l := _box(self, "ShoulderL", Vector3(0.20, 0.22, 0.28), Vector3(-0.37, 1.30, 0.0), outfit)
@@ -137,9 +149,9 @@ func _build() -> void:
 	_box(self, "EyeWR", Vector3(0.12, 0.15, 0.02), Vector3(0.12, 1.84, fz), EYE_WHITE)
 	_box(self, "PupL", Vector3(0.06, 0.11, 0.02), Vector3(-0.105, 1.83, fz + 0.012), EYE_DARK)
 	_box(self, "PupR", Vector3(0.06, 0.11, 0.02), Vector3(0.105, 1.83, fz + 0.012), EYE_DARK)
-	# Brows sit just above the eyes, clear of the fringe, angled for a friendly look.
-	_box(self, "BrowL", Vector3(0.16, 0.05, 0.025), Vector3(-0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-10)))
-	_box(self, "BrowR", Vector3(0.16, 0.05, 0.025), Vector3(0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(10)))
+	# Brows: nearly flat with inner ends slightly RAISED (friendly, not angry).
+	_box(self, "BrowL", Vector3(0.16, 0.05, 0.025), Vector3(-0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(7)))
+	_box(self, "BrowR", Vector3(0.16, 0.05, 0.025), Vector3(0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-7)))
 	# Open grin: dark mouth, red interior, white teeth.
 	_box(self, "Mouth", Vector3(0.21, 0.10, 0.02), Vector3(0.0, 1.66, fz), MOUTH_DARK)
 	_box(self, "MouthRed", Vector3(0.15, 0.055, 0.02), Vector3(0.0, 1.648, fz + 0.012), MOUTH_RED)
