@@ -1,162 +1,221 @@
 # SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# builder_preview.gd — recolourable box-minifig preview for the avatar creator.
+# builder_preview.gd — detailed recolourable box-minifig preview for the avatar creator.
 #
-# NOT the in-world Builder: no physics, groups, mouse capture, or sibling lookups.
-# It builds a minifig-proportioned figure from BoxMeshes (head, hair, torso, arms,
-# hands, legs, accessories) so EVERY customiser swatch visibly changes the preview:
-#   skin tone   → head + hands albedo
-#   outfit col  → torso + arms (sleeves) albedo
-#   hairstyle   → hair silhouette (head_shape token reused as the 3 Kapsel options)
-#   accessory   → backpack / cape visibility
-# Legs + hair colour are fixed (dark trousers, brown hair) to match the art, whose
-# customiser exposes only Skin / Outfit / Hairstyle / Accessory.
-#
-# The figure is a single fixed size, so all three builder cards preview at the same
-# scale (no per-skin size drift). apply_avatar_config(cfg) is the drive point used by
-# avatar_creator.gd::_apply_config_to_preview.
+# A blocky voxel-LEGO minifig assembled from primitives, tuned to read like the
+# painted card art: printed face (white eyes + pupils, angled brows, open grin),
+# spiky brown hair with a fringe, a trapezoidal jacket torso (collar, belt + gold
+# buckle), angled sleeved arms with C-claw hands, and dark legs. Every customiser
+# swatch drives it live:
+#   skin tone  → head + hands (+ neck)
+#   outfit col → jacket torso + sleeves + shoulders
+#   hairstyle  → hair silhouette (3 Kapsel options)
+#   accessory  → backpack / cape
+# Legs, hair, face and trim are fixed accents (the art's customiser only exposes
+# Skin / Outfit / Hairstyle / Accessory). One fixed size → all builders preview
+# at the same scale. apply_avatar_config(cfg) is the drive point.
 
 extends Node3D
 
-# ─── Palettes (self-contained copies of avatar_creator's swatches) ────────────
+# ─── Palettes (index-identical to avatar_creator's swatches) ──────────────────
 
-## Skin colour swatches (5) — applied to head + hands.
-## MUST stay index-identical to avatar_creator.SKIN_COLOURS (swatch ↔ preview mapping).
 const SKIN_COLOURS: Array[Color] = [
-	Color("#FFD21A"),  # classic builder-figure yellow
-	Color("#D4956A"),  # tan
-	Color("#A0614A"),  # medium
-	Color("#6B3A2A"),  # dark
-	Color("#3B1F16"),  # deep
+	Color("#FFD21A"), Color("#D4956A"), Color("#A0614A"), Color("#6B3A2A"), Color("#3B1F16"),
 ]
-
-## Outfit colour swatches (10) — applied to torso + arms.
-## MUST stay index-identical to avatar_creator.BODY_COLOURS.
 const BODY_COLOURS: Array[Color] = [
-	Color("#C91111"),  # 0 red
-	Color("#E8890C"),  # 1 orange
-	Color("#F5C30D"),  # 2 yellow
-	Color("#97C515"),  # 3 lime
-	Color("#3DB560"),  # 4 green
-	Color("#159195"),  # 5 teal
-	Color("#1B72D8"),  # 6 blue
-	Color("#7B2DB5"),  # 7 purple
-	Color("#D43582"),  # 8 pink
-	Color("#F1F0EA"),  # 9 white
+	Color("#C91111"), Color("#E8890C"), Color("#F5C30D"), Color("#97C515"), Color("#3DB560"),
+	Color("#159195"), Color("#1B72D8"), Color("#7B2DB5"), Color("#D43582"), Color("#F1F0EA"),
 ]
 
-## Fixed accents (not swatch-driven; match the painted minifigs).
-const LEG_COLOUR: Color = Color("#3A2A1C")   # dark trousers
-const HAIR_COLOUR: Color = Color("#6B3F22")  # brown hair
-const CAPE_COLOUR: Color = Color("#C0202C")  # red cape
+# Fixed accents.
+const LEG_COLOUR := Color("#2B2B33")     # dark trousers
+const HAIR_COLOUR := Color("#6E4326")    # brown hair
+const HAIR_SHADE := Color("#5A3520")     # darker hair (depth)
+const BELT_COLOUR := Color("#3A2A1C")
+const BUCKLE_COLOUR := Color("#E8B23A")
+const STRAP_COLOUR := Color("#4A3420")  # brown strap
+const CAPE_COLOUR := Color("#C0202C")
+const EYE_WHITE := Color("#F7F7F2")
+const EYE_DARK := Color("#241A12")
+const MOUTH_DARK := Color("#3A1410")
+const MOUTH_RED := Color("#C44233")
 
-# ─── Part references ──────────────────────────────────────────────────────────
+# ─── Part groups (recoloured in apply_avatar_config) ──────────────────────────
 
-var _head: MeshInstance3D = null
-var _hair: MeshInstance3D = null
-var _torso: MeshInstance3D = null
-var _arm_l: MeshInstance3D = null
-var _arm_r: MeshInstance3D = null
-var _hand_l: MeshInstance3D = null
-var _hand_r: MeshInstance3D = null
-var _legs: MeshInstance3D = null   # named "Legs" for the controller's fallback recolour path
-var _leg_l: MeshInstance3D = null
-var _leg_r: MeshInstance3D = null
-var _hips: MeshInstance3D = null
-var _backpack: MeshInstance3D = null
+var _skin_parts: Array[MeshInstance3D] = []
+var _outfit_parts: Array[MeshInstance3D] = []
+var _hair_root: Node3D = null
+var _backpack: Node3D = null
 var _cape: MeshInstance3D = null
-
-# Aliases the avatar_creator fallback path looks up by name.
-var _body_mesh: MeshInstance3D = null  # == _torso
-var _head_mesh: MeshInstance3D = null  # == _head
-var _legs_mesh: MeshInstance3D = null  # == _hips
+var _cur_hair := ""
 
 
 func _ready() -> void:
-	_build_figure()
+	_build()
+
+
+# ─── Primitive helpers ────────────────────────────────────────────────────────
+
+func _mat(colour: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = colour
+	m.roughness = 0.85
+	return m
+
+func _box(p: Node, nm: String, size: Vector3, pos: Vector3, colour: Color, rot := Vector3.ZERO) -> MeshInstance3D:
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	var mi := MeshInstance3D.new()
+	mi.name = nm
+	mi.mesh = mesh
+	mi.position = pos
+	if rot != Vector3.ZERO:
+		mi.rotation = rot
+	mi.set_surface_override_material(0, _mat(colour))
+	p.add_child(mi)
+	return mi
+
+func _torus(p: Node, nm: String, inner: float, outer: float, pos: Vector3, colour: Color, rot: Vector3) -> MeshInstance3D:
+	var mesh := TorusMesh.new()
+	mesh.inner_radius = inner
+	mesh.outer_radius = outer
+	mesh.rings = 12
+	mesh.ring_segments = 8
+	var mi := MeshInstance3D.new()
+	mi.name = nm
+	mi.mesh = mesh
+	mi.position = pos
+	mi.rotation = rot
+	mi.set_surface_override_material(0, _mat(colour))
+	p.add_child(mi)
+	return mi
 
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 
-func _box(name: String, size: Vector3, pos: Vector3, colour: Color) -> MeshInstance3D:
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	var mi := MeshInstance3D.new()
-	mi.name = name
-	mi.mesh = mesh
-	mi.position = pos
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = colour
-	mat.roughness = 0.9
-	mi.set_surface_override_material(0, mat)
-	add_child(mi)
-	return mi
+func _build() -> void:
+	var skin := SKIN_COLOURS[0]
+	var outfit := BODY_COLOURS[6]
 
+	# ── Legs + hips ───────────────────────────────────────────────────────────
+	_box(self, "LegL", Vector3(0.26, 0.62, 0.30), Vector3(-0.145, 0.31, 0.0), LEG_COLOUR)
+	_box(self, "LegR", Vector3(0.26, 0.62, 0.30), Vector3(0.145, 0.31, 0.0), LEG_COLOUR)
+	_box(self, "FootL", Vector3(0.27, 0.10, 0.34), Vector3(-0.145, 0.05, 0.02), Color("#1C1C22"))
+	_box(self, "FootR", Vector3(0.27, 0.10, 0.34), Vector3(0.145, 0.05, 0.02), Color("#1C1C22"))
+	_box(self, "Hips", Vector3(0.56, 0.20, 0.32), Vector3(0.0, 0.72, 0.0), LEG_COLOUR)
 
-## Build the minifig. Origin at the feet; the figure is ~2.0 units tall.
-func _build_figure() -> void:
-	var skin: Color = SKIN_COLOURS[0]
-	var body: Color = BODY_COLOURS[6]  # default blue
+	# ── Torso (trapezoid: narrow chest box + wider waist box) ─────────────────
+	var chest := _box(self, "Chest", Vector3(0.58, 0.40, 0.34), Vector3(0.0, 1.18, 0.0), outfit)
+	var waist := _box(self, "Waist", Vector3(0.64, 0.26, 0.345), Vector3(0.0, 0.93, 0.0), outfit)
+	_outfit_parts.append(chest)
+	_outfit_parts.append(waist)
+	# Collar (V-neck) + chest seam + belt + gold buckle (fixed trim).
+	_box(self, "Collar", Vector3(0.30, 0.10, 0.36), Vector3(0.0, 1.38, 0.01), Color("#FFFFFF").lerp(outfit, 0.2))
+	_box(self, "Belt", Vector3(0.66, 0.07, 0.355), Vector3(0.0, 0.84, 0.0), BELT_COLOUR)
+	_box(self, "Buckle", Vector3(0.10, 0.07, 0.02), Vector3(0.0, 0.84, 0.18), BUCKLE_COLOUR)
+	_box(self, "Seam", Vector3(0.02, 0.45, 0.02), Vector3(0.0, 1.16, 0.175), BELT_COLOUR)
 
-	# Legs (two trousers) + hips.
-	_leg_l = _box("LegL", Vector3(0.26, 0.55, 0.30), Vector3(-0.14, 0.28, 0.0), LEG_COLOUR)
-	_leg_r = _box("LegR", Vector3(0.26, 0.55, 0.30), Vector3(0.14, 0.28, 0.0), LEG_COLOUR)
-	_hips = _box("Legs", Vector3(0.56, 0.22, 0.32), Vector3(0.0, 0.66, 0.0), LEG_COLOUR)
+	# ── Shoulders + arms (angled) + C-claw hands ──────────────────────────────
+	var sh_l := _box(self, "ShoulderL", Vector3(0.20, 0.22, 0.28), Vector3(-0.37, 1.30, 0.0), outfit)
+	var sh_r := _box(self, "ShoulderR", Vector3(0.20, 0.22, 0.28), Vector3(0.37, 1.30, 0.0), outfit)
+	var arm_l := _box(self, "ArmL", Vector3(0.18, 0.46, 0.22), Vector3(-0.42, 1.02, 0.04), outfit, Vector3(0, 0, deg_to_rad(8)))
+	var arm_r := _box(self, "ArmR", Vector3(0.18, 0.46, 0.22), Vector3(0.42, 1.02, 0.04), outfit, Vector3(0, 0, deg_to_rad(-8)))
+	_outfit_parts.append_array([sh_l, sh_r, arm_l, arm_r])
+	var hand_l := _torus(self, "HandL", 0.045, 0.12, Vector3(-0.45, 0.78, 0.08), skin, Vector3(deg_to_rad(90), 0, 0))
+	var hand_r := _torus(self, "HandR", 0.045, 0.12, Vector3(0.45, 0.78, 0.08), skin, Vector3(deg_to_rad(90), 0, 0))
+	_skin_parts.append_array([hand_l, hand_r])
 
-	# Torso + arms (outfit colour) and yellow/skin hands.
-	_torso = _box("Body", Vector3(0.62, 0.62, 0.34), Vector3(0.0, 1.08, 0.0), body)
-	_arm_l = _box("ArmL", Vector3(0.18, 0.56, 0.22), Vector3(-0.40, 1.10, 0.02), body)
-	_arm_r = _box("ArmR", Vector3(0.18, 0.56, 0.22), Vector3(0.40, 1.10, 0.02), body)
-	_hand_l = _box("HandL", Vector3(0.17, 0.17, 0.17), Vector3(-0.40, 0.80, 0.06), skin)
-	_hand_r = _box("HandR", Vector3(0.17, 0.17, 0.17), Vector3(0.40, 0.80, 0.06), skin)
+	# ── Neck + head ───────────────────────────────────────────────────────────
+	var neck := _box(self, "Neck", Vector3(0.22, 0.10, 0.22), Vector3(0.0, 1.46, 0.0), skin)
+	var head := _box(self, "Head", Vector3(0.52, 0.54, 0.50), Vector3(0.0, 1.78, 0.0), skin)
+	_skin_parts.append_array([neck, head])
 
-	# Head + hair (hair = top cap + front fringe).
-	_head = _box("Head", Vector3(0.52, 0.52, 0.52), Vector3(0.0, 1.66, 0.0), skin)
-	_hair = _box("Hair", Vector3(0.60, 0.22, 0.60), Vector3(0.0, 1.96, 0.0), HAIR_COLOUR)
-	var fringe := _box("HairFringe", Vector3(0.54, 0.16, 0.10), Vector3(0.0, 1.84, 0.23), HAIR_COLOUR)
-	fringe.set_meta("hair", true)
+	# ── Face (printed on +Z, fixed colours) ───────────────────────────────────
+	var fz := 0.255
+	_box(self, "EyeWL", Vector3(0.12, 0.15, 0.02), Vector3(-0.12, 1.84, fz), EYE_WHITE)
+	_box(self, "EyeWR", Vector3(0.12, 0.15, 0.02), Vector3(0.12, 1.84, fz), EYE_WHITE)
+	_box(self, "PupL", Vector3(0.06, 0.11, 0.02), Vector3(-0.105, 1.83, fz + 0.012), EYE_DARK)
+	_box(self, "PupR", Vector3(0.06, 0.11, 0.02), Vector3(0.105, 1.83, fz + 0.012), EYE_DARK)
+	# Brows sit just above the eyes, clear of the fringe, angled for a friendly look.
+	_box(self, "BrowL", Vector3(0.16, 0.05, 0.025), Vector3(-0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-10)))
+	_box(self, "BrowR", Vector3(0.16, 0.05, 0.025), Vector3(0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(10)))
+	# Open grin: dark mouth, red interior, white teeth.
+	_box(self, "Mouth", Vector3(0.21, 0.10, 0.02), Vector3(0.0, 1.66, fz), MOUTH_DARK)
+	_box(self, "MouthRed", Vector3(0.15, 0.055, 0.02), Vector3(0.0, 1.648, fz + 0.012), MOUTH_RED)
+	_box(self, "Teeth", Vector3(0.15, 0.03, 0.02), Vector3(0.0, 1.69, fz + 0.012), EYE_WHITE)
 
-	# Face on the +Z front (defines the front and gives the figure character).
-	var eye := Color("#241A12")
-	_box("EyeL", Vector3(0.08, 0.10, 0.03), Vector3(-0.12, 1.71, 0.27), eye)
-	_box("EyeR", Vector3(0.08, 0.10, 0.03), Vector3(0.12, 1.71, 0.27), eye)
-	_box("Mouth", Vector3(0.18, 0.04, 0.03), Vector3(0.0, 1.57, 0.27), Color("#7A2A1E"))
+	# ── Hair (rebuilt per style) ──────────────────────────────────────────────
+	_hair_root = Node3D.new()
+	_hair_root.name = "Hair"
+	add_child(_hair_root)
+	_apply_hairstyle("square")
 
-	# Accessories (hidden by default).
-	_backpack = _box("Backpack", Vector3(0.42, 0.48, 0.18), Vector3(0.0, 1.06, -0.26), Color("#7A5230"))
+	# ── Accessories ───────────────────────────────────────────────────────────
+	_backpack = Node3D.new()
+	_backpack.name = "Backpack"
+	add_child(_backpack)
+	_box(_backpack, "Pack", Vector3(0.42, 0.50, 0.20), Vector3(0.0, 1.12, -0.28), Color("#7A5230"))
+	_box(_backpack, "PackLid", Vector3(0.44, 0.14, 0.22), Vector3(0.0, 1.32, -0.28), Color("#62421F"))
+	_box(_backpack, "PackStrapL", Vector3(0.05, 0.42, 0.02), Vector3(-0.16, 1.18, 0.18), STRAP_COLOUR)
+	_box(_backpack, "PackStrapR", Vector3(0.05, 0.42, 0.02), Vector3(0.16, 1.18, 0.18), STRAP_COLOUR)
 	_backpack.visible = false
-	_cape = _box("Cape", Vector3(0.58, 0.82, 0.05), Vector3(0.0, 0.98, -0.22), CAPE_COLOUR)
+	_cape = _box(self, "Cape", Vector3(0.60, 0.90, 0.04), Vector3(0.0, 1.05, -0.24), CAPE_COLOUR, Vector3(deg_to_rad(4), 0, 0))
 	_cape.visible = false
 
-	# Name aliases for the controller fallback path.
-	_body_mesh = _torso
-	_head_mesh = _head
-	_legs_mesh = _hips
+
+## Rebuild the hair cluster for the chosen Kapsel option.
+func _apply_hairstyle(style: String) -> void:
+	if _hair_root == null:
+		return
+	_cur_hair = style
+	for c in _hair_root.get_children():
+		c.queue_free()
+	var h := _hair_root
+	# Common base: cap + fringe + sideburns framing the head (head top ~2.05).
+	_box(h, "Cap", Vector3(0.56, 0.16, 0.54), Vector3(0.0, 2.07, 0.0), HAIR_COLOUR)
+	_box(h, "Fringe", Vector3(0.54, 0.11, 0.10), Vector3(0.0, 2.03, 0.235), HAIR_COLOUR)
+	_box(h, "SideL", Vector3(0.08, 0.34, 0.46), Vector3(-0.27, 1.86, 0.0), HAIR_COLOUR)
+	_box(h, "SideR", Vector3(0.08, 0.34, 0.46), Vector3(0.27, 1.86, 0.0), HAIR_COLOUR)
+	_box(h, "Back", Vector3(0.50, 0.30, 0.10), Vector3(0.0, 1.86, -0.255), HAIR_COLOUR)
+	match style:
+		"round":  # fuller, rounded — lower side volume, soft top
+			_box(h, "TopR", Vector3(0.48, 0.16, 0.46), Vector3(0.0, 2.16, -0.02), HAIR_SHADE)
+			_box(h, "SideLo_L", Vector3(0.10, 0.16, 0.40), Vector3(-0.29, 1.66, 0.0), HAIR_COLOUR)
+			_box(h, "SideLo_R", Vector3(0.10, 0.16, 0.40), Vector3(0.29, 1.66, 0.0), HAIR_COLOUR)
+		"tall":   # spiky, tall tufts
+			for i in 5:
+				var x := -0.20 + 0.10 * float(i)
+				var hh := 0.22 + 0.06 * float(i % 2)
+				_box(h, "Spike%d" % i, Vector3(0.09, hh, 0.10), Vector3(x, 2.14 + hh * 0.4, -0.02 + 0.04 * float(i % 2)), HAIR_COLOUR, Vector3(deg_to_rad(-12 + 6 * i), 0, 0))
+		_:        # "square" — short spiky fringe (matches the art's explorer)
+			for i in 4:
+				var x := -0.18 + 0.12 * float(i)
+				_box(h, "Tuft%d" % i, Vector3(0.11, 0.18, 0.12), Vector3(x, 2.12, 0.16), HAIR_COLOUR, Vector3(deg_to_rad(-22), 0, deg_to_rad(-8 + 5 * i)))
+			_box(h, "TopFlat", Vector3(0.50, 0.10, 0.40), Vector3(0.0, 2.13, -0.05), HAIR_SHADE)
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
-## Apply avatar config to the preview. Null-safe; unknown indices are clamped.
 func apply_avatar_config(cfg: Dictionary) -> void:
-	# Skin → head + hands.
 	var skin_idx: int = clampi(int(cfg.get("skin_colour_index", 0)), 0, SKIN_COLOURS.size() - 1)
 	var skin: Color = SKIN_COLOURS[skin_idx]
-	_set_colour(_head, skin)
-	_set_colour(_hand_l, skin)
-	_set_colour(_hand_r, skin)
+	for mi in _skin_parts:
+		_recolour(mi, skin)
 
-	# Outfit → torso + arms.
-	var body_idx: int = clampi(int(cfg.get("body_colour_index", 4)), 0, BODY_COLOURS.size() - 1)
-	var body: Color = BODY_COLOURS[body_idx]
-	_set_colour(_torso, body)
-	_set_colour(_arm_l, body)
-	_set_colour(_arm_r, body)
+	var body_idx: int = clampi(int(cfg.get("body_colour_index", 6)), 0, BODY_COLOURS.size() - 1)
+	var outfit: Color = BODY_COLOURS[body_idx]
+	for mi in _outfit_parts:
+		_recolour(mi, outfit)
+	# Keep the collar a tinted-light shade of the new outfit.
+	var collar: Node = get_node_or_null("Collar")
+	if collar is MeshInstance3D:
+		_recolour(collar, Color("#FFFFFF").lerp(outfit, 0.2))
 
-	# Hairstyle (reuses the head_shape token for the 3 Kapsel options).
-	_apply_hairstyle(str(cfg.get("head_shape", "square")))
+	var style: String = str(cfg.get("head_shape", "square"))
+	if style != _cur_hair:
+		_apply_hairstyle(style)
 
-	# Accessory.
 	var acc: String = str(cfg.get("body_accessory", "none"))
 	if _backpack != null:
 		_backpack.visible = (acc == "backpack")
@@ -164,29 +223,9 @@ func apply_avatar_config(cfg: Dictionary) -> void:
 		_cape.visible = (acc == "cape")
 
 
-## Set a mesh's override-material albedo (null-safe).
-func _set_colour(mi: MeshInstance3D, colour: Color) -> void:
+func _recolour(mi: MeshInstance3D, colour: Color) -> void:
 	if mi == null:
 		return
-	var mat: StandardMaterial3D = mi.get_active_material(0) as StandardMaterial3D
-	if mat != null:
-		mat.albedo_color = colour
-
-
-## Reshape the hair block for the three Kapsel options.
-func _apply_hairstyle(style: String) -> void:
-	if _hair == null:
-		return
-	var mesh: BoxMesh = _hair.mesh as BoxMesh
-	if mesh == null:
-		return
-	match style:
-		"round":  # rounded / fuller bob — wider, lower
-			mesh.size = Vector3(0.64, 0.30, 0.64)
-			_hair.position.y = 1.92
-		"tall":   # spiky / tall — taller, narrower
-			mesh.size = Vector3(0.56, 0.40, 0.56)
-			_hair.position.y = 2.02
-		_:        # "square" — short flat cap
-			mesh.size = Vector3(0.60, 0.20, 0.60)
-			_hair.position.y = 1.96
+	var m: StandardMaterial3D = mi.get_active_material(0) as StandardMaterial3D
+	if m != null:
+		m.albedo_color = colour
