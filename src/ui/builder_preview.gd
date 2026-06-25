@@ -76,6 +76,21 @@ func _box(p: Node, nm: String, size: Vector3, pos: Vector3, colour: Color, rot :
 	p.add_child(mi)
 	return mi
 
+## Build a wide open-gap C-claw hand from chunky voxels (gap at the top, where a
+## tool would sit). Reads as a minifig C-hand rather than a closed ring.
+func _build_claw(nm: String, center: Vector3, colour: Color) -> void:
+	var r := 0.15
+	var seg := 9
+	for i in seg:
+		var a := TAU * float(i) / float(seg)
+		var deg := rad_to_deg(a)
+		if deg > 66.0 and deg < 134.0:
+			continue  # open gap at the top
+		var px := center.x + cos(a) * r
+		var py := center.y + sin(a) * r
+		var b := _box(self, "%s_%d" % [nm, i], Vector3(0.10, 0.10, 0.19), Vector3(px, py, center.z), colour)
+		_skin_parts.append(b)
+
 func _torus(p: Node, nm: String, inner: float, outer: float, pos: Vector3, colour: Color, rot: Vector3) -> MeshInstance3D:
 	var mesh := TorusMesh.new()
 	mesh.inner_radius = inner
@@ -108,6 +123,11 @@ func _build() -> void:
 	_box(self, "KneeL", Vector3(0.20, 0.12, 0.02), Vector3(-0.145, 0.34, 0.16), LEG_COLOUR.lightened(0.12))
 	_box(self, "KneeR", Vector3(0.20, 0.12, 0.02), Vector3(0.145, 0.34, 0.16), LEG_COLOUR.lightened(0.12))
 	_box(self, "LegGap", Vector3(0.03, 0.58, 0.30), Vector3(0.0, 0.31, 0.0), Color("#15151A"))
+	# Shoe toe caps + soles.
+	_box(self, "ToeL", Vector3(0.27, 0.07, 0.10), Vector3(-0.145, 0.06, 0.21), Color("#0F0F14"))
+	_box(self, "ToeR", Vector3(0.27, 0.07, 0.10), Vector3(0.145, 0.06, 0.21), Color("#0F0F14"))
+	_box(self, "SoleL", Vector3(0.28, 0.03, 0.36), Vector3(-0.145, 0.005, 0.02), Color("#444"))
+	_box(self, "SoleR", Vector3(0.28, 0.03, 0.36), Vector3(0.145, 0.005, 0.02), Color("#444"))
 
 	# ── Torso (trapezoid: narrow chest box + wider waist box) ─────────────────
 	var chest := _box(self, "Chest", Vector3(0.58, 0.40, 0.34), Vector3(0.0, 1.18, 0.0), outfit)
@@ -115,7 +135,7 @@ func _build() -> void:
 	_outfit_parts.append(chest)
 	_outfit_parts.append(waist)
 	# Collar (V-neck) + chest seam + belt + gold buckle (fixed trim).
-	_box(self, "Collar", Vector3(0.30, 0.10, 0.36), Vector3(0.0, 1.38, 0.01), Color("#FFFFFF").lerp(outfit, 0.2))
+	_box(self, "Collar", Vector3(0.26, 0.08, 0.36), Vector3(0.0, 1.39, 0.01), Color("#FFFFFF").lerp(outfit, 0.35))
 	_box(self, "Belt", Vector3(0.66, 0.07, 0.355), Vector3(0.0, 0.84, 0.0), BELT_COLOUR)
 	_box(self, "Buckle", Vector3(0.10, 0.07, 0.02), Vector3(0.0, 0.84, 0.18), BUCKLE_COLOUR)
 	_box(self, "Seam", Vector3(0.02, 0.45, 0.02), Vector3(0.0, 1.16, 0.175), BELT_COLOUR)
@@ -125,8 +145,8 @@ func _build() -> void:
 	_box(self, "BtnA", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.30, 0.18), BUCKLE_COLOUR)
 	_box(self, "BtnB", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.18, 0.18), BUCKLE_COLOUR)
 	_box(self, "BtnC", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.06, 0.18), BUCKLE_COLOUR)
-	_box(self, "LapelL", Vector3(0.10, 0.20, 0.02), Vector3(-0.12, 1.30, 0.175), Color("#FFFFFF").lerp(outfit, 0.35), Vector3(0, 0, deg_to_rad(-14)))
-	_box(self, "LapelR", Vector3(0.10, 0.20, 0.02), Vector3(0.12, 1.30, 0.175), Color("#FFFFFF").lerp(outfit, 0.35), Vector3(0, 0, deg_to_rad(14)))
+	_box(self, "LapelL", Vector3(0.08, 0.17, 0.02), Vector3(-0.10, 1.29, 0.175), Color("#FFFFFF").lerp(outfit, 0.5), Vector3(0, 0, deg_to_rad(-16)))
+	_box(self, "LapelR", Vector3(0.08, 0.17, 0.02), Vector3(0.10, 1.29, 0.175), Color("#FFFFFF").lerp(outfit, 0.5), Vector3(0, 0, deg_to_rad(16)))
 
 	# ── Shoulders + arms (angled) + C-claw hands ──────────────────────────────
 	var sh_l := _box(self, "ShoulderL", Vector3(0.20, 0.22, 0.28), Vector3(-0.37, 1.30, 0.0), outfit)
@@ -134,9 +154,12 @@ func _build() -> void:
 	var arm_l := _box(self, "ArmL", Vector3(0.18, 0.46, 0.22), Vector3(-0.42, 1.02, 0.04), outfit, Vector3(0, 0, deg_to_rad(8)))
 	var arm_r := _box(self, "ArmR", Vector3(0.18, 0.46, 0.22), Vector3(0.42, 1.02, 0.04), outfit, Vector3(0, 0, deg_to_rad(-8)))
 	_outfit_parts.append_array([sh_l, sh_r, arm_l, arm_r])
-	var hand_l := _torus(self, "HandL", 0.045, 0.12, Vector3(-0.45, 0.78, 0.08), skin, Vector3(deg_to_rad(90), 0, 0))
-	var hand_r := _torus(self, "HandR", 0.045, 0.12, Vector3(0.45, 0.78, 0.08), skin, Vector3(deg_to_rad(90), 0, 0))
-	_skin_parts.append_array([hand_l, hand_r])
+	# Sleeve cuffs (slightly darker outfit) then wide open-gap C-claw hands.
+	var cuff_l := _box(self, "CuffL", Vector3(0.20, 0.08, 0.24), Vector3(-0.42, 0.86, 0.04), outfit.darkened(0.18), Vector3(0, 0, deg_to_rad(8)))
+	var cuff_r := _box(self, "CuffR", Vector3(0.20, 0.08, 0.24), Vector3(0.42, 0.86, 0.04), outfit.darkened(0.18), Vector3(0, 0, deg_to_rad(-8)))
+	_outfit_parts.append_array([cuff_l, cuff_r])
+	_build_claw("HandL", Vector3(-0.45, 0.74, 0.10), skin)
+	_build_claw("HandR", Vector3(0.45, 0.74, 0.10), skin)
 
 	# ── Neck + head ───────────────────────────────────────────────────────────
 	var neck := _box(self, "Neck", Vector3(0.22, 0.10, 0.22), Vector3(0.0, 1.46, 0.0), skin)
@@ -152,10 +175,16 @@ func _build() -> void:
 	# Brows: nearly flat with inner ends slightly RAISED (friendly, not angry).
 	_box(self, "BrowL", Vector3(0.16, 0.05, 0.025), Vector3(-0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(7)))
 	_box(self, "BrowR", Vector3(0.16, 0.05, 0.025), Vector3(0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-7)))
-	# Open grin: dark mouth, red interior, white teeth.
-	_box(self, "Mouth", Vector3(0.21, 0.10, 0.02), Vector3(0.0, 1.66, fz), MOUTH_DARK)
-	_box(self, "MouthRed", Vector3(0.15, 0.055, 0.02), Vector3(0.0, 1.648, fz + 0.012), MOUTH_RED)
-	_box(self, "Teeth", Vector3(0.15, 0.03, 0.02), Vector3(0.0, 1.69, fz + 0.012), EYE_WHITE)
+	# Happy open smile: a thin red mouth + white teeth above a dark smile curve whose
+	# corners turn up. No tongue (keeps it clean and cheerful).
+	_box(self, "Teeth", Vector3(0.18, 0.045, 0.02), Vector3(0.0, 1.675, fz + 0.014), EYE_WHITE)
+	_box(self, "MouthRed", Vector3(0.16, 0.035, 0.02), Vector3(0.0, 1.642, fz + 0.008), MOUTH_RED)
+	_box(self, "LipC", Vector3(0.16, 0.04, 0.022), Vector3(0.0, 1.615, fz), MOUTH_DARK)
+	_box(self, "SmileL", Vector3(0.10, 0.042, 0.022), Vector3(-0.115, 1.645, fz), MOUTH_DARK, Vector3(0, 0, deg_to_rad(38)))
+	_box(self, "SmileR", Vector3(0.10, 0.042, 0.022), Vector3(0.115, 1.645, fz), MOUTH_DARK, Vector3(0, 0, deg_to_rad(-38)))
+	# Rosy cheeks for a warmer, happier read.
+	_box(self, "CheekL", Vector3(0.07, 0.05, 0.02), Vector3(-0.20, 1.70, fz - 0.005), Color("#F0A24A"))
+	_box(self, "CheekR", Vector3(0.07, 0.05, 0.02), Vector3(0.20, 1.70, fz - 0.005), Color("#F0A24A"))
 
 	# ── Hair (rebuilt per style) ──────────────────────────────────────────────
 	_hair_root = Node3D.new()
@@ -190,6 +219,12 @@ func _apply_hairstyle(style: String) -> void:
 	_box(h, "SideL", Vector3(0.08, 0.34, 0.46), Vector3(-0.27, 1.86, 0.0), HAIR_COLOUR)
 	_box(h, "SideR", Vector3(0.08, 0.34, 0.46), Vector3(0.27, 1.86, 0.0), HAIR_COLOUR)
 	_box(h, "Back", Vector3(0.50, 0.30, 0.10), Vector3(0.0, 1.86, -0.255), HAIR_COLOUR)
+	# Density: angled fringe tufts + layered side locks on every style.
+	_box(h, "TuftFL", Vector3(0.14, 0.13, 0.12), Vector3(-0.16, 2.13, 0.11), HAIR_COLOUR, Vector3(deg_to_rad(-24), 0, deg_to_rad(-10)))
+	_box(h, "TuftFR", Vector3(0.14, 0.13, 0.12), Vector3(0.16, 2.13, 0.11), HAIR_COLOUR, Vector3(deg_to_rad(-24), 0, deg_to_rad(10)))
+	_box(h, "LockL", Vector3(0.09, 0.12, 0.30), Vector3(-0.30, 1.98, -0.04), HAIR_SHADE, Vector3(0, 0, deg_to_rad(16)))
+	_box(h, "LockR", Vector3(0.09, 0.12, 0.30), Vector3(0.30, 1.98, -0.04), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-16)))
+	_box(h, "Nape", Vector3(0.44, 0.14, 0.08), Vector3(0.0, 1.66, -0.255), HAIR_SHADE)
 	match style:
 		"round":  # fuller, rounded — lower side volume, soft top
 			_box(h, "TopR", Vector3(0.48, 0.16, 0.46), Vector3(0.0, 2.16, -0.02), HAIR_SHADE)
