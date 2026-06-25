@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://b_avatar_creator"]
+[gd_scene load_steps=12 format=3 uid="uid://b_avatar_creator"]
 
 [ext_resource type="Script" path="res://src/ui/avatar_creator.gd" id="1_creator"]
 [ext_resource type="PackedScene" path="res://src/ui/builder_preview.tscn" id="2_preview"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_forester.png" id="4_card_forester"]
 [ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_explorer.png" id="5_card_explorer"]
 [ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_pathfinder.png" id="6_card_pathfinder"]
+[ext_resource type="Texture2D" path="res://assets/textures/icons/cubicraftia_wordmark.png" id="7_wordmark"]
 
 [sub_resource type="StyleBoxFlat" id="SB_LeftPanel"]
 bg_color = Color(0.101961, 0.168627, 0.290196, 1)
@@ -85,10 +86,17 @@ theme_override_constants/margin_bottom = 24
 layout_mode = 2
 theme_override_constants/separation = 18
 
+[node name="Wordmark" type="TextureRect" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn"]
+custom_minimum_size = Vector2(0, 78)
+layout_mode = 2
+texture = ExtResource("7_wordmark")
+expand_mode = 1
+stretch_mode = 5
+
 [node name="HeaderLabel" type="Label" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 30
 text = "ui.avatar.header"
 
 [node name="CardRow" type="HBoxContainer" parent="Root/LeftMargin/LeftPanel/LeftInner/LeftColumn"]
