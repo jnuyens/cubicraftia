@@ -212,9 +212,52 @@ func _ready() -> void:
 	if back_btn:
 		back_btn.pressed.connect(_on_back_pressed)
 
+	# Decorate section headers + accessory buttons with sliced artwork icons.
+	_wire_artwork_icons()
+
 	# Apply initial config to UI controls and preview.
 	_refresh_ui_selection()
 	_apply_config_to_preview(_cfg)
+
+
+## Prepend a small artwork icon beside each section label, and put the option icons
+## on the accessory buttons. All icons are sliced from the concept art.
+func _wire_artwork_icons() -> void:
+	const ICON_DIR := "res://assets/textures/avatars/creator/"
+	_add_section_icon("SkinLabel", ICON_DIR + "ic_skin.png")
+	_add_section_icon("HairstyleLabel", ICON_DIR + "ic_hair.png")
+	_add_section_icon("OutfitLabel", ICON_DIR + "ic_outfit.png")
+	_add_section_icon("AccessoryLabel", ICON_DIR + "ic_accessory.png")
+	var acc_icons: Array[String] = [ICON_DIR + "ic_none.png", ICON_DIR + "ic_backpack.png", ICON_DIR + "ic_cape.png"]
+	for i: int in mini(_body_acc_buttons.size(), acc_icons.size()):
+		var tex: Texture2D = load(acc_icons[i]) as Texture2D
+		if tex != null:
+			_body_acc_buttons[i].icon = tex
+			_body_acc_buttons[i].expand_icon = true
+
+
+## Wrap a section's label in an HBox with a 26px icon to its left.
+func _add_section_icon(label_name: String, icon_path: String) -> void:
+	var label: Node = _find_node(label_name)
+	if label == null or not (label is Label):
+		return
+	var tex: Texture2D = load(icon_path) as Texture2D
+	if tex == null:
+		return
+	var section: Node = label.get_parent()
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 8)
+	section.add_child(hbox)
+	section.move_child(hbox, label.get_index())
+	var icon := TextureRect.new()
+	icon.texture = tex
+	icon.custom_minimum_size = Vector2(26, 26)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	hbox.add_child(icon)
+	section.remove_child(label)
+	hbox.add_child(label)
 
 
 func _process(delta: float) -> void:
