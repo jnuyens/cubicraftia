@@ -1,12 +1,16 @@
-[gd_scene load_steps=12 format=3 uid="uid://b_avatar_creator"]
+[gd_scene load_steps=14 format=3 uid="uid://b_avatar_creator"]
 
 [ext_resource type="Script" path="res://src/ui/avatar_creator.gd" id="1_creator"]
+[ext_resource type="FontFile" path="res://assets/fonts/PixelifySans.ttf" id="8_font"]
 [ext_resource type="PackedScene" path="res://src/ui/builder_preview.tscn" id="2_preview"]
 [ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/backdrop.png" id="3_backdrop"]
 [ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_forester.png" id="4_card_forester"]
 [ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_explorer.png" id="5_card_explorer"]
 [ext_resource type="Texture2D" path="res://assets/textures/avatars/creator/card_pathfinder.png" id="6_card_pathfinder"]
 [ext_resource type="Texture2D" path="res://assets/textures/icons/cubicraftia_wordmark.png" id="7_wordmark"]
+
+[sub_resource type="Theme" id="Theme_pixel"]
+default_font = ExtResource("8_font")
 
 [sub_resource type="StyleBoxFlat" id="SB_LeftPanel"]
 bg_color = Color(0.101961, 0.168627, 0.290196, 1)
@@ -55,6 +59,7 @@ layer = 10
 script = ExtResource("1_creator")
 
 [node name="Root" type="HBoxContainer" parent="."]
+theme = SubResource("Theme_pixel")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
