@@ -240,6 +240,40 @@ func _wire_artwork_icons() -> void:
 		if tex != null:
 			_body_acc_buttons[i].icon = tex
 			_body_acc_buttons[i].expand_icon = true
+			_body_acc_buttons[i].text = ""  # icon-only: the accessory icons speak for themselves
+	# Leaf sprigs flanking the screen title (matches the art header).
+	_wrap_header_with_leaves("HeaderLabel", ICON_DIR + "ic_leaf.png")
+
+
+## Flank a header label with a leaf sprig on each side (right one mirrored).
+func _wrap_header_with_leaves(label_name: String, leaf_path: String) -> void:
+	var label: Node = _find_node(label_name)
+	if not (label is Label):
+		return
+	var tex: Texture2D = load(leaf_path) as Texture2D
+	if tex == null:
+		return
+	var parent: Node = label.get_parent()
+	var idx: int = label.get_index()
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 10)
+	parent.add_child(hbox)
+	parent.move_child(hbox, idx)
+	hbox.add_child(_leaf_rect(tex, false))
+	parent.remove_child(label)
+	hbox.add_child(label)
+	hbox.add_child(_leaf_rect(tex, true))
+
+
+func _leaf_rect(tex: Texture2D, flip: bool) -> TextureRect:
+	var r := TextureRect.new()
+	r.texture = tex
+	r.custom_minimum_size = Vector2(34, 34)
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	r.flip_h = flip
+	return r
 
 
 ## Wrap a section's label in an HBox with a 26px icon to its left.
