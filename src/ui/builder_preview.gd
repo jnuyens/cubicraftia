@@ -181,16 +181,17 @@ func _build() -> void:
 	# Brows: nearly flat with inner ends slightly RAISED (friendly, not angry).
 	_box(self, "BrowL", Vector3(0.16, 0.05, 0.025), Vector3(-0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(7)))
 	_box(self, "BrowR", Vector3(0.16, 0.05, 0.025), Vector3(0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-7)))
-	# Happy open smile: a thin red mouth + white teeth above a dark smile curve whose
-	# corners turn up. No tongue (keeps it clean and cheerful).
-	_box(self, "Teeth", Vector3(0.18, 0.045, 0.02), Vector3(0.0, 1.675, fz + 0.014), EYE_WHITE)
-	_box(self, "MouthRed", Vector3(0.16, 0.035, 0.02), Vector3(0.0, 1.642, fz + 0.008), MOUTH_RED)
-	_box(self, "LipC", Vector3(0.16, 0.04, 0.022), Vector3(0.0, 1.615, fz), MOUTH_DARK)
-	_box(self, "SmileL", Vector3(0.10, 0.042, 0.022), Vector3(-0.115, 1.645, fz), MOUTH_DARK, Vector3(0, 0, deg_to_rad(38)))
-	_box(self, "SmileR", Vector3(0.10, 0.042, 0.022), Vector3(0.115, 1.645, fz), MOUTH_DARK, Vector3(0, 0, deg_to_rad(-38)))
-	# Rosy cheeks for a warmer, happier read.
-	_box(self, "CheekL", Vector3(0.07, 0.05, 0.02), Vector3(-0.20, 1.70, fz - 0.005), Color("#F0A24A"))
-	_box(self, "CheekR", Vector3(0.07, 0.05, 0.02), Vector3(0.20, 1.70, fz - 0.005), Color("#F0A24A"))
+	# Clean happy open smile: white teeth + red mouth + a thin lower lip whose ENDS sit
+	# slightly higher (an up-turn). No rotated side-corners — those read as a moustache
+	# and made every builder look the same. Facial hair is per-character only.
+	_box(self, "Teeth", Vector3(0.20, 0.05, 0.02), Vector3(0.0, 1.675, fz + 0.014), EYE_WHITE)
+	_box(self, "MouthRed", Vector3(0.18, 0.04, 0.02), Vector3(0.0, 1.64, fz + 0.008), MOUTH_RED)
+	_box(self, "Lip", Vector3(0.14, 0.03, 0.022), Vector3(0.0, 1.612, fz), MOUTH_DARK)
+	_box(self, "LipTipL", Vector3(0.045, 0.03, 0.022), Vector3(-0.10, 1.626, fz), MOUTH_DARK)
+	_box(self, "LipTipR", Vector3(0.045, 0.03, 0.022), Vector3(0.10, 1.626, fz), MOUTH_DARK)
+	# Rosy cheeks, kept low/outboard so they read as cheeks (not a moustache).
+	_box(self, "CheekL", Vector3(0.06, 0.045, 0.02), Vector3(-0.205, 1.72, fz - 0.005), Color("#F0A24A"))
+	_box(self, "CheekR", Vector3(0.06, 0.045, 0.02), Vector3(0.205, 1.72, fz - 0.005), Color("#F0A24A"))
 
 	# ── Hair (rebuilt per style) ──────────────────────────────────────────────
 	_hair_root = Node3D.new()
