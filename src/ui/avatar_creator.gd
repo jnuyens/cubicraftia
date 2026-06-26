@@ -96,21 +96,27 @@ const CARDS: Array[Dictionary] = [
 		"tex": "res://assets/textures/avatars/creator/card_forester.png",
 		"name_key": "ui.avatar.card_forester",
 		"sub_key": "ui.avatar.card_forester_sub",
-		"body": 4,  # green signature outfit
+		"body": 4,        # green jacket
+		"hair": "round",  # fuller hair
+		"skin": 0,
 	},
 	{
 		"id": "builder1",
 		"tex": "res://assets/textures/avatars/creator/card_explorer.png",
 		"name_key": "ui.avatar.card_explorer",
 		"sub_key": "ui.avatar.card_explorer_sub",
-		"body": 6,  # blue signature outfit
+		"body": 6,         # blue shirt + satchel signature
+		"hair": "square",  # short spiky
+		"skin": 0,
 	},
 	{
 		"id": "red",
 		"tex": "res://assets/textures/avatars/creator/card_pathfinder.png",
 		"name_key": "ui.avatar.card_pathfinder",
 		"sub_key": "ui.avatar.card_pathfinder_sub",
-		"body": 0,  # red signature outfit
+		"body": 0,        # red jacket + bandolier signature
+		"hair": "tall",   # tall spiky
+		"skin": 1,
 	},
 ]
 const DEFAULT_CHARACTER: String = "builder1"
@@ -341,10 +347,14 @@ func _on_character_pressed(index: int) -> void:
 	if index < 0 or index >= CARDS.size():
 		return
 	_cfg["character"] = str(CARDS[index].get("id", DEFAULT_CHARACTER))
-	# Apply the card's signature outfit colour so picking a builder visibly changes the
-	# preview (and the Outfit swatch highlight). Players can override it afterwards.
+	# Apply the card's signature look so each builder is visibly distinct (outfit colour,
+	# hairstyle, skin + the satchel/bandolier driven by character). Players can override after.
 	if CARDS[index].has("body"):
 		_cfg["body_colour_index"] = int(CARDS[index]["body"])
+	if CARDS[index].has("hair"):
+		_cfg["head_shape"] = str(CARDS[index]["hair"])
+	if CARDS[index].has("skin"):
+		_cfg["skin_colour_index"] = int(CARDS[index]["skin"])
 	_refresh_ui_selection()
 	_write_avatar_cfg_silent()
 	_apply_config_to_preview(_cfg)  # re-render the preview on base-figure change

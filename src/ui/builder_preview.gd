@@ -48,6 +48,8 @@ var _outfit_parts: Array[MeshInstance3D] = []
 var _hair_root: Node3D = null
 var _backpack: Node3D = null
 var _cape: MeshInstance3D = null
+var _satchel: Node3D = null      # Explorer signature
+var _bandolier: Node3D = null    # Pathfinder signature
 var _cur_hair := ""
 
 
@@ -79,16 +81,17 @@ func _box(p: Node, nm: String, size: Vector3, pos: Vector3, colour: Color, rot :
 ## Build a wide open-gap C-claw hand from chunky voxels (gap at the top, where a
 ## tool would sit). Reads as a minifig C-hand rather than a closed ring.
 func _build_claw(nm: String, center: Vector3, colour: Color) -> void:
-	var r := 0.15
-	var seg := 9
+	var r := 0.16
+	var seg := 10
 	for i in seg:
 		var a := TAU * float(i) / float(seg)
 		var deg := rad_to_deg(a)
-		if deg > 66.0 and deg < 134.0:
-			continue  # open gap at the top
+		# Big open gap across the top-front so the hand clearly reads as an open C.
+		if deg > 40.0 and deg < 165.0:
+			continue
 		var px := center.x + cos(a) * r
 		var py := center.y + sin(a) * r
-		var b := _box(self, "%s_%d" % [nm, i], Vector3(0.10, 0.10, 0.19), Vector3(px, py, center.z), colour)
+		var b := _box(self, "%s_%d" % [nm, i], Vector3(0.11, 0.11, 0.20), Vector3(px, py, center.z), colour)
 		_skin_parts.append(b)
 
 func _torus(p: Node, nm: String, inner: float, outer: float, pos: Vector3, colour: Color, rot: Vector3) -> MeshInstance3D:
@@ -204,6 +207,23 @@ func _build() -> void:
 	_cape = _box(self, "Cape", Vector3(0.60, 0.90, 0.04), Vector3(0.0, 1.05, -0.24), CAPE_COLOUR, Vector3(deg_to_rad(4), 0, 0))
 	_cape.visible = false
 
+	# ── Per-builder signature gear (toggled by character) ─────────────────────
+	# Explorer: a single satchel strap across the chest + a hip pouch.
+	_satchel = Node3D.new()
+	_satchel.name = "Satchel"
+	add_child(_satchel)
+	_box(_satchel, "Strap", Vector3(0.07, 0.78, 0.03), Vector3(0.0, 1.08, 0.185), STRAP_COLOUR, Vector3(0, 0, deg_to_rad(33)))
+	_box(_satchel, "Pouch", Vector3(0.20, 0.18, 0.12), Vector3(0.26, 0.86, 0.16), Color("#6B4A28"))
+	_satchel.visible = false
+	# Pathfinder: a crossed X bandolier.
+	_bandolier = Node3D.new()
+	_bandolier.name = "Bandolier"
+	add_child(_bandolier)
+	_box(_bandolier, "StrapA", Vector3(0.07, 0.80, 0.03), Vector3(0.0, 1.08, 0.185), STRAP_COLOUR, Vector3(0, 0, deg_to_rad(33)))
+	_box(_bandolier, "StrapB", Vector3(0.07, 0.80, 0.03), Vector3(0.0, 1.08, 0.185), STRAP_COLOUR, Vector3(0, 0, deg_to_rad(-33)))
+	_box(_bandolier, "BuckleX", Vector3(0.09, 0.09, 0.03), Vector3(0.0, 1.08, 0.2), BUCKLE_COLOUR)
+	_bandolier.visible = false
+
 
 ## Rebuild the hair cluster for the chosen Kapsel option.
 func _apply_hairstyle(style: String) -> void:
@@ -268,6 +288,17 @@ func apply_avatar_config(cfg: Dictionary) -> void:
 		_backpack.visible = (acc == "backpack")
 	if _cape != null:
 		_cape.visible = (acc == "cape")
+
+	_apply_signature(str(cfg.get("character", "")))
+
+
+## Show the chosen builder's signature gear (Explorer satchel / Pathfinder bandolier;
+## Forester wears neither). Makes the three cards visibly distinct beyond jacket colour.
+func _apply_signature(character: String) -> void:
+	if _satchel != null:
+		_satchel.visible = (character == "builder1")
+	if _bandolier != null:
+		_bandolier.visible = (character == "red")
 
 
 func _recolour(mi: MeshInstance3D, colour: Color) -> void:
