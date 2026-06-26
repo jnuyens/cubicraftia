@@ -49,6 +49,16 @@ const BODY_COLOURS: Array[Color] = [
 	Color("#F1F0EA"),  # white
 ]
 
+## Hair colour swatches (index-identical to builder_preview.HAIR_COLOURS).
+const HAIR_COLOURS: Array[Color] = [
+	Color("#6E4326"),  # brown
+	Color("#2B2118"),  # black
+	Color("#C9A24B"),  # blonde
+	Color("#8E3B1E"),  # auburn
+	Color("#9A9A9A"),  # grey
+	Color("#E8E2D0"),  # white/platinum
+]
+
 ## Head shape string tokens.
 const HEAD_SHAPES: Array[String] = ["square", "round", "tall"]
 
@@ -150,6 +160,7 @@ var _cfg: Dictionary = {}
 ## Swatch Button arrays — populated in _ready from the scene tree.
 var _skin_buttons: Array[Button] = []
 var _head_shape_buttons: Array[Button] = []
+var _hair_colour_buttons: Array[Button] = []
 var _face_expr_buttons: Array[Button] = []
 var _body_colour_buttons: Array[Button] = []
 var _body_acc_buttons: Array[Button] = []
@@ -221,6 +232,9 @@ func _ready() -> void:
 	# Decorate section headers + accessory buttons with sliced artwork icons.
 	_wire_artwork_icons()
 
+	# Add the pickable hair-colour swatch row under the hairstyle options.
+	_build_hair_colour_row()
+
 	# Apply initial config to UI controls and preview.
 	_refresh_ui_selection()
 	_apply_config_to_preview(_cfg)
@@ -274,6 +288,32 @@ func _leaf_rect(tex: Texture2D, flip: bool) -> TextureRect:
 	r.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	r.flip_h = flip
 	return r
+
+
+## Build the pickable hair-colour swatch row inside the hairstyle section.
+func _build_hair_colour_row() -> void:
+	var section: Node = _find_node("HairstyleSection")
+	if section == null:
+		return
+	var row := HBoxContainer.new()
+	row.name = "HairColourRow"
+	row.add_theme_constant_override("separation", 6)
+	section.add_child(row)
+	for i: int in HAIR_COLOURS.size():
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(40, 40)
+		btn.modulate = HAIR_COLOURS[i]
+		btn.pressed.connect(func() -> void: _on_hair_colour_pressed(i))
+		row.add_child(btn)
+		_hair_colour_buttons.append(btn)
+
+
+## Hair colour swatch tapped: persist + re-render the preview's hair.
+func _on_hair_colour_pressed(index: int) -> void:
+	_cfg["hair_colour_index"] = index
+	_refresh_ui_selection()
+	_apply_config_to_preview(_cfg)
+	_write_avatar_cfg_silent()
 
 
 ## Wrap a section's label in an HBox with a 26px icon to its left.
@@ -454,6 +494,7 @@ func _write_avatar_cfg_silent() -> void:
 	cfg.set_value(AVATAR_SECTION, "character",         _cfg.get("character", DEFAULT_CHARACTER))
 	cfg.set_value(AVATAR_SECTION, "skin_colour_index", _cfg.get("skin_colour_index", 0))
 	cfg.set_value(AVATAR_SECTION, "head_shape",        _cfg.get("head_shape", "square"))
+	cfg.set_value(AVATAR_SECTION, "hair_colour_index", _cfg.get("hair_colour_index", 0))
 	cfg.set_value(AVATAR_SECTION, "face_expression",   _cfg.get("face_expression", "neutral"))
 	cfg.set_value(AVATAR_SECTION, "body_colour_index", _cfg.get("body_colour_index", 6))
 	cfg.set_value(AVATAR_SECTION, "body_accessory",    _cfg.get("body_accessory", "none"))
@@ -473,6 +514,7 @@ func _load_avatar_cfg() -> Dictionary:
 		"character":         cfg.get_value(AVATAR_SECTION, "character", DEFAULT_CHARACTER),
 		"skin_colour_index": cfg.get_value(AVATAR_SECTION, "skin_colour_index", 0),
 		"head_shape":        cfg.get_value(AVATAR_SECTION, "head_shape", "square"),
+		"hair_colour_index": cfg.get_value(AVATAR_SECTION, "hair_colour_index", 0),
 		"face_expression":   cfg.get_value(AVATAR_SECTION, "face_expression", "neutral"),
 		"body_colour_index": cfg.get_value(AVATAR_SECTION, "body_colour_index", 6),
 		"body_accessory":    cfg.get_value(AVATAR_SECTION, "body_accessory", "none"),
@@ -536,6 +578,7 @@ func _refresh_ui_selection() -> void:
 	_refresh_card_selection(_character_index(str(_cfg.get("character", DEFAULT_CHARACTER))))
 	_set_selected_index(_skin_buttons, int(_cfg.get("skin_colour_index", 0)))
 	_set_selected_index(_head_shape_buttons, HEAD_SHAPES.find(str(_cfg.get("head_shape", "square"))))
+	_set_selected_index(_hair_colour_buttons, int(_cfg.get("hair_colour_index", 0)))
 	_set_selected_index(_face_expr_buttons, FACE_EXPRESSIONS.find(str(_cfg.get("face_expression", "neutral"))))
 	_set_selected_index(_body_colour_buttons, int(_cfg.get("body_colour_index", 6)))
 	_set_selected_index(_body_acc_buttons, BODY_ACCESSORIES.find(str(_cfg.get("body_accessory", "none"))))

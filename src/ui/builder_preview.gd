@@ -30,8 +30,18 @@ const BODY_COLOURS: Array[Color] = [
 
 # Fixed accents.
 const LEG_COLOUR := Color("#2B2B33")     # dark trousers
-const HAIR_COLOUR := Color("#6E4326")    # brown hair
+const HAIR_COLOUR := Color("#6E4326")    # default brown hair
 const HAIR_SHADE := Color("#5A3520")     # darker hair (depth)
+
+## Hair colour swatches (index-identical to avatar_creator.HAIR_COLOURS).
+const HAIR_COLOURS: Array[Color] = [
+	Color("#6E4326"),  # brown
+	Color("#2B2118"),  # black
+	Color("#C9A24B"),  # blonde
+	Color("#8E3B1E"),  # auburn
+	Color("#9A9A9A"),  # grey
+	Color("#E8E2D0"),  # white/platinum
+]
 const BELT_COLOUR := Color("#3A2A1C")
 const BUCKLE_COLOUR := Color("#E8B23A")
 const STRAP_COLOUR := Color("#4A3420")  # brown strap
@@ -54,6 +64,9 @@ var _mustache: MeshInstance3D = null   # Pathfinder face
 var _goatee: Node3D = null             # Explorer face
 var _scarf: MeshInstance3D = null      # Forester neck scarf
 var _cur_hair := ""
+## Current hair colour + the non-hair-root parts that follow it (brows, facial hair).
+var _hair_colour: Color = HAIR_COLOURS[0]
+var _hair_shade_parts: Array[MeshInstance3D] = []
 
 
 func _ready() -> void:
@@ -89,8 +102,8 @@ func _build_claw(nm: String, center: Vector3, colour: Color) -> void:
 	for i in seg:
 		var a := TAU * float(i) / float(seg)
 		var deg := rad_to_deg(a)
-		# Open gap at the BOTTOM (claw opening downward); the arm meets the closed top.
-		if deg > 205.0 and deg < 335.0:
+		# Small open gap at the BOTTOM (claw opening downward); the arm meets the closed top.
+		if deg > 244.0 and deg < 296.0:
 			continue
 		var px := center.x + cos(a) * r
 		var py := center.y + sin(a) * r
@@ -178,9 +191,10 @@ func _build() -> void:
 	_box(self, "EyeWR", Vector3(0.12, 0.15, 0.02), Vector3(0.12, 1.84, fz), EYE_WHITE)
 	_box(self, "PupL", Vector3(0.06, 0.11, 0.02), Vector3(-0.105, 1.83, fz + 0.012), EYE_DARK)
 	_box(self, "PupR", Vector3(0.06, 0.11, 0.02), Vector3(0.105, 1.83, fz + 0.012), EYE_DARK)
-	# Brows: nearly flat with inner ends slightly RAISED (friendly, not angry).
-	_box(self, "BrowL", Vector3(0.16, 0.05, 0.025), Vector3(-0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(7)))
-	_box(self, "BrowR", Vector3(0.16, 0.05, 0.025), Vector3(0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-7)))
+	# Brows: nearly flat with inner ends slightly RAISED (friendly, not angry). They
+	# follow the hair colour.
+	_hair_shade_parts.append(_box(self, "BrowL", Vector3(0.16, 0.05, 0.025), Vector3(-0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(7))))
+	_hair_shade_parts.append(_box(self, "BrowR", Vector3(0.16, 0.05, 0.025), Vector3(0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-7))))
 	# Clean happy open smile: white teeth + red mouth + a thin lower lip whose ENDS sit
 	# slightly higher (an up-turn). No rotated side-corners — those read as a moustache
 	# and made every builder look the same. Facial hair is per-character only.
@@ -240,11 +254,12 @@ func _build() -> void:
 	var fz2 := 0.255
 	_mustache = _box(self, "Mustache", Vector3(0.20, 0.05, 0.03), Vector3(0.0, 1.71, fz2), HAIR_SHADE)
 	_mustache.visible = false
+	_hair_shade_parts.append(_mustache)
 	_goatee = Node3D.new()
 	_goatee.name = "Goatee"
 	add_child(_goatee)
-	_box(_goatee, "Chin", Vector3(0.14, 0.09, 0.04), Vector3(0.0, 1.55, fz2 - 0.005), HAIR_SHADE)
-	_box(_goatee, "Jaw", Vector3(0.30, 0.06, 0.30), Vector3(0.0, 1.56, 0.0), HAIR_SHADE)
+	_hair_shade_parts.append(_box(_goatee, "Chin", Vector3(0.14, 0.09, 0.04), Vector3(0.0, 1.55, fz2 - 0.005), HAIR_SHADE))
+	_hair_shade_parts.append(_box(_goatee, "Jaw", Vector3(0.30, 0.06, 0.30), Vector3(0.0, 1.56, 0.0), HAIR_SHADE))
 	_goatee.visible = false
 	# Forester neck scarf (wraps the neck).
 	_scarf = _box(self, "Scarf", Vector3(0.40, 0.12, 0.40), Vector3(0.0, 1.46, 0.0), Color("#C9483A"))
@@ -259,36 +274,38 @@ func _apply_hairstyle(style: String) -> void:
 	for c in _hair_root.get_children():
 		c.queue_free()
 	var h := _hair_root
+	var hc: Color = _hair_colour                  # picked hair colour
+	var hs: Color = _hair_colour.darkened(0.20)   # derived depth shade
 	# Common base: cap + fringe + sideburns framing the head (head top ~2.05).
-	_box(h, "Cap", Vector3(0.56, 0.16, 0.54), Vector3(0.0, 2.07, 0.0), HAIR_COLOUR)
-	_box(h, "Fringe", Vector3(0.54, 0.11, 0.10), Vector3(0.0, 2.03, 0.235), HAIR_COLOUR)
-	_box(h, "SideL", Vector3(0.08, 0.34, 0.46), Vector3(-0.27, 1.86, 0.0), HAIR_COLOUR)
-	_box(h, "SideR", Vector3(0.08, 0.34, 0.46), Vector3(0.27, 1.86, 0.0), HAIR_COLOUR)
-	_box(h, "Back", Vector3(0.50, 0.30, 0.10), Vector3(0.0, 1.86, -0.255), HAIR_COLOUR)
+	_box(h, "Cap", Vector3(0.56, 0.16, 0.54), Vector3(0.0, 2.07, 0.0), hc)
+	_box(h, "Fringe", Vector3(0.54, 0.11, 0.10), Vector3(0.0, 2.03, 0.235), hc)
+	_box(h, "SideL", Vector3(0.08, 0.34, 0.46), Vector3(-0.27, 1.86, 0.0), hc)
+	_box(h, "SideR", Vector3(0.08, 0.34, 0.46), Vector3(0.27, 1.86, 0.0), hc)
+	_box(h, "Back", Vector3(0.50, 0.30, 0.10), Vector3(0.0, 1.86, -0.255), hc)
 	# Density: angled fringe tufts + layered side locks on every style.
-	_box(h, "TuftFL", Vector3(0.14, 0.13, 0.12), Vector3(-0.16, 2.13, 0.11), HAIR_COLOUR, Vector3(deg_to_rad(-24), 0, deg_to_rad(-10)))
-	_box(h, "TuftFR", Vector3(0.14, 0.13, 0.12), Vector3(0.16, 2.13, 0.11), HAIR_COLOUR, Vector3(deg_to_rad(-24), 0, deg_to_rad(10)))
-	_box(h, "LockL", Vector3(0.09, 0.12, 0.30), Vector3(-0.30, 1.98, -0.04), HAIR_SHADE, Vector3(0, 0, deg_to_rad(16)))
-	_box(h, "LockR", Vector3(0.09, 0.12, 0.30), Vector3(0.30, 1.98, -0.04), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-16)))
-	_box(h, "Nape", Vector3(0.44, 0.14, 0.08), Vector3(0.0, 1.66, -0.255), HAIR_SHADE)
-	_box(h, "CrownL", Vector3(0.13, 0.15, 0.18), Vector3(-0.13, 2.15, -0.03), HAIR_COLOUR, Vector3(deg_to_rad(-10), 0, deg_to_rad(-7)))
-	_box(h, "CrownR", Vector3(0.13, 0.15, 0.18), Vector3(0.13, 2.15, -0.03), HAIR_COLOUR, Vector3(deg_to_rad(-10), 0, deg_to_rad(7)))
-	_box(h, "CrownM", Vector3(0.12, 0.14, 0.18), Vector3(0.0, 2.16, -0.10), HAIR_SHADE, Vector3(deg_to_rad(-6), 0, 0))
+	_box(h, "TuftFL", Vector3(0.14, 0.13, 0.12), Vector3(-0.16, 2.13, 0.11), hc, Vector3(deg_to_rad(-24), 0, deg_to_rad(-10)))
+	_box(h, "TuftFR", Vector3(0.14, 0.13, 0.12), Vector3(0.16, 2.13, 0.11), hc, Vector3(deg_to_rad(-24), 0, deg_to_rad(10)))
+	_box(h, "LockL", Vector3(0.09, 0.12, 0.30), Vector3(-0.30, 1.98, -0.04), hs, Vector3(0, 0, deg_to_rad(16)))
+	_box(h, "LockR", Vector3(0.09, 0.12, 0.30), Vector3(0.30, 1.98, -0.04), hs, Vector3(0, 0, deg_to_rad(-16)))
+	_box(h, "Nape", Vector3(0.44, 0.14, 0.08), Vector3(0.0, 1.66, -0.255), hs)
+	_box(h, "CrownL", Vector3(0.13, 0.15, 0.18), Vector3(-0.13, 2.15, -0.03), hc, Vector3(deg_to_rad(-10), 0, deg_to_rad(-7)))
+	_box(h, "CrownR", Vector3(0.13, 0.15, 0.18), Vector3(0.13, 2.15, -0.03), hc, Vector3(deg_to_rad(-10), 0, deg_to_rad(7)))
+	_box(h, "CrownM", Vector3(0.12, 0.14, 0.18), Vector3(0.0, 2.16, -0.10), hs, Vector3(deg_to_rad(-6), 0, 0))
 	match style:
 		"round":  # fuller, rounded — lower side volume, soft top
-			_box(h, "TopR", Vector3(0.48, 0.16, 0.46), Vector3(0.0, 2.16, -0.02), HAIR_SHADE)
-			_box(h, "SideLo_L", Vector3(0.10, 0.16, 0.40), Vector3(-0.29, 1.66, 0.0), HAIR_COLOUR)
-			_box(h, "SideLo_R", Vector3(0.10, 0.16, 0.40), Vector3(0.29, 1.66, 0.0), HAIR_COLOUR)
+			_box(h, "TopR", Vector3(0.48, 0.16, 0.46), Vector3(0.0, 2.16, -0.02), hs)
+			_box(h, "SideLo_L", Vector3(0.10, 0.16, 0.40), Vector3(-0.29, 1.66, 0.0), hc)
+			_box(h, "SideLo_R", Vector3(0.10, 0.16, 0.40), Vector3(0.29, 1.66, 0.0), hc)
 		"tall":   # spiky, tall tufts
 			for i in 5:
 				var x := -0.20 + 0.10 * float(i)
 				var hh := 0.22 + 0.06 * float(i % 2)
-				_box(h, "Spike%d" % i, Vector3(0.09, hh, 0.10), Vector3(x, 2.14 + hh * 0.4, -0.02 + 0.04 * float(i % 2)), HAIR_COLOUR, Vector3(deg_to_rad(-12 + 6 * i), 0, 0))
+				_box(h, "Spike%d" % i, Vector3(0.09, hh, 0.10), Vector3(x, 2.14 + hh * 0.4, -0.02 + 0.04 * float(i % 2)), hc, Vector3(deg_to_rad(-12 + 6 * i), 0, 0))
 		_:        # "square" — short spiky fringe (matches the art's explorer)
 			for i in 4:
 				var x := -0.18 + 0.12 * float(i)
-				_box(h, "Tuft%d" % i, Vector3(0.11, 0.18, 0.12), Vector3(x, 2.12, 0.16), HAIR_COLOUR, Vector3(deg_to_rad(-22), 0, deg_to_rad(-8 + 5 * i)))
-			_box(h, "TopFlat", Vector3(0.50, 0.10, 0.40), Vector3(0.0, 2.13, -0.05), HAIR_SHADE)
+				_box(h, "Tuft%d" % i, Vector3(0.11, 0.18, 0.12), Vector3(x, 2.12, 0.16), hc, Vector3(deg_to_rad(-22), 0, deg_to_rad(-8 + 5 * i)))
+			_box(h, "TopFlat", Vector3(0.50, 0.10, 0.40), Vector3(0.0, 2.13, -0.05), hs)
 
 
 # ─── Public API ───────────────────────────────────────────────────────────────
@@ -308,9 +325,17 @@ func apply_avatar_config(cfg: Dictionary) -> void:
 	if collar is MeshInstance3D:
 		_recolour(collar, Color("#FFFFFF").lerp(outfit, 0.2))
 
+	# Hair: pickable colour + style. Rebuild the hair cluster when either changes.
 	var style: String = str(cfg.get("head_shape", "square"))
-	if style != _cur_hair:
+	var hair_idx: int = clampi(int(cfg.get("hair_colour_index", 0)), 0, HAIR_COLOURS.size() - 1)
+	var new_hair: Color = HAIR_COLOURS[hair_idx]
+	var hair_changed: bool = not new_hair.is_equal_approx(_hair_colour)
+	_hair_colour = new_hair
+	if style != _cur_hair or hair_changed:
 		_apply_hairstyle(style)
+	# Brows + facial hair follow the hair colour (a touch darker).
+	for p in _hair_shade_parts:
+		_recolour(p, _hair_colour.darkened(0.12))
 
 	var acc: String = str(cfg.get("body_accessory", "none"))
 	if _backpack != null:
