@@ -50,6 +50,9 @@ var _backpack: Node3D = null
 var _cape: MeshInstance3D = null
 var _satchel: Node3D = null      # Explorer signature
 var _bandolier: Node3D = null    # Pathfinder signature
+var _mustache: MeshInstance3D = null   # Pathfinder face
+var _goatee: Node3D = null             # Explorer face
+var _scarf: MeshInstance3D = null      # Forester neck scarf
 var _cur_hair := ""
 
 
@@ -86,8 +89,8 @@ func _build_claw(nm: String, center: Vector3, colour: Color) -> void:
 	for i in seg:
 		var a := TAU * float(i) / float(seg)
 		var deg := rad_to_deg(a)
-		# Big open gap across the top-front so the hand clearly reads as an open C.
-		if deg > 40.0 and deg < 165.0:
+		# Open gap at the BOTTOM (claw opening downward); the arm meets the closed top.
+		if deg > 205.0 and deg < 335.0:
 			continue
 		var px := center.x + cos(a) * r
 		var py := center.y + sin(a) * r
@@ -224,6 +227,28 @@ func _build() -> void:
 	_box(_bandolier, "BuckleX", Vector3(0.09, 0.09, 0.03), Vector3(0.0, 1.08, 0.2), BUCKLE_COLOUR)
 	_bandolier.visible = false
 
+	# ── Ears (skin) peeking past the sideburns ────────────────────────────────
+	var ear_l := _box(self, "EarL", Vector3(0.055, 0.13, 0.11), Vector3(-0.278, 1.74, 0.03), skin)
+	var ear_r := _box(self, "EarR", Vector3(0.055, 0.13, 0.11), Vector3(0.278, 1.74, 0.03), skin)
+	_skin_parts.append_array([ear_l, ear_r])
+
+	# ── Jacket zipper pull (gold) below the collar ────────────────────────────
+	_box(self, "Zipper", Vector3(0.03, 0.07, 0.02), Vector3(0.0, 1.33, 0.185), BUCKLE_COLOUR)
+
+	# ── Per-character face details (toggled by _apply_face) ───────────────────
+	var fz2 := 0.255
+	_mustache = _box(self, "Mustache", Vector3(0.20, 0.05, 0.03), Vector3(0.0, 1.71, fz2), HAIR_SHADE)
+	_mustache.visible = false
+	_goatee = Node3D.new()
+	_goatee.name = "Goatee"
+	add_child(_goatee)
+	_box(_goatee, "Chin", Vector3(0.14, 0.09, 0.04), Vector3(0.0, 1.55, fz2 - 0.005), HAIR_SHADE)
+	_box(_goatee, "Jaw", Vector3(0.30, 0.06, 0.30), Vector3(0.0, 1.56, 0.0), HAIR_SHADE)
+	_goatee.visible = false
+	# Forester neck scarf (wraps the neck).
+	_scarf = _box(self, "Scarf", Vector3(0.40, 0.12, 0.40), Vector3(0.0, 1.46, 0.0), Color("#C9483A"))
+	_scarf.visible = false
+
 
 ## Rebuild the hair cluster for the chosen Kapsel option.
 func _apply_hairstyle(style: String) -> void:
@@ -245,6 +270,9 @@ func _apply_hairstyle(style: String) -> void:
 	_box(h, "LockL", Vector3(0.09, 0.12, 0.30), Vector3(-0.30, 1.98, -0.04), HAIR_SHADE, Vector3(0, 0, deg_to_rad(16)))
 	_box(h, "LockR", Vector3(0.09, 0.12, 0.30), Vector3(0.30, 1.98, -0.04), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-16)))
 	_box(h, "Nape", Vector3(0.44, 0.14, 0.08), Vector3(0.0, 1.66, -0.255), HAIR_SHADE)
+	_box(h, "CrownL", Vector3(0.13, 0.15, 0.18), Vector3(-0.13, 2.15, -0.03), HAIR_COLOUR, Vector3(deg_to_rad(-10), 0, deg_to_rad(-7)))
+	_box(h, "CrownR", Vector3(0.13, 0.15, 0.18), Vector3(0.13, 2.15, -0.03), HAIR_COLOUR, Vector3(deg_to_rad(-10), 0, deg_to_rad(7)))
+	_box(h, "CrownM", Vector3(0.12, 0.14, 0.18), Vector3(0.0, 2.16, -0.10), HAIR_SHADE, Vector3(deg_to_rad(-6), 0, 0))
 	match style:
 		"round":  # fuller, rounded — lower side volume, soft top
 			_box(h, "TopR", Vector3(0.48, 0.16, 0.46), Vector3(0.0, 2.16, -0.02), HAIR_SHADE)
@@ -289,7 +317,9 @@ func apply_avatar_config(cfg: Dictionary) -> void:
 	if _cape != null:
 		_cape.visible = (acc == "cape")
 
-	_apply_signature(str(cfg.get("character", "")))
+	var character: String = str(cfg.get("character", ""))
+	_apply_signature(character)
+	_apply_face(character)
 
 
 ## Show the chosen builder's signature gear (Explorer satchel / Pathfinder bandolier;
@@ -299,6 +329,17 @@ func _apply_signature(character: String) -> void:
 		_satchel.visible = (character == "builder1")
 	if _bandolier != null:
 		_bandolier.visible = (character == "red")
+
+
+## Give each builder a distinct face: Pathfinder a moustache, Explorer a stubbled
+## jaw/goatee, Forester a clean face + red neck scarf.
+func _apply_face(character: String) -> void:
+	if _mustache != null:
+		_mustache.visible = (character == "red")
+	if _goatee != null:
+		_goatee.visible = (character == "builder1")
+	if _scarf != null:
+		_scarf.visible = (character == "fem")
 
 
 func _recolour(mi: MeshInstance3D, colour: Color) -> void:

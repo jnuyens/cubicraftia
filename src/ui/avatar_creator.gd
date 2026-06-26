@@ -266,10 +266,34 @@ func _add_section_icon(label_name: String, icon_path: String) -> void:
 	hbox.add_child(label)
 
 
+## True while the user is click-dragging the preview to spin it by hand.
+var _dragging_preview: bool = false
+
+
 func _process(delta: float) -> void:
-	# Rotate the SubViewport preview builder.
-	if is_instance_valid(_preview_builder):
+	# Gentle idle auto-spin, paused while the user is steering it by drag.
+	if is_instance_valid(_preview_builder) and not _dragging_preview:
 		_preview_builder.rotation.y += PREVIEW_ROT_SPEED * delta
+
+
+## Click-drag anywhere over the preview to rotate the builder; release resumes idle spin.
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and _is_over_preview(mb.position):
+			_dragging_preview = true
+		elif not mb.pressed:
+			_dragging_preview = false
+	elif event is InputEventMouseMotion and _dragging_preview and is_instance_valid(_preview_builder):
+		_preview_builder.rotation.y -= (event as InputEventMouseMotion).relative.x * 0.012
+
+
+## True when the screen position is inside the 3D preview area (the SubViewportContainer).
+func _is_over_preview(pos: Vector2) -> bool:
+	var c: Node = _find_node("AvatarSubViewportContainer")
+	if c is Control:
+		return (c as Control).get_global_rect().has_point(pos)
+	return false
 
 
 # ─── Public helpers ───────────────────────────────────────────────────────────
