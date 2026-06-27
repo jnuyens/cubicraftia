@@ -2069,17 +2069,35 @@ func _sweep_clearing(voxel_tool: Object, cx0: int, cz0: int) -> void:
 ## SAND voxel id (matches terrain.tscn's VoxelBlockyLibrary: 0=air,1=grass,2=sand,...).
 const _PYRAMID_SAND_VOXEL: int = 2
 
-## Bearing° (0=+Z, clockwise) and radius m from spawn for the pyramid centre. Placed on the
-## far-right edge of the spawn green, clear of the landmark ring (108..248) and of the spawn
-## point, so it reads as a distinct desert landmark beside the village rather than overlapping it.
+## FALLBACK bearing° (0=+Z, clockwise) and radius m from spawn for the pyramid centre. Used ONLY
+## when no DESERT biome is found within _PYRAMID_DESERT_SEARCH_R_M of spawn — in that case the
+## pyramid sits here and a sand "desert patch" disc is stamped under it so it still reads as a
+## desert monument. When desert IS found nearby the pyramid relocates to the nearest desert column
+## (see _build_spawn_pyramid), ignoring these.
 const _PYRAMID_BEARING_DEG: float = 180.0
 const _PYRAMID_RADIUS_M: float = 20.0
 
+## Maximum search radius (m) from spawn for an actual DESERT-biome column to anchor the pyramid on.
+## Beyond this we fall back to the fixed bearing above + a stamped sand patch. ~150 m keeps the
+## monument within a reasonable walk of spawn (the biome-noise wavelength is ~2000 m, so a desert
+## edge is often, but not always, within this radius).
+const _PYRAMID_DESERT_SEARCH_R_M: float = 150.0
+
+## Minimum clearance (m) the relocated pyramid keeps from spawn, the lake centre, and the starter
+## kit so it never overlaps the village green / water / chest-bed-sign cluster.
+const _PYRAMID_MIN_CLEARANCE_M: float = 18.0
+
+## Radius (voxels) of the sand "desert patch" disc stamped under/around the pyramid when no real
+## desert biome is found nearby. Comfortably wider than the 23x23 pyramid base so sand reads as
+## ground the monument sits in, not a square plinth.
+const _PYRAMID_SAND_PATCH_R: int = 18
+
 ## Stepped pyramid geometry: base is (2*_PYRAMID_HALF_BASE+1) voxels per side, shrinking by 1
-## voxel per side each layer up, for _PYRAMID_LAYERS layers. half_base 6 -> 13x13 base, 7 layers,
+## voxel per side each layer up, for _PYRAMID_LAYERS layers. half_base 11 -> 23x23 base, 11 layers,
 ## top a 1x1 cap. Each layer is 1 voxel tall, so the whole pyramid is _PYRAMID_LAYERS cells tall.
-const _PYRAMID_HALF_BASE: int = 7
-const _PYRAMID_LAYERS: int = 8
+## Enlarged from 15x15/8 to read as a substantial desert monument from the low chase-cam.
+const _PYRAMID_HALF_BASE: int = 11
+const _PYRAMID_LAYERS: int = 11
 
 
 ## Build a solid stepped sand pyramid from TERRAIN VOXELS (not a GLB) near the spawn point.
@@ -2097,10 +2115,24 @@ func _build_spawn_pyramid(world_spawn: Vector3) -> void:
 	if "channel" in voxel_tool:
 		voxel_tool.channel = 0  # VoxelBuffer.CHANNEL_TYPE — the block-id channel
 
-	# Pyramid centre column (bearing 0 = +Z, increasing clockwise: x = sin, z = cos).
-	var bearing: float = deg_to_rad(_PYRAMID_BEARING_DEG)
-	var cx0: int = floori(world_spawn.x + sin(bearing) * _PYRAMID_RADIUS_M)
-	var cz0: int = floori(world_spawn.z + cos(bearing) * _PYRAMID_RADIUS_M)
+	# ── Pyramid centre: anchor on / next to the nearest DESERT biome column ──────
+	# Search outward from spawn for an actual DESERT-biome column and place the pyramid there, so
+	# the monument sits in real desert sand rather than on whatever terrain the old fixed bearing
+	# happened to land on. Falls back to the fixed bearing + a stamped sand "desert patch" when no
+	# desert is within _PYRAMID_DESERT_SEARCH_R_M of spawn.
+	var need_sand_patch: bool = false
+	var desert_col: Vector2i = _find_nearest_desert_column(world_spawn)
+	var cx0: int
+	var cz0: int
+	if desert_col.x != 2147483647:
+		cx0 = desert_col.x
+		cz0 = desert_col.y
+	else:
+		# No desert nearby: use the fixed fallback bearing and stamp a sand patch under the pyramid.
+		var bearing: float = deg_to_rad(_PYRAMID_BEARING_DEG)
+		cx0 = floori(world_spawn.x + sin(bearing) * _PYRAMID_RADIUS_M)
+		cz0 = floori(world_spawn.z + cos(bearing) * _PYRAMID_RADIUS_M)
+		need_sand_patch = true
 
 	# Wait (bounded) for the centre chunk to stream so the writes actually land. Probe a
 	# known-solid surface cell; once it reads non-AIR the chunk under the pyramid has meshed.
@@ -2123,6 +2155,8 @@ func _build_spawn_pyramid(world_spawn: Vector3) -> void:
 	if not ready_to_edit or not voxel_tool.has_method("set_voxel"):
 		return
 
+	if need_sand_patch:
+		_stamp_sand_patch(voxel_tool, cx0, cz0)
 	_stamp_pyramid(voxel_tool, cx0, cz0)
 	# Re-stamp several times, spread out over ~12 s, to win the race against late chunk
 	# streaming: the generator re-fills chunks that stream/mesh AFTER an early pass (re-burying
@@ -2137,7 +2171,83 @@ func _build_spawn_pyramid(world_spawn: Vector3) -> void:
 			return
 		if "channel" in voxel_tool:
 			voxel_tool.channel = 0
+		if need_sand_patch:
+			_stamp_sand_patch(voxel_tool, cx0, cz0)
 		_stamp_pyramid(voxel_tool, cx0, cz0)
+
+
+## Search outward from spawn (expanding ring/grid) for the nearest column whose biome is DESERT and
+## that keeps _PYRAMID_MIN_CLEARANCE_M clear of the spawn point, the lake centre, and the starter
+## kit. Returns the column as a Vector2i(x, z), or Vector2i(INT32_MAX, INT32_MAX) as a sentinel when
+## no desert column is found within _PYRAMID_DESERT_SEARCH_R_M. Pure deterministic biome-noise reads
+## (thread-safe) — fully guarded: a missing/incomplete _biome_map returns the no-desert sentinel.
+func _find_nearest_desert_column(world_spawn: Vector3) -> Vector2i:
+	const _SENTINEL := Vector2i(2147483647, 2147483647)
+	if _biome_map == null or not _biome_map.has_method("biome_at"):
+		return _SENTINEL
+	var sx: float = world_spawn.x
+	var sz: float = world_spawn.z
+	var max_r: int = int(_PYRAMID_DESERT_SEARCH_R_M)
+	# Coarse step keeps the scan cheap (biomes span hundreds of metres, so an 8 m grid never
+	# skips a desert region) while sampling enough columns to find the closest desert edge.
+	var step: int = 8
+	var best_col := _SENTINEL
+	var best_d_sq: float = INF
+	var rr: int = 0
+	while rr <= max_r:
+		# Walk the square ring at radius rr (in metres) on the coarse grid.
+		var x: int = -rr
+		while x <= rr:
+			var z: int = -rr
+			while z <= rr:
+				# Only the perimeter of this ring (interior was covered by smaller rr).
+				if rr == 0 or abs(x) == rr or abs(z) == rr:
+					var wx: float = sx + float(x)
+					var wz: float = sz + float(z)
+					if int(_biome_map.biome_at(wx, wz)) == int(BiomeMap.Biome.DESERT):
+						var d_sq: float = float(x * x + z * z)
+						if d_sq <= float(max_r * max_r) and d_sq < best_d_sq \
+								and _pyramid_centre_is_clear(Vector2(wx, wz), world_spawn):
+							best_d_sq = d_sq
+							best_col = Vector2i(floori(wx), floori(wz))
+				z += step
+			x += step
+		# Once we've found a desert on a ring, finish that ring then stop (closest wins inside it).
+		if best_col != _SENTINEL:
+			break
+		rr += step
+	return best_col
+
+
+## True when a candidate pyramid centre keeps _PYRAMID_MIN_CLEARANCE_M from the spawn point, the
+## lake centre (if recorded), and the starter chest/bed/sign cluster (all near world_spawn) so the
+## relocated pyramid never overlaps the village green / water / starter kit.
+func _pyramid_centre_is_clear(centre: Vector2, world_spawn: Vector3) -> bool:
+	var clr_sq: float = _PYRAMID_MIN_CLEARANCE_M * _PYRAMID_MIN_CLEARANCE_M
+	if centre.distance_squared_to(Vector2(world_spawn.x, world_spawn.z)) < clr_sq:
+		return false
+	if _lake_centre.x != INF:
+		if centre.distance_squared_to(Vector2(_lake_centre.x, _lake_centre.z)) < clr_sq:
+			return false
+	return true
+
+
+## One stamp of a flat SAND "desert patch" disc on the surface centred on column (cx0, cz0). Used
+## as the fallback when no real desert biome is near spawn: replaces the top solid cell of every
+## column in the disc with sand so the (relocated) pyramid reads as sitting in desert ground rather
+## than on grass. Pure VoxelTool writes on streamed chunks.
+func _stamp_sand_patch(voxel_tool: Object, cx0: int, cz0: int) -> void:
+	var r: int = _PYRAMID_SAND_PATCH_R
+	var r_sq: float = float(r) * float(r)
+	for dx: int in range(-r, r + 1):
+		for dz: int in range(-r, r + 1):
+			if float(dx * dx + dz * dz) > r_sq:
+				continue
+			var wx: int = cx0 + dx
+			var wz: int = cz0 + dz
+			var col_surface: int = int(_terrain_surface_at(float(wx), float(wz)))
+			# Replace the top solid cell (one below the first AIR cell) with sand.
+			voxel_tool.set_voxel(Vector3i(wx, col_surface - 1, wz), _PYRAMID_SAND_VOXEL)
 
 
 ## One stamp of the stepped sand pyramid centred on column (cx0, cz0). Each layer is a solid
@@ -2173,12 +2283,12 @@ const _LAKE_SAND_VOXEL: int = 2
 const _LAKE_BEARING_DEG: float = 196.0
 const _LAKE_RADIUS_M: float = 18.0
 
-## Lake disc radius (voxels). 13 → a ~26 m pond: big enough to read as a real water body and
-## carry a ship, small enough to stamp cheaply and not flood the whole clearing or reach the
-## spawn point / landmark ring.
-const _LAKE_DISC_R: int = 13
+## Lake disc radius (voxels). 20 → a ~40 m pond: enlarged from 13 so it reads clearly from the
+## low chase-cam as a real water body carrying ships, while staying clear of the spawn point,
+## landmark ring, and the relocated desert pyramid.
+const _LAKE_DISC_R: int = 20
 ## How many cells deep the basin is carved below the local surface before flooding with water.
-const _LAKE_DEPTH: int = 4
+const _LAKE_DEPTH: int = 6
 
 ## Build a shallow water lake near spawn from TERRAIN VOXELS. Carves a smooth bowl-shaped basin
 ## (deeper toward the centre), rims it with a thin sand beach, then floods it to one cell below the
