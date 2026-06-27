@@ -782,6 +782,18 @@ func _ready() -> void:
 	if builder != null:
 		builder.global_position = _world_spawn + Vector3(0.0, 0.5, 0.0)
 
+	# ─── Spawn SHOWCASE: a curated brick-village diorama around the spawn point ──
+	# A ring of landmark GLB structures (castle, lighthouse, windmill, market stall,
+	# houses), a floating hot-air balloon, a campfire, decorative flags, and a few
+	# friendly animals arranged around the spawn clearing — so a fresh world reads as
+	# a lively, hand-built LEGO-voxel world rather than empty wilderness. Runs in BOTH
+	# game modes (it is pure decorative world dressing, not survival starter gear), and
+	# is fully fallback-safe: every asset load is existence-checked, every node null-
+	# guarded, so a missing GLB never crashes or stalls the spawn. Deferred a couple of
+	# frames so terrain collision under the ring has a chance to bake before the heavy
+	# GLB instances + trimesh collision are built.
+	_spawn_showcase_near_spawn(_world_spawn)
+
 	# ─── Plan 03-11: Survival starter kit (D-15 + DOCS §5.6) ─────────────────
 	# In survival worlds, spawn a starter chest + bed near the spawn every session. We
 	# do NOT gate on the starter_kit_spawned meta any more because ChestEntity /
@@ -1679,6 +1691,288 @@ func spawn_bed(position: Vector3) -> Node:
 ## Called once on first open_world() in survival mode (one-shot gate via WorldSave
 ## "starter_kit_spawned" meta key). Sandbox worlds do NOT call this function (D-01).
 ##
+# ─── Spawn SHOWCASE: curated landmark diorama around the spawn point ──────────
+
+## Arbitrary-path GLB prop paths used by the showcase (campfire + balloon + flags live
+## OUTSIDE assets/meshes/structures/, so spawn_structure — which only loads from that dir —
+## can't place them). _spawn_showcase_prop() loads these directly, existence-checked.
+const _SHOWCASE_BALLOON_PATH: String = "res://assets/meshes/sky/hot_air_balloon.glb"
+const _SHOWCASE_CAMPFIRE_PATH: String = "res://assets/meshes/campfire.glb"
+const _SHOWCASE_FLAG_PATH: String = "res://assets/meshes/pil4k_clean/flag2.glb"
+const _SHOWCASE_FLAGPOLE_PATH: String = "res://assets/meshes/pil4k_clean/flag2_pole.glb"
+
+## Showcase landmark ring: each entry places one catalog structure GLB (via spawn_structure,
+## which auto-scales to its longest axis, grounds the base on terrain, and builds collision)
+## at a bearing (degrees, clockwise from +Z = "in front of the player") and radius (m) from
+## the spawn point. Bearings/radii are tuned to ring the spawn clearing without crowding the
+## ~3 m spawn point and without overlapping each other. Kept clear of the chest (+1 X), bed
+## (-6 X) and welcome sign (+5,-2) starter-kit footprints so survival worlds don't double up.
+const _SHOWCASE_LANDMARKS: Array = [
+	# id,                      bearing°, radius m
+	# The spawn chase-cam looks toward bearing ~90, so the landmarks are spread across the
+	# visible forward arc (~40°..150°) with the hero castle dead-ahead, lighthouse + windmill
+	# flanking it, and the market stall + a cottage closer in for foreground depth. Two more
+	# houses sit behind the player (bearings ~250/300) so the village wraps fully around the
+	# clearing for anyone who turns around.
+	# The builder spawns at yaw 0, so the chase-cam looks toward world -Z = bearing 180 (with
+	# bearing 0 = +Z). The visible village is therefore spread across bearing ~140 (left edge)
+	# .. ~220 (right edge), centred on 180: hero castle dead-ahead, windmill + lighthouse
+	# flanking, market stall + cottages filling the foreground of the cleared green.
+	# NB: with the camera looking toward bearing 180, INCREASING bearing moves a landmark to the
+	# LEFT of frame and decreasing moves it RIGHT; 180 is dead-centre. Radii are staggered so the
+	# tall hero landmarks sit farther back (clearing the foreground cottages) and nothing overlaps.
+	["structure_1_03",         200.0, 32.0],  # red/white lighthouse — tall hero, left-of-centre, set back
+	["structure_2_03",         165.0, 32.0],  # stone castle w/ blue banners — hero, right-of-centre, back
+	["structure_1_01",         222.0, 28.0],  # windmill — tall, far LEFT
+	["structure_1_05",         184.0, 18.0],  # striped market stall — centre foreground
+	["structure_1_00",         210.0, 16.0],  # cottage/house — left foreground
+	["structure_1_02",         156.0, 18.0],  # cottage/house — right foreground
+	["structure_1_06",         140.0, 24.0],  # house/tower — far right edge
+]
+
+## A few showcase animals scattered in the spawn clearing (land kinds that ground cleanly via
+## spawn_wildlife). Bearing° / radius m from spawn, kept inside the ring of landmarks so they
+## read as livestock milling around the village green.
+const _SHOWCASE_ANIMALS: Array = [
+	["sheep", 168.0, 8.0],
+	["pig",   192.0, 7.0],
+	["dog",   158.0, 6.0],
+	["panda", 200.0, 10.0],
+	["sheep", 180.0, 11.0],
+]
+
+
+## Place the curated landmark + prop + animal diorama around `world_spawn`. Fully fallback-safe:
+## every GLB is existence-checked and every spawned node is null-guarded, so a missing or broken
+## asset is silently skipped and never crashes or stalls the spawn. Deferred two frames so the
+## terrain under the ring can begin meshing/baking collision before the heavy GLB instances land.
+func _spawn_showcase_near_spawn(world_spawn: Vector3) -> void:
+	# Defer so the splash stays up and terrain collision under the ring starts baking before
+	# we instance the (heavy, trimesh-collided) landmark GLBs — mirrors the structure pre-stamp.
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	var origin := Vector2(world_spawn.x, world_spawn.z)
+
+	# Clear the forest in the showcase footprint so the village reads as a real CLEARING rather
+	# than landmarks buried behind a wall of trees (seed-dependent: a forested spawn otherwise
+	# hides everything below the canopy). Runs on its own retry loop because VoxelTool edits only
+	# apply to STREAMED chunks — it waits for terrain near spawn to mesh, then removes tree voxels.
+	_clear_showcase_clearing(world_spawn)
+
+	# ── Landmark ring (catalog structure GLBs) ──────────────────────────────────
+	for entry: Array in _SHOWCASE_LANDMARKS:
+		var id: String = entry[0]
+		var bearing: float = deg_to_rad(float(entry[1]))
+		var radius: float = float(entry[2])
+		# Bearing 0 = +Z (in front), increasing clockwise: x = sin, z = cos.
+		var px: float = origin.x + sin(bearing) * radius
+		var pz: float = origin.y + cos(bearing) * radius
+		var path: String = "res://assets/meshes/structures/%s.glb" % id
+		if not ResourceLoader.exists(path):
+			continue
+		var gy: float = _terrain_surface_at(px, pz)
+		var s: Node3D = spawn_structure(id, Vector3(px, gy, pz))
+		if s != null:
+			s.add_to_group("spawn_showcase")
+			# Face the structure roughly toward the spawn point so doorways/fronts read.
+			var to_spawn := Vector2(origin.x - px, origin.y - pz)
+			if to_spawn.length() > 0.01:
+				s.rotation.y = atan2(to_spawn.x, to_spawn.y)
+
+	# ── Hot-air balloon, floating over the forward skyline ──────────────────────
+	# Placed ahead of the player (forward bearing ~95) and ~16 m up so it hangs as a
+	# big, colourful skyline landmark in the camera's view, clearing the landmark roofs
+	# without sailing off the top of the frame. No collision (decorative sky prop).
+	var bal_bearing: float = deg_to_rad(180.0)
+	var bal_x: float = origin.x + sin(bal_bearing) * 24.0
+	var bal_z: float = origin.y + cos(bal_bearing) * 24.0
+	var balloon: Node3D = _spawn_showcase_prop(
+		_SHOWCASE_BALLOON_PATH,
+		Vector3(bal_x, _terrain_surface_at(bal_x, bal_z) + 20.0, bal_z),
+		13.0)
+	if balloon != null:
+		balloon.add_to_group("spawn_showcase")
+
+	# ── Campfire in the clearing, just ahead of the spawn point (in view) ────────
+	var fire_bearing: float = deg_to_rad(165.0)
+	var fire_x: float = origin.x + sin(fire_bearing) * 5.0
+	var fire_z: float = origin.y + cos(fire_bearing) * 5.0
+	var campfire: Node3D = _spawn_showcase_prop(
+		_SHOWCASE_CAMPFIRE_PATH,
+		Vector3(fire_x, _terrain_surface_at(fire_x, fire_z), fire_z),
+		1.6)
+	if campfire != null:
+		campfire.add_to_group("spawn_showcase")
+		# A warm point light so the campfire reads as lit (esp. at dawn/dusk/night).
+		var glow := OmniLight3D.new()
+		glow.light_color = Color(1.0, 0.62, 0.30)
+		glow.light_energy = 2.4
+		glow.omni_range = 8.0
+		glow.position = Vector3(0.0, 1.0, 0.0)
+		glow.light_cull_mask = CHANNEL_VISUAL_MASK
+		campfire.add_child(glow)
+
+	# ── A pair of decorative flags flanking the spawn green, like a village entrance ──
+	for fb: float in [160.0, 200.0]:
+		var fbearing: float = deg_to_rad(fb)
+		var fx: float = origin.x + sin(fbearing) * 8.0
+		var fz: float = origin.y + cos(fbearing) * 8.0
+		var fgy: float = _terrain_surface_at(fx, fz)
+		var pole: Node3D = _spawn_showcase_prop(_SHOWCASE_FLAGPOLE_PATH, Vector3(fx, fgy, fz), 4.0)
+		if pole != null:
+			pole.add_to_group("spawn_showcase")
+		var flag: Node3D = _spawn_showcase_prop(_SHOWCASE_FLAG_PATH, Vector3(fx, fgy + 3.0, fz), 1.6)
+		if flag != null:
+			flag.add_to_group("spawn_showcase")
+
+	# ── Friendly animals milling around the village green ───────────────────────
+	for a: Array in _SHOWCASE_ANIMALS:
+		var kind: String = a[0]
+		var abearing: float = deg_to_rad(float(a[1]))
+		var aradius: float = float(a[2])
+		var ax: float = origin.x + sin(abearing) * aradius
+		var az: float = origin.y + cos(abearing) * aradius
+		var agy: float = _terrain_surface_at(ax, az)
+		spawn_wildlife(kind, Vector3(ax, agy, az))
+
+
+## Load + instance a decorative GLB prop from an ARBITRARY path (NOT the structures dir),
+## scale its longest axis to `target_m`, ground its base at `world_pos.y` (centred on X/Z),
+## and add it to the world. Returns the wrapper Node3D, or null if the asset is missing/broken
+## (fully fallback-safe — the caller null-guards). Decorative only: no collision is built, so
+## these are cheap and never trap the player (campfire/balloon/flags are walk-through dressing).
+func _spawn_showcase_prop(path: String, world_pos: Vector3, target_m: float) -> Node3D:
+	if not ResourceLoader.exists(path):
+		return null
+	var ps: PackedScene = load(path) as PackedScene
+	if ps == null:
+		return null
+	var inst := ps.instantiate() as Node3D
+	if inst == null:
+		return null
+	var wrapper := Node3D.new()
+	add_child(wrapper)
+	wrapper.add_child(inst)
+	# Merge-AABB of every MeshInstance3D under the instance, in the instance's local frame.
+	var ab := AABB()
+	var first := true
+	var stack: Array[Node] = [inst]
+	while not stack.is_empty():
+		var n: Node = stack.pop_back()
+		if n is MeshInstance3D and (n as MeshInstance3D).mesh != null:
+			var a: AABB = (n as MeshInstance3D).transform * (n as MeshInstance3D).mesh.get_aabb()
+			if first:
+				ab = a
+				first = false
+			else:
+				ab = ab.merge(a)
+		for c: Node in n.get_children():
+			stack.push_back(c)
+	if first:
+		# No mesh found — leave unscaled at world_pos so we never divide by a degenerate AABB.
+		wrapper.position = world_pos
+		return wrapper
+	var longest: float = maxf(ab.size.x, maxf(ab.size.y, ab.size.z))
+	var sc: float = target_m / maxf(longest, 0.01)
+	inst.scale = Vector3(sc, sc, sc)
+	# Ground the base at the wrapper origin, centre on X/Z (same convention as WorldStructure).
+	inst.position = Vector3(-ab.get_center().x * sc, -ab.position.y * sc, -ab.get_center().z * sc)
+	wrapper.position = world_pos
+	return wrapper
+
+
+## Radius (m) of the cleared showcase green — trees inside this disc around spawn are removed
+## so the landmark village is visible instead of buried behind a forest canopy. Sized to wrap
+## the landmark ring (farthest landmark ~28 m) plus a little margin.
+const _SHOWCASE_CLEARING_RADIUS_M: float = 40.0
+
+## Vertical span (cells above the surface) scanned for tree voxels to remove. Trees in this world
+## are ~10-14 cells tall; 24 comfortably covers the tallest jungle tree without runaway cost.
+const _SHOWCASE_CLEARING_HEIGHT: int = 24
+
+## Tree voxel ids removed when clearing the showcase green (wood_log trunk + leaves canopy).
+## Matches terrain.tscn's VoxelBlockyLibrary / multipass_generator.gd / wildlife.gd grounding.
+const _SHOWCASE_TREE_VOXELS: Array = [10, 12]
+
+
+## Remove the forest canopy inside a disc around `world_spawn` so the showcase village reads as a
+## real clearing. VoxelTool edits only apply to STREAMED chunks, so this retries on a timer until
+## the terrain near spawn has meshed (or a bounded number of attempts elapse), then walks every
+## column in the disc and turns wood_log/leaves cells into AIR. Fully guarded: if there is no
+## VoxelTerrain / VoxelTool (headless tests, alternate scenes) it simply does nothing.
+func _clear_showcase_clearing(world_spawn: Vector3) -> void:
+	var terrain: Node = get_node_or_null("Terrain")
+	if terrain == null or not terrain.has_method("get_voxel_tool"):
+		return
+	# Wait (bounded) for chunks near spawn to stream so the VoxelTool writes actually land. Each
+	# attempt yields ~0.4 s; ~30 attempts ≈ 12 s, comfortably inside the loading window. We retry
+	# until a probe column at spawn reads a non-AIR surface voxel (terrain has meshed there).
+	var voxel_tool: Object = terrain.get_voxel_tool()
+	if voxel_tool == null:
+		return
+	if "channel" in voxel_tool:
+		voxel_tool.channel = 0  # VoxelBuffer.CHANNEL_TYPE — the block-id channel
+	var cx0: int = floori(world_spawn.x)
+	var cz0: int = floori(world_spawn.z)
+	var surface_probe: int = int(_terrain_surface_at(world_spawn.x, world_spawn.z))
+	var ready_to_edit: bool = false
+	for _attempt: int in range(30):
+		# Probe a known-solid surface cell at spawn; once it reads non-air the chunk is streamed.
+		if voxel_tool.has_method("get_voxel"):
+			var v: int = int(voxel_tool.get_voxel(Vector3i(cx0, surface_probe - 1, cz0)))
+			if v != 0:
+				ready_to_edit = true
+				break
+		await get_tree().create_timer(0.4).timeout
+		# Re-fetch the tool in case it briefly went null while terrain streamed.
+		if not is_instance_valid(terrain):
+			return
+		voxel_tool = terrain.get_voxel_tool()
+		if voxel_tool == null:
+			return
+		if "channel" in voxel_tool:
+			voxel_tool.channel = 0
+	if not ready_to_edit or not voxel_tool.has_method("set_voxel"):
+		return
+	# Sweep the disc clearing tree voxels. Run a few passes spaced out in time: a VoxelTerrain with
+	# a generator re-plants trees into chunks that stream/mesh AFTER the first pass (the seed-tree
+	# step runs at generation), so a single early sweep leaves the LATE-streaming edge chunks
+	# forested. Re-sweeping a couple more times catches those chunks once they have meshed, without
+	# an expensive per-frame loop.
+	_sweep_clearing(voxel_tool, cx0, cz0)
+	for _pass: int in range(2):
+		await get_tree().create_timer(1.5).timeout
+		if not is_instance_valid(terrain):
+			return
+		voxel_tool = terrain.get_voxel_tool()
+		if voxel_tool == null or not voxel_tool.has_method("set_voxel"):
+			return
+		if "channel" in voxel_tool:
+			voxel_tool.channel = 0
+		_sweep_clearing(voxel_tool, cx0, cz0)
+
+
+## One sweep of the showcase clearing disc: turn every wood_log/leaves voxel above each column's
+## surface into AIR, within _SHOWCASE_CLEARING_RADIUS_M of (cx0, cz0). Pure VoxelTool writes on
+## already-streamed chunks (a no-op on chunks not yet meshed). Called by _clear_showcase_clearing.
+func _sweep_clearing(voxel_tool: Object, cx0: int, cz0: int) -> void:
+	var r: int = int(_SHOWCASE_CLEARING_RADIUS_M)
+	var r_sq: float = float(r) * float(r)
+	for dx: int in range(-r, r + 1):
+		for dz: int in range(-r, r + 1):
+			if float(dx * dx + dz * dz) > r_sq:
+				continue
+			var wx: int = cx0 + dx
+			var wz: int = cz0 + dz
+			var col_surface: int = int(_terrain_surface_at(float(wx), float(wz)))
+			for yy: int in range(col_surface, col_surface + _SHOWCASE_CLEARING_HEIGHT):
+				var cell := Vector3i(wx, yy, wz)
+				var vv: int = int(voxel_tool.get_voxel(cell))
+				if _SHOWCASE_TREE_VOXELS.has(vv):
+					voxel_tool.set_voxel(cell, 0)  # AIR
+
+
 ## Chest contents match D-15 verbatim (single source of truth: _STARTER_CHEST_CONTENTS).
 ## Chest spawns at world_spawn + (1, 0.5, 0); bed spawns at world_spawn + (-1, 0, 0).
 ## Both nodes added to their respective groups for test assertions + Phase-4 replication.
