@@ -124,18 +124,93 @@ func _mat(colour: Color) -> StandardMaterial3D:
 	m.roughness = 0.85
 	return m
 
+## Target voxel edge length: every part is rebuilt from a grid of cubes this size
+## (≈100× the old single-box count) for a fine voxel look. Cached by size so identical
+## parts (legs L/R, etc.) share one mesh.
+const _VOXEL_CUBE: float = 0.066
+var _voxel_cache: Dictionary = {}
+var _vox_placeholder: StandardMaterial3D = null
+
+
+## A part is ONE MeshInstance3D (material + pivots unchanged) whose mesh is a voxel
+## grid of small cubes, so recolouring and animation keep working as before.
 func _box(p: Node, nm: String, size: Vector3, pos: Vector3, colour: Color, rot := Vector3.ZERO) -> MeshInstance3D:
-	var mesh := BoxMesh.new()
-	mesh.size = size
 	var mi := MeshInstance3D.new()
 	mi.name = nm
-	mi.mesh = mesh
+	mi.mesh = _voxel_mesh(size)
 	mi.position = pos
 	if rot != Vector3.ZERO:
 		mi.rotation = rot
 	mi.set_surface_override_material(0, _mat(colour))
 	p.add_child(mi)
 	return mi
+
+
+## Build (and cache) a voxelised box: a shell of small cubes filling `size`, with small
+## gaps between them (SSAO settles into the seams) and the 8 corners shaved for a rounded,
+## less-blocky silhouette. Tiny parts (≤1 cube) fall back to a plain BoxMesh.
+func _voxel_mesh(size: Vector3) -> Mesh:
+	var key: String = "%0.3f_%0.3f_%0.3f" % [size.x, size.y, size.z]
+	if _voxel_cache.has(key):
+		return _voxel_cache[key]
+	var nx: int = maxi(1, int(round(size.x / _VOXEL_CUBE)))
+	var ny: int = maxi(1, int(round(size.y / _VOXEL_CUBE)))
+	var nz: int = maxi(1, int(round(size.z / _VOXEL_CUBE)))
+	# Small detail parts (eyes, mouth, brows, buttons) stay crisp solid boxes; only
+	# parts big enough to read as voxels (≥3 cubes on an axis) get the grid.
+	if maxi(maxi(nx, ny), nz) < 3:
+		var bm := BoxMesh.new()
+		bm.size = size
+		_voxel_cache[key] = bm
+		return bm
+	var sx: float = size.x / nx
+	var sy: float = size.y / ny
+	var sz: float = size.z / nz
+	var h: Vector3 = Vector3(sx, sy, sz) * (0.91 * 0.5)  # cube half-extents (small gaps)
+	var rounded: bool = nx >= 3 and ny >= 3 and nz >= 3
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in nx:
+		for j in ny:
+			for k in nz:
+				if not (i == 0 or i == nx - 1 or j == 0 or j == ny - 1 or k == 0 or k == nz - 1):
+					continue  # shell only — interior cubes are never seen
+				if rounded and (i == 0 or i == nx - 1) and (j == 0 or j == ny - 1) and (k == 0 or k == nz - 1):
+					continue  # shave the 8 corners
+				var c := Vector3(
+					-size.x * 0.5 + (float(i) + 0.5) * sx,
+					-size.y * 0.5 + (float(j) + 0.5) * sy,
+					-size.z * 0.5 + (float(k) + 0.5) * sz)
+				_add_cube(st, c, h)
+	# A shared fallback surface material avoids "material is null" render warnings
+	# (the per-instance colour comes from the MeshInstance3D's surface override).
+	if _vox_placeholder == null:
+		_vox_placeholder = StandardMaterial3D.new()
+	st.set_material(_vox_placeholder)
+	st.generate_normals()
+	var am: ArrayMesh = st.commit()
+	_voxel_cache[key] = am
+	return am
+
+
+## Emit one cube (6 quads, CCW-out) centred at `c` with half-extents `h`.
+func _add_cube(st: SurfaceTool, c: Vector3, h: Vector3) -> void:
+	var v := [
+		c + Vector3(-h.x, -h.y, -h.z), c + Vector3(h.x, -h.y, -h.z),
+		c + Vector3(h.x, h.y, -h.z), c + Vector3(-h.x, h.y, -h.z),
+		c + Vector3(-h.x, -h.y, h.z), c + Vector3(h.x, -h.y, h.z),
+		c + Vector3(h.x, h.y, h.z), c + Vector3(-h.x, h.y, h.z)]
+	# faces as CCW-outward vertex-index quads
+	var faces := [
+		[4, 5, 6, 7],  # +Z
+		[1, 0, 3, 2],  # -Z
+		[5, 1, 2, 6],  # +X
+		[0, 4, 7, 3],  # -X
+		[7, 6, 2, 3],  # +Y
+		[0, 1, 5, 4]]  # -Y
+	for f in faces:
+		st.add_vertex(v[f[0]]); st.add_vertex(v[f[1]]); st.add_vertex(v[f[2]])
+		st.add_vertex(v[f[0]]); st.add_vertex(v[f[2]]); st.add_vertex(v[f[3]])
 
 ## Build a wide open-gap C-claw hand from chunky voxels (gap at the top, where a
 ## tool would sit). Reads as a minifig C-hand rather than a closed ring.
