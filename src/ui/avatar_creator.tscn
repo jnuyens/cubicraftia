@@ -12,6 +12,17 @@
 [sub_resource type="Theme" id="Theme_pixel"]
 default_font = ExtResource("8_font")
 
+[sub_resource type="Environment" id="Env_preview"]
+background_mode = 0
+ambient_light_source = 3
+ambient_light_color = Color(0.82, 0.86, 0.96, 1)
+ambient_light_energy = 0.45
+tonemap_mode = 3
+ssao_enabled = true
+ssao_radius = 0.6
+ssao_intensity = 2.2
+ssao_detail = 0.6
+
 [sub_resource type="StyleBoxFlat" id="SB_LeftPanel"]
 bg_color = Color(0.101961, 0.168627, 0.290196, 1)
 border_width_left = 2
@@ -444,14 +455,23 @@ stretch = true
 [node name="AvatarSubViewport" type="SubViewport" parent="Root/RightPanel/AvatarSubViewportContainer"]
 transparent_bg = true
 handle_input_locally = false
+msaa_3d = 2
 size = Vector2i(540, 700)
 render_target_update_mode = 4
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Root/RightPanel/AvatarSubViewportContainer/AvatarSubViewport"]
+environment = SubResource("Env_preview")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="Root/RightPanel/AvatarSubViewportContainer/AvatarSubViewport"]
 transform = Transform3D(0.866025, -0.25, 0.433013, 0, 0.866025, 0.5, -0.5, -0.433013, 0.75, 0, 3, 0)
+light_energy = 1.6
 shadow_enabled = true
+shadow_blur = 1.5
+
+[node name="FillLight" type="DirectionalLight3D" parent="Root/RightPanel/AvatarSubViewportContainer/AvatarSubViewport"]
+transform = Transform3D(0.5, 0.2, -0.84, 0, 0.97, 0.23, 0.87, -0.12, 0.48, 0, 3, 0)
+light_color = Color(0.8, 0.86, 1, 1)
+light_energy = 0.45
 
 [node name="Camera3D" type="Camera3D" parent="Root/RightPanel/AvatarSubViewportContainer/AvatarSubViewport"]
 transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 1.2, 2.7)

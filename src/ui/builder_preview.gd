@@ -320,6 +320,36 @@ func _build() -> void:
 	_scarf = _box(self, "Scarf", Vector3(0.40, 0.12, 0.40), Vector3(0.0, 1.46, 0.0), Color("#C9483A"))
 	_scarf.visible = false
 
+	_polish_materials()
+
+
+## Advanced finish: metallic trim, a subtle skin sheen, and a faint rim so the figure
+## reads as a real 3D character rather than flat boxes. Applies in the creator AND in
+## the world (materials travel with the meshes).
+func _polish_materials() -> void:
+	# Gold trim → shiny metal.
+	for nm in ["Buckle", "BtnA", "BtnB", "BtnC", "Zipper"]:
+		_tune(get_node_or_null(nm), 0.30, 0.85)
+	if _bandolier != null:
+		_tune(_bandolier.get_node_or_null("BuckleX"), 0.30, 0.85)
+	# Skin → soft sheen (head, hands, neck, ears).
+	for p in _skin_parts:
+		_tune(p, 0.5, 0.0, 0.25)
+
+
+## Tune a mesh's StandardMaterial3D: roughness, metallic, and an optional rim.
+func _tune(n: Node, rough: float, metal: float, rim: float = 0.0) -> void:
+	if not (n is MeshInstance3D):
+		return
+	var m: StandardMaterial3D = (n as MeshInstance3D).get_active_material(0) as StandardMaterial3D
+	if m == null:
+		return
+	m.roughness = rough
+	m.metallic = metal
+	if rim > 0.0:
+		m.rim_enabled = true
+		m.rim = rim
+
 
 ## Rebuild the hair cluster for the chosen Kapsel option.
 func _apply_hairstyle(style: String) -> void:
