@@ -330,9 +330,9 @@ func _build() -> void:
 	# Clean happy open smile: white teeth + red mouth + a thin lower lip whose ENDS sit
 	# slightly higher (an up-turn). No rotated side-corners — those read as a moustache
 	# and made every builder look the same. Facial hair is per-character only.
-	_box(self, "Teeth", Vector3(0.20, 0.05, 0.02), Vector3(0.0, 1.675, fz + 0.014), EYE_WHITE)
-	_box(self, "MouthRed", Vector3(0.18, 0.04, 0.02), Vector3(0.0, 1.64, fz + 0.008), MOUTH_RED)
-	_box(self, "Lip", Vector3(0.14, 0.03, 0.022), Vector3(0.0, 1.612, fz), MOUTH_DARK)
+	_box(self, "Teeth", Vector3(0.23, 0.055, 0.02), Vector3(0.0, 1.682, fz + 0.014), EYE_WHITE)
+	_box(self, "MouthRed", Vector3(0.21, 0.06, 0.02), Vector3(0.0, 1.638, fz + 0.008), MOUTH_RED)
+	_box(self, "Lip", Vector3(0.17, 0.03, 0.022), Vector3(0.0, 1.605, fz), MOUTH_DARK)
 	_box(self, "LipTipL", Vector3(0.045, 0.03, 0.022), Vector3(-0.10, 1.626, fz), MOUTH_DARK)
 	_box(self, "LipTipR", Vector3(0.045, 0.03, 0.022), Vector3(0.10, 1.626, fz), MOUTH_DARK)
 	# Rosy cheeks, kept low/outboard so they read as cheeks (not a moustache).
@@ -455,6 +455,10 @@ func _apply_hairstyle(style: String) -> void:
 	_box(h, "CrownL", Vector3(0.13, 0.15, 0.18), Vector3(-0.13, 2.15, -0.03), hc, Vector3(deg_to_rad(-10), 0, deg_to_rad(-7)))
 	_box(h, "CrownR", Vector3(0.13, 0.15, 0.18), Vector3(0.13, 2.15, -0.03), hc, Vector3(deg_to_rad(-10), 0, deg_to_rad(7)))
 	_box(h, "CrownM", Vector3(0.12, 0.14, 0.18), Vector3(0.0, 2.16, -0.10), hs, Vector3(deg_to_rad(-6), 0, 0))
+	# Spiky tufts poking up/forward, like the chunky hero hair.
+	for si in 4:
+		var sxp := -0.21 + 0.14 * float(si)
+		_box(h, "TopSpike%d" % si, Vector3(0.10, 0.20, 0.13), Vector3(sxp, 2.30, 0.06 - 0.03 * float(si % 2)), hc, Vector3(deg_to_rad(-20), 0, deg_to_rad(-10 + 7 * si)))
 	match style:
 		"round":  # fuller, rounded — lower side volume, soft top
 			_box(h, "TopR", Vector3(0.48, 0.16, 0.46), Vector3(0.0, 2.16, -0.02), hs)
