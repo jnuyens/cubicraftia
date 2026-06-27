@@ -332,9 +332,9 @@ func _polish_materials() -> void:
 		_tune(get_node_or_null(nm), 0.30, 0.85)
 	if _bandolier != null:
 		_tune(_bandolier.get_node_or_null("BuckleX"), 0.30, 0.85)
-	# Skin → soft sheen (head, hands, neck, ears).
+	# Skin → very subtle sheen (no rim — the rim was washing the skin toward white).
 	for p in _skin_parts:
-		_tune(p, 0.5, 0.0, 0.25)
+		_tune(p, 0.7, 0.0)
 
 
 ## Tune a mesh's StandardMaterial3D: roughness, metallic, and an optional rim.
