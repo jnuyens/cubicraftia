@@ -38,6 +38,20 @@ const _CLOUD_Y_MIN: float = 70.0
 const _CLOUD_Y_MAX: float = 120.0
 const _CLOUD_DRIFT: float = 6.0      # m/s along +X
 
+## ─── Clouds flow around mountains ────────────────────────────────────────────
+## When a cloud drifts toward a peak that reaches into its altitude band, it parts
+## sideways (toward the lower flank) and lifts a little to skim over, then relaxes
+## back to its lane once clear — a cheap flow-field feel, like water around a rock.
+## Only mountain-biome peaks (≈ +40…+90 m) reach the cloud band, so normal terrain
+## never triggers it. Heights come from main_scene._terrain_surface_at (group lookup).
+const _CLOUD_LOOKAHEAD: float = 46.0   # how far ahead (along drift) to sense a peak
+const _CLOUD_CLEARANCE: float = 14.0   # vertical gap a cloud wants above a peak
+const _CLOUD_PROBE_SIDE: float = 34.0  # lateral probe to find the lower flank
+const _CLOUD_STEER: float = 16.0       # m/s sideways push while deflecting
+const _CLOUD_LIFT: float = 11.0        # m/s upward push while deflecting
+const _CLOUD_RELAX: float = 3.5        # m/s drift back to base lane/altitude when clear
+const _CLOUD_Z_RANGE: float = 95.0     # max lateral wander from a cloud's base lane
+
 ## ─── Mystery orb (easter egg) ────────────────────────────────────────────────
 ## Once every MYSTERY_PERIOD_DAYS, the green orb streaks across the sky at high speed,
 ## passing through everything (no collider — it lives in the sky layer) and leaving a
@@ -57,6 +71,7 @@ var _clouds: Array[Node3D] = []
 var _mystery_orb: Node3D = null
 var _mystery_t: float = -1.0                  # <0 = inactive; [0,1] = flyby progress
 var _mystery_q_timer: float = 0.0
+var _main_scene: Node = null                  # lazily resolved (group "main_scene"), read-only
 
 
 func _ready() -> void:
@@ -211,8 +226,56 @@ func _spawn_clouds() -> void:
 			rng.randf_range(-_CLOUD_SPREAD, _CLOUD_SPREAD),
 			rng.randf_range(_CLOUD_Y_MIN, _CLOUD_Y_MAX),
 			rng.randf_range(-_CLOUD_SPREAD, _CLOUD_SPREAD))
+		# Base lane + altitude this cloud relaxes back to after deflecting around a peak.
+		holder.set_meta("base_y", holder.position.y)
+		holder.set_meta("base_z", holder.position.z)
 		add_child(holder)
 		_clouds.append(holder)
+
+
+## Nudge one cloud so it flows AROUND a mountain peak in its path: if the terrain a bit
+## ahead reaches into the cloud's altitude band, steer toward the lower flank and lift to
+## skim over; otherwise relax back to the cloud's base lane + altitude. Cheap (≤3 terrain
+## samples) and a no-op over normal low terrain (peaks only exist in the MOUNTAIN biome).
+func _flow_around_terrain(cloud: Node3D, delta: float) -> void:
+	var gx: float = global_position.x + cloud.position.x
+	var gz: float = global_position.z + cloud.position.z
+	var base_y: float = float(cloud.get_meta("base_y", cloud.position.y))
+	var base_z: float = float(cloud.get_meta("base_z", cloud.position.z))
+	var ahead: float = _surface_y(gx + _CLOUD_LOOKAHEAD, gz)
+	if ahead > cloud.position.y - _CLOUD_CLEARANCE:
+		# A peak blocks the lane — part toward the lower side and rise to clear it.
+		var left: float = _surface_y(gx + _CLOUD_LOOKAHEAD, gz - _CLOUD_PROBE_SIDE)
+		var right: float = _surface_y(gx + _CLOUD_LOOKAHEAD, gz + _CLOUD_PROBE_SIDE)
+		var dir: float = -1.0 if left < right else 1.0
+		cloud.position.z = clampf(cloud.position.z + dir * _CLOUD_STEER * delta,
+			base_z - _CLOUD_Z_RANGE, base_z + _CLOUD_Z_RANGE)
+		cloud.position.y = move_toward(cloud.position.y, maxf(ahead + _CLOUD_CLEARANCE, base_y),
+			_CLOUD_LIFT * delta)
+	else:
+		# Clear air — ease back toward the cloud's lane and cruise altitude.
+		cloud.position.z = move_toward(cloud.position.z, base_z, _CLOUD_RELAX * delta)
+		cloud.position.y = move_toward(cloud.position.y, base_y, _CLOUD_RELAX * delta)
+
+
+## Deterministic generator surface height at world (x, z) via main_scene._terrain_surface_at
+## (the same formula entities ground-snap to, mountain lift included). Very low fallback when
+## no main_scene is reachable (detached test) so clouds never deflect over nothing.
+func _surface_y(x: float, z: float) -> float:
+	var scene: Node = _resolve_main_scene()
+	if scene != null and scene.has_method("_terrain_surface_at"):
+		return float(scene._terrain_surface_at(x, z))
+	return -1000.0
+
+
+## Lazily resolve + cache the MainScene node (group "main_scene"); null in a detached test.
+func _resolve_main_scene() -> Node:
+	if _main_scene != null and is_instance_valid(_main_scene):
+		return _main_scene
+	if not is_inside_tree():
+		return null
+	_main_scene = get_tree().get_first_node_in_group("main_scene")
+	return _main_scene
 
 
 ## Build a disc of unit bricks in the local XY plane: cubes within `diameter`/2 of centre,
@@ -268,6 +331,7 @@ func _process(delta: float) -> void:
 		cloud.position.x += _CLOUD_DRIFT * delta
 		if cloud.position.x > _CLOUD_SPREAD:
 			cloud.position.x = -_CLOUD_SPREAD
+		_flow_around_terrain(cloud, delta)
 
 	if is_day:
 		_place(_sun, cam_pos, clampf(dp / NIGHT_START, 0.0, 1.0))
