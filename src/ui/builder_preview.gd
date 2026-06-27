@@ -68,9 +68,52 @@ var _cur_hair := ""
 var _hair_colour: Color = HAIR_COLOURS[0]
 var _hair_shade_parts: Array[MeshInstance3D] = []
 
+## Animation pivots (legs/arms swing from these) + procedural-animation state.
+var _leg_l_pivot: Node3D = null
+var _leg_r_pivot: Node3D = null
+var _arm_l_pivot: Node3D = null
+var _arm_r_pivot: Node3D = null
+var _anim_phase: float = 0.0
+var _walk_blend: float = 0.0
+var _grounded: bool = true
+## Off in the creator (clean idle stand); the in-world Builder turns it on + drives it.
+var _animate: bool = false
+
 
 func _ready() -> void:
 	_build()
+
+
+## Drive the procedural walk/idle/jump from the in-world Builder each frame.
+##   h_speed : horizontal speed (m/s); 0 = idle.
+##   grounded: false → jump/airborne pose.
+func set_locomotion(h_speed: float, grounded: bool) -> void:
+	_animate = true
+	_walk_blend = clampf(h_speed / 2.5, 0.0, 1.0)
+	_grounded = grounded
+
+
+func _process(delta: float) -> void:
+	if not _animate:
+		return
+	if not _grounded:
+		# Airborne: legs split, arms raised.
+		_set_pivot(_leg_l_pivot, 0.5)
+		_set_pivot(_leg_r_pivot, -0.3)
+		_set_pivot(_arm_l_pivot, -0.9)
+		_set_pivot(_arm_r_pivot, -0.9)
+		return
+	_anim_phase += delta * (5.0 + _walk_blend * 8.0)
+	var swing: float = sin(_anim_phase) * (0.04 + _walk_blend * 0.55)
+	_set_pivot(_leg_l_pivot, swing)
+	_set_pivot(_leg_r_pivot, -swing)
+	_set_pivot(_arm_l_pivot, -swing * 0.85)
+	_set_pivot(_arm_r_pivot, swing * 0.85)
+
+
+func _set_pivot(p: Node3D, x_rot: float) -> void:
+	if p != null:
+		p.rotation.x = x_rot
 
 
 # ─── Primitive helpers ────────────────────────────────────────────────────────
@@ -96,7 +139,7 @@ func _box(p: Node, nm: String, size: Vector3, pos: Vector3, colour: Color, rot :
 
 ## Build a wide open-gap C-claw hand from chunky voxels (gap at the top, where a
 ## tool would sit). Reads as a minifig C-hand rather than a closed ring.
-func _build_claw(nm: String, center: Vector3, colour: Color) -> void:
+func _build_claw(parent: Node, nm: String, center: Vector3, colour: Color) -> void:
 	var r := 0.16
 	var seg := 10
 	for i in seg:
@@ -107,7 +150,7 @@ func _build_claw(nm: String, center: Vector3, colour: Color) -> void:
 			continue
 		var px := center.x + cos(a) * r
 		var py := center.y + sin(a) * r
-		var b := _box(self, "%s_%d" % [nm, i], Vector3(0.11, 0.11, 0.20), Vector3(px, py, center.z), colour)
+		var b := _box(parent, "%s_%d" % [nm, i], Vector3(0.11, 0.11, 0.20), Vector3(px, py, center.z), colour)
 		_skin_parts.append(b)
 
 func _torus(p: Node, nm: String, inner: float, outer: float, pos: Vector3, colour: Color, rot: Vector3) -> MeshInstance3D:
@@ -132,21 +175,27 @@ func _build() -> void:
 	var skin := SKIN_COLOURS[0]
 	var outfit := BODY_COLOURS[6]
 
-	# ── Legs + hips ───────────────────────────────────────────────────────────
-	_box(self, "LegL", Vector3(0.26, 0.62, 0.30), Vector3(-0.145, 0.31, 0.0), LEG_COLOUR)
-	_box(self, "LegR", Vector3(0.26, 0.62, 0.30), Vector3(0.145, 0.31, 0.0), LEG_COLOUR)
-	_box(self, "FootL", Vector3(0.27, 0.10, 0.34), Vector3(-0.145, 0.05, 0.02), Color("#1C1C22"))
-	_box(self, "FootR", Vector3(0.27, 0.10, 0.34), Vector3(0.145, 0.05, 0.02), Color("#1C1C22"))
+	# ── Legs on hip pivots (animation) ────────────────────────────────────────
+	# Each leg hangs from a pivot at the hip joint (y≈0.70) so rotating the pivot.x
+	# swings the whole leg for a walk cycle. Parts are positioned relative to it.
+	_leg_l_pivot = Node3D.new()
+	_leg_l_pivot.name = "HipPivotL"
+	_leg_l_pivot.position = Vector3(-0.145, 0.70, 0.0)
+	add_child(_leg_l_pivot)
+	_leg_r_pivot = Node3D.new()
+	_leg_r_pivot.name = "HipPivotR"
+	_leg_r_pivot.position = Vector3(0.145, 0.70, 0.0)
+	add_child(_leg_r_pivot)
+	for side in [["L", _leg_l_pivot], ["R", _leg_r_pivot]]:
+		var s: String = side[0]
+		var p: Node3D = side[1]
+		_box(p, "Leg" + s, Vector3(0.26, 0.62, 0.30), Vector3(0.0, -0.39, 0.0), LEG_COLOUR)
+		_box(p, "Foot" + s, Vector3(0.27, 0.10, 0.34), Vector3(0.0, -0.65, 0.02), Color("#1C1C22"))
+		_box(p, "Knee" + s, Vector3(0.20, 0.12, 0.02), Vector3(0.0, -0.36, 0.16), LEG_COLOUR.lightened(0.12))
+		_box(p, "Toe" + s, Vector3(0.27, 0.07, 0.10), Vector3(0.0, -0.64, 0.21), Color("#0F0F14"))
+		_box(p, "Sole" + s, Vector3(0.28, 0.03, 0.36), Vector3(0.0, -0.695, 0.02), Color("#444"))
 	_box(self, "Hips", Vector3(0.56, 0.20, 0.32), Vector3(0.0, 0.72, 0.0), LEG_COLOUR)
-	# Leg detail: lighter knee panels + a centre seam between the legs.
-	_box(self, "KneeL", Vector3(0.20, 0.12, 0.02), Vector3(-0.145, 0.34, 0.16), LEG_COLOUR.lightened(0.12))
-	_box(self, "KneeR", Vector3(0.20, 0.12, 0.02), Vector3(0.145, 0.34, 0.16), LEG_COLOUR.lightened(0.12))
-	_box(self, "LegGap", Vector3(0.03, 0.58, 0.30), Vector3(0.0, 0.31, 0.0), Color("#15151A"))
-	# Shoe toe caps + soles.
-	_box(self, "ToeL", Vector3(0.27, 0.07, 0.10), Vector3(-0.145, 0.06, 0.21), Color("#0F0F14"))
-	_box(self, "ToeR", Vector3(0.27, 0.07, 0.10), Vector3(0.145, 0.06, 0.21), Color("#0F0F14"))
-	_box(self, "SoleL", Vector3(0.28, 0.03, 0.36), Vector3(-0.145, 0.005, 0.02), Color("#444"))
-	_box(self, "SoleR", Vector3(0.28, 0.03, 0.36), Vector3(0.145, 0.005, 0.02), Color("#444"))
+	_box(self, "LegGap", Vector3(0.03, 0.40, 0.30), Vector3(0.0, 0.50, 0.0), Color("#15151A"))
 
 	# ── Torso (trapezoid: narrow chest box + wider waist box) ─────────────────
 	var chest := _box(self, "Chest", Vector3(0.58, 0.40, 0.34), Vector3(0.0, 1.18, 0.0), outfit)
@@ -167,18 +216,24 @@ func _build() -> void:
 	_box(self, "LapelL", Vector3(0.08, 0.17, 0.02), Vector3(-0.10, 1.29, 0.175), Color("#FFFFFF").lerp(outfit, 0.5), Vector3(0, 0, deg_to_rad(-16)))
 	_box(self, "LapelR", Vector3(0.08, 0.17, 0.02), Vector3(0.10, 1.29, 0.175), Color("#FFFFFF").lerp(outfit, 0.5), Vector3(0, 0, deg_to_rad(16)))
 
-	# ── Shoulders + arms (angled) + C-claw hands ──────────────────────────────
+	# ── Shoulders (static) + arms on shoulder pivots + C-claw hands ───────────
 	var sh_l := _box(self, "ShoulderL", Vector3(0.20, 0.22, 0.28), Vector3(-0.37, 1.30, 0.0), outfit)
 	var sh_r := _box(self, "ShoulderR", Vector3(0.20, 0.22, 0.28), Vector3(0.37, 1.30, 0.0), outfit)
-	var arm_l := _box(self, "ArmL", Vector3(0.18, 0.46, 0.22), Vector3(-0.42, 1.02, 0.04), outfit, Vector3(0, 0, deg_to_rad(8)))
-	var arm_r := _box(self, "ArmR", Vector3(0.18, 0.46, 0.22), Vector3(0.42, 1.02, 0.04), outfit, Vector3(0, 0, deg_to_rad(-8)))
-	_outfit_parts.append_array([sh_l, sh_r, arm_l, arm_r])
-	# Sleeve cuffs (slightly darker outfit) then wide open-gap C-claw hands.
-	var cuff_l := _box(self, "CuffL", Vector3(0.20, 0.08, 0.24), Vector3(-0.42, 0.86, 0.04), outfit.darkened(0.18), Vector3(0, 0, deg_to_rad(8)))
-	var cuff_r := _box(self, "CuffR", Vector3(0.20, 0.08, 0.24), Vector3(0.42, 0.86, 0.04), outfit.darkened(0.18), Vector3(0, 0, deg_to_rad(-8)))
-	_outfit_parts.append_array([cuff_l, cuff_r])
-	_build_claw("HandL", Vector3(-0.45, 0.74, 0.10), skin)
-	_build_claw("HandR", Vector3(0.45, 0.74, 0.10), skin)
+	_outfit_parts.append_array([sh_l, sh_r])
+	_arm_l_pivot = Node3D.new()
+	_arm_l_pivot.name = "ShoulderPivotL"
+	_arm_l_pivot.position = Vector3(-0.40, 1.38, 0.04)
+	add_child(_arm_l_pivot)
+	_arm_r_pivot = Node3D.new()
+	_arm_r_pivot.name = "ShoulderPivotR"
+	_arm_r_pivot.position = Vector3(0.40, 1.38, 0.04)
+	add_child(_arm_r_pivot)
+	for side in [["L", _arm_l_pivot], ["R", _arm_r_pivot]]:
+		var s: String = side[0]
+		var p: Node3D = side[1]
+		_outfit_parts.append(_box(p, "Arm" + s, Vector3(0.18, 0.46, 0.22), Vector3(0.0, -0.36, 0.0), outfit))
+		_outfit_parts.append(_box(p, "Cuff" + s, Vector3(0.20, 0.08, 0.24), Vector3(0.0, -0.52, 0.0), outfit.darkened(0.18)))
+		_build_claw(p, "Hand" + s, Vector3(0.0, -0.64, 0.06), skin)
 
 	# ── Neck + head ───────────────────────────────────────────────────────────
 	var neck := _box(self, "Neck", Vector3(0.22, 0.10, 0.22), Vector3(0.0, 1.46, 0.0), skin)
