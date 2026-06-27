@@ -2264,22 +2264,10 @@ func _setup_avatar_mesh_nodes() -> void:
 	_avatar_mesh_root.name = "AvatarMesh"
 	add_child(_avatar_mesh_root)
 
-	# ── Box-minifig avatar (the customised creator figure) ──────────────────
-	# Use the same figure the player designed in the avatar creator so ALL their
-	# customisation (face, hair colour, outfit, accessories, signature gear) shows
-	# in-world. It is the sole visual when present and is animated procedurally via
-	# set_locomotion() each physics frame. Any failure falls through to the GLB path.
-	const _BOX_MINIFIG := "res://src/ui/builder_preview.tscn"
-	if ResourceLoader.exists(_BOX_MINIFIG):
-		var packed_bm := load(_BOX_MINIFIG)
-		if packed_bm is PackedScene:
-			var bm := (packed_bm as PackedScene).instantiate() as Node3D
-			if bm != null and bm.has_method("apply_avatar_config"):
-				bm.name = "BoxMinifig"
-				bm.scale = Vector3.ONE * (1.8 / 2.25)  # ~2.25 u tall → ~1.8 m
-				bm.rotation.y = PI                     # face the walk direction (-Z)
-				_avatar_mesh_root.add_child(bm)
-				_box_minifig = bm
+	# ── Avatar model = the textured, rigged skin .glb (the original builder look). ──
+	# (The voxel box-minifig experiment was reverted: it didn't read well in-world, and
+	# the skin GLBs carry real authored Walking/Running/Jump animations. _box_minifig
+	# stays null, so the GLB path below runs and the forwarding guards are inert.)
 
 	# ── Fix(07): Real builder model from .glb (skipped when the box-minifig loaded) ─
 	# Try to load builder_default.glb; if successful, add it as the visible model.
