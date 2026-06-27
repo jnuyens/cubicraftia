@@ -1724,21 +1724,33 @@ const _SHOWCASE_LANDMARKS: Array = [
 	["structure_1_03",         200.0, 32.0],  # red/white lighthouse — tall hero, left-of-centre, set back
 	["structure_2_03",         165.0, 32.0],  # stone castle w/ blue banners — hero, right-of-centre, back
 	["structure_1_01",         222.0, 28.0],  # windmill — tall, far LEFT
-	["structure_1_05",         184.0, 18.0],  # striped market stall — centre foreground
+	["structure_1_05",         196.0, 19.0],  # striped market stall — left-of-centre (clears the pyramid)
 	["structure_1_00",         210.0, 16.0],  # cottage/house — left foreground
 	["structure_1_02",         156.0, 18.0],  # cottage/house — right foreground
 	["structure_1_06",         140.0, 24.0],  # house/tower — far right edge
+	# More cottages/landmarks to fill the green and wrap the village further around the ring.
+	["structure_1_04",         130.0, 30.0],  # cottage — far right, set back
+	["structure_1_07",         234.0, 22.0],  # cottage — far left foreground
+	["structure_1_08",         118.0, 20.0],  # cottage/stall — right edge, foreground
+	["structure_2_00",         248.0, 30.0],  # tower/keep — left side, behind windmill
+	["structure_3_00",         108.0, 30.0],  # market stall/house — right edge, set back
 ]
 
 ## A few showcase animals scattered in the spawn clearing (land kinds that ground cleanly via
 ## spawn_wildlife). Bearing° / radius m from spawn, kept inside the ring of landmarks so they
 ## read as livestock milling around the village green.
 const _SHOWCASE_ANIMALS: Array = [
-	["sheep", 168.0, 8.0],
-	["pig",   192.0, 7.0],
-	["dog",   158.0, 6.0],
-	["panda", 200.0, 10.0],
-	["sheep", 180.0, 11.0],
+	["sheep",   168.0, 8.0],
+	["pig",     192.0, 7.0],
+	["dog",     158.0, 6.0],
+	["panda",   200.0, 10.0],
+	["sheep",   162.0, 9.0],
+	["pig",     150.0, 9.0],
+	["dog",     210.0, 8.0],
+	["penguin", 176.0, 6.0],
+	["penguin", 188.0, 13.0],
+	["sheep",   144.0, 12.0],
+	["panda",   216.0, 12.0],
 ]
 
 
@@ -1813,8 +1825,8 @@ func _spawn_showcase_near_spawn(world_spawn: Vector3) -> void:
 		glow.light_cull_mask = CHANNEL_VISUAL_MASK
 		campfire.add_child(glow)
 
-	# ── A pair of decorative flags flanking the spawn green, like a village entrance ──
-	for fb: float in [160.0, 200.0]:
+	# ── Decorative flags ringing the spawn green, like a festive village entrance ──
+	for fb: float in [148.0, 160.0, 172.0, 188.0, 200.0, 212.0]:
 		var fbearing: float = deg_to_rad(fb)
 		var fx: float = origin.x + sin(fbearing) * 8.0
 		var fz: float = origin.y + cos(fbearing) * 8.0
@@ -1825,6 +1837,12 @@ func _spawn_showcase_near_spawn(world_spawn: Vector3) -> void:
 		var flag: Node3D = _spawn_showcase_prop(_SHOWCASE_FLAG_PATH, Vector3(fx, fgy + 3.0, fz), 1.6)
 		if flag != null:
 			flag.add_to_group("spawn_showcase")
+
+	# ── Stepped sand pyramid, built from TERRAIN VOXELS (not a GLB) ─────────────
+	# Placed off to one side of the spawn green (bearing/radius below), clear of the
+	# landmark ring. Runs on its own retry loop (like the clearing sweep) because
+	# VoxelTool writes only land on STREAMED chunks.
+	_build_spawn_pyramid(world_spawn)
 
 	# ── Friendly animals milling around the village green ───────────────────────
 	for a: Array in _SHOWCASE_ANIMALS:
@@ -1885,7 +1903,7 @@ func _spawn_showcase_prop(path: String, world_pos: Vector3, target_m: float) -> 
 ## Radius (m) of the cleared showcase green — trees inside this disc around spawn are removed
 ## so the landmark village is visible instead of buried behind a forest canopy. Sized to wrap
 ## the landmark ring (farthest landmark ~28 m) plus a little margin.
-const _SHOWCASE_CLEARING_RADIUS_M: float = 40.0
+const _SHOWCASE_CLEARING_RADIUS_M: float = 48.0
 
 ## Vertical span (cells above the surface) scanned for tree voxels to remove. Trees in this world
 ## are ~10-14 cells tall; 24 comfortably covers the tallest jungle tree without runaway cost.
@@ -1971,6 +1989,101 @@ func _sweep_clearing(voxel_tool: Object, cx0: int, cz0: int) -> void:
 				var vv: int = int(voxel_tool.get_voxel(cell))
 				if _SHOWCASE_TREE_VOXELS.has(vv):
 					voxel_tool.set_voxel(cell, 0)  # AIR
+
+
+# ─── Spawn PYRAMID: stepped Egyptian pyramid built from SAND terrain voxels ───
+
+## SAND voxel id (matches terrain.tscn's VoxelBlockyLibrary: 0=air,1=grass,2=sand,...).
+const _PYRAMID_SAND_VOXEL: int = 2
+
+## Bearing° (0=+Z, clockwise) and radius m from spawn for the pyramid centre. Placed on the
+## far-right edge of the spawn green, clear of the landmark ring (108..248) and of the spawn
+## point, so it reads as a distinct desert landmark beside the village rather than overlapping it.
+const _PYRAMID_BEARING_DEG: float = 180.0
+const _PYRAMID_RADIUS_M: float = 20.0
+
+## Stepped pyramid geometry: base is (2*_PYRAMID_HALF_BASE+1) voxels per side, shrinking by 1
+## voxel per side each layer up, for _PYRAMID_LAYERS layers. half_base 6 -> 13x13 base, 7 layers,
+## top a 1x1 cap. Each layer is 1 voxel tall, so the whole pyramid is _PYRAMID_LAYERS cells tall.
+const _PYRAMID_HALF_BASE: int = 7
+const _PYRAMID_LAYERS: int = 8
+
+
+## Build a solid stepped sand pyramid from TERRAIN VOXELS (not a GLB) near the spawn point.
+## Mirrors _clear_showcase_clearing's retry pattern: VoxelTool writes only land on STREAMED
+## chunks, so we wait (bounded) for the chunks under the footprint to mesh, stamp the pyramid,
+## then re-stamp a couple more times to catch any late-streaming chunks the generator re-fills.
+## Fully guarded: if there is no VoxelTerrain / VoxelTool it simply does nothing (no crash).
+func _build_spawn_pyramid(world_spawn: Vector3) -> void:
+	var terrain: Node = get_node_or_null("Terrain")
+	if terrain == null or not terrain.has_method("get_voxel_tool"):
+		return
+	var voxel_tool: Object = terrain.get_voxel_tool()
+	if voxel_tool == null:
+		return
+	if "channel" in voxel_tool:
+		voxel_tool.channel = 0  # VoxelBuffer.CHANNEL_TYPE — the block-id channel
+
+	# Pyramid centre column (bearing 0 = +Z, increasing clockwise: x = sin, z = cos).
+	var bearing: float = deg_to_rad(_PYRAMID_BEARING_DEG)
+	var cx0: int = floori(world_spawn.x + sin(bearing) * _PYRAMID_RADIUS_M)
+	var cz0: int = floori(world_spawn.z + cos(bearing) * _PYRAMID_RADIUS_M)
+
+	# Wait (bounded) for the centre chunk to stream so the writes actually land. Probe a
+	# known-solid surface cell; once it reads non-AIR the chunk under the pyramid has meshed.
+	var surface_probe: int = int(_terrain_surface_at(float(cx0), float(cz0)))
+	var ready_to_edit: bool = false
+	for _attempt: int in range(30):
+		if voxel_tool.has_method("get_voxel"):
+			var v: int = int(voxel_tool.get_voxel(Vector3i(cx0, surface_probe - 1, cz0)))
+			if v != 0:
+				ready_to_edit = true
+				break
+		await get_tree().create_timer(0.4).timeout
+		if not is_instance_valid(terrain):
+			return
+		voxel_tool = terrain.get_voxel_tool()
+		if voxel_tool == null:
+			return
+		if "channel" in voxel_tool:
+			voxel_tool.channel = 0
+	if not ready_to_edit or not voxel_tool.has_method("set_voxel"):
+		return
+
+	_stamp_pyramid(voxel_tool, cx0, cz0)
+	# Re-stamp several times, spread out over ~12 s, to win the race against late chunk
+	# streaming: the generator re-fills chunks that stream/mesh AFTER an early pass (re-burying
+	# the pyramid under fresh grass/air), so we keep re-stamping until the footprint has settled.
+	# Same pattern as the clearing sweep, but more/longer passes because the footprint is wider.
+	for _pass: int in range(6):
+		await get_tree().create_timer(2.0).timeout
+		if not is_instance_valid(terrain):
+			return
+		voxel_tool = terrain.get_voxel_tool()
+		if voxel_tool == null or not voxel_tool.has_method("set_voxel"):
+			return
+		if "channel" in voxel_tool:
+			voxel_tool.channel = 0
+		_stamp_pyramid(voxel_tool, cx0, cz0)
+
+
+## One stamp of the stepped sand pyramid centred on column (cx0, cz0). Each layer is a solid
+## square of sand voxels, shrinking by 1 voxel per side as it rises; the base is ground-snapped
+## so its lowest layer sits flush ON the local terrain surface (no floating, no burying). Pure
+## VoxelTool writes on already-streamed chunks (a no-op on chunks not yet meshed).
+func _stamp_pyramid(voxel_tool: Object, cx0: int, cz0: int) -> void:
+	# Ground-snap: the local surface_y is _terrain_surface_at - 1 (top SOLID cell); the pyramid's
+	# first layer sits one cell above that, ON the surface. Snap to the centre column so the whole
+	# stack shares one base height (a stepped monument reads as built on flat ground).
+	var base_y: int = int(_terrain_surface_at(float(cx0), float(cz0)))  # first AIR cell above ground
+	for layer: int in range(_PYRAMID_LAYERS):
+		var half: int = _PYRAMID_HALF_BASE - layer
+		if half < 0:
+			break
+		var yy: int = base_y + layer
+		for dx: int in range(-half, half + 1):
+			for dz: int in range(-half, half + 1):
+				voxel_tool.set_voxel(Vector3i(cx0 + dx, yy, cz0 + dz), _PYRAMID_SAND_VOXEL)
 
 
 ## Chest contents match D-15 verbatim (single source of truth: _STARTER_CHEST_CONTENTS).
