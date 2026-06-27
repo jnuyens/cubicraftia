@@ -127,7 +127,7 @@ func _mat(colour: Color) -> StandardMaterial3D:
 ## Target voxel edge length: every part is rebuilt from a grid of cubes this size
 ## (≈100× the old single-box count) for a fine voxel look. Cached by size so identical
 ## parts (legs L/R, etc.) share one mesh.
-const _VOXEL_CUBE: float = 0.066
+const _VOXEL_CUBE: float = 0.085
 var _voxel_cache: Dictionary = {}
 var _vox_placeholder: StandardMaterial3D = null
 
