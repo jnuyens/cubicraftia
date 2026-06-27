@@ -29,7 +29,7 @@ const BODY_COLOURS: Array[Color] = [
 ]
 
 # Fixed accents.
-const LEG_COLOUR := Color("#2B2B33")     # dark trousers
+const LEG_COLOUR := Color("#1B2747")     # navy trousers (matches the hero art)
 const HAIR_COLOUR := Color("#6E4326")    # default brown hair
 const HAIR_SHADE := Color("#5A3520")     # darker hair (depth)
 
@@ -278,7 +278,7 @@ func _build() -> void:
 	_outfit_parts.append(chest)
 	_outfit_parts.append(waist)
 	# Collar (V-neck) + chest seam + belt + gold buckle (fixed trim).
-	_box(self, "Collar", Vector3(0.26, 0.08, 0.36), Vector3(0.0, 1.39, 0.01), Color("#FFFFFF").lerp(outfit, 0.35))
+	_box(self, "Collar", Vector3(0.30, 0.09, 0.37), Vector3(0.0, 1.40, 0.0), outfit.lightened(0.18))
 	_box(self, "Belt", Vector3(0.66, 0.07, 0.355), Vector3(0.0, 0.84, 0.0), BELT_COLOUR)
 	_box(self, "Buckle", Vector3(0.10, 0.07, 0.02), Vector3(0.0, 0.84, 0.18), BUCKLE_COLOUR)
 	_box(self, "Seam", Vector3(0.02, 0.45, 0.02), Vector3(0.0, 1.16, 0.175), BELT_COLOUR)
@@ -288,8 +288,10 @@ func _build() -> void:
 	_box(self, "BtnA", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.30, 0.18), BUCKLE_COLOUR)
 	_box(self, "BtnB", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.18, 0.18), BUCKLE_COLOUR)
 	_box(self, "BtnC", Vector3(0.035, 0.035, 0.02), Vector3(0.0, 1.06, 0.18), BUCKLE_COLOUR)
-	_box(self, "LapelL", Vector3(0.08, 0.17, 0.02), Vector3(-0.10, 1.29, 0.175), Color("#FFFFFF").lerp(outfit, 0.5), Vector3(0, 0, deg_to_rad(-16)))
-	_box(self, "LapelR", Vector3(0.08, 0.17, 0.02), Vector3(0.10, 1.29, 0.175), Color("#FFFFFF").lerp(outfit, 0.5), Vector3(0, 0, deg_to_rad(16)))
+	# Thin cream undershirt placket peeking at the collar (small, not a big white V).
+	_box(self, "Placket", Vector3(0.06, 0.18, 0.02), Vector3(0.0, 1.30, 0.178), Color("#EDE7D2"))
+	_box(self, "LapelL", Vector3(0.09, 0.16, 0.02), Vector3(-0.10, 1.30, 0.176), outfit.lightened(0.12), Vector3(0, 0, deg_to_rad(-16)))
+	_box(self, "LapelR", Vector3(0.09, 0.16, 0.02), Vector3(0.10, 1.30, 0.176), outfit.lightened(0.12), Vector3(0, 0, deg_to_rad(16)))
 
 	# ── Shoulders (static) + arms on shoulder pivots + C-claw hands ───────────
 	var sh_l := _box(self, "ShoulderL", Vector3(0.20, 0.22, 0.28), Vector3(-0.37, 1.30, 0.0), outfit)
@@ -321,10 +323,10 @@ func _build() -> void:
 	_box(self, "EyeWR", Vector3(0.12, 0.15, 0.02), Vector3(0.12, 1.84, fz), EYE_WHITE)
 	_box(self, "PupL", Vector3(0.06, 0.11, 0.02), Vector3(-0.105, 1.83, fz + 0.012), EYE_DARK)
 	_box(self, "PupR", Vector3(0.06, 0.11, 0.02), Vector3(0.105, 1.83, fz + 0.012), EYE_DARK)
-	# Brows: nearly flat with inner ends slightly RAISED (friendly, not angry). They
-	# follow the hair colour.
-	_hair_shade_parts.append(_box(self, "BrowL", Vector3(0.16, 0.05, 0.025), Vector3(-0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(7))))
-	_hair_shade_parts.append(_box(self, "BrowR", Vector3(0.16, 0.05, 0.025), Vector3(0.12, 1.935, fz + 0.005), HAIR_SHADE, Vector3(0, 0, deg_to_rad(-7))))
+	# Brows: BOLD black, thick and slightly angled — the strong dark brows of the hero art.
+	var brow_col := Color("#181210")
+	_box(self, "BrowL", Vector3(0.18, 0.07, 0.03), Vector3(-0.115, 1.93, fz + 0.008), brow_col, Vector3(0, 0, deg_to_rad(9)))
+	_box(self, "BrowR", Vector3(0.18, 0.07, 0.03), Vector3(0.115, 1.93, fz + 0.008), brow_col, Vector3(0, 0, deg_to_rad(-9)))
 	# Clean happy open smile: white teeth + red mouth + a thin lower lip whose ENDS sit
 	# slightly higher (an up-turn). No rotated side-corners — those read as a moustache
 	# and made every builder look the same. Facial hair is per-character only.
@@ -436,12 +438,14 @@ func _apply_hairstyle(style: String) -> void:
 	var h := _hair_root
 	var hc: Color = _hair_colour                  # picked hair colour
 	var hs: Color = _hair_colour.darkened(0.20)   # derived depth shade
-	# Common base: cap + fringe + sideburns framing the head (head top ~2.05).
-	_box(h, "Cap", Vector3(0.56, 0.16, 0.54), Vector3(0.0, 2.07, 0.0), hc)
-	_box(h, "Fringe", Vector3(0.54, 0.11, 0.10), Vector3(0.0, 2.03, 0.235), hc)
-	_box(h, "SideL", Vector3(0.08, 0.34, 0.46), Vector3(-0.27, 1.86, 0.0), hc)
-	_box(h, "SideR", Vector3(0.08, 0.34, 0.46), Vector3(0.27, 1.86, 0.0), hc)
-	_box(h, "Back", Vector3(0.50, 0.30, 0.10), Vector3(0.0, 1.86, -0.255), hc)
+	# Common base: a big chunky cap + fringe + thick sideburns framing the head, sitting
+	# high and voluminous like the hero art (head top ~2.05).
+	_box(h, "Cap", Vector3(0.62, 0.26, 0.60), Vector3(0.0, 2.12, 0.0), hc)
+	_box(h, "CapTop", Vector3(0.54, 0.16, 0.52), Vector3(0.0, 2.28, -0.02), hc)
+	_box(h, "Fringe", Vector3(0.58, 0.16, 0.12), Vector3(0.0, 2.04, 0.24), hc)
+	_box(h, "SideL", Vector3(0.12, 0.42, 0.52), Vector3(-0.29, 1.88, 0.0), hc)
+	_box(h, "SideR", Vector3(0.12, 0.42, 0.52), Vector3(0.29, 1.88, 0.0), hc)
+	_box(h, "Back", Vector3(0.56, 0.40, 0.14), Vector3(0.0, 1.90, -0.27), hc)
 	# Density: angled fringe tufts + layered side locks on every style.
 	_box(h, "TuftFL", Vector3(0.14, 0.13, 0.12), Vector3(-0.16, 2.13, 0.11), hc, Vector3(deg_to_rad(-24), 0, deg_to_rad(-10)))
 	_box(h, "TuftFR", Vector3(0.14, 0.13, 0.12), Vector3(0.16, 2.13, 0.11), hc, Vector3(deg_to_rad(-24), 0, deg_to_rad(10)))
@@ -483,7 +487,9 @@ func apply_avatar_config(cfg: Dictionary) -> void:
 	# Keep the collar a tinted-light shade of the new outfit.
 	var collar: Node = get_node_or_null("Collar")
 	if collar is MeshInstance3D:
-		_recolour(collar, Color("#FFFFFF").lerp(outfit, 0.2))
+		_recolour(collar, outfit.lightened(0.18))
+	for lap in ["LapelL", "LapelR"]:
+		_recolour(get_node_or_null(lap) as MeshInstance3D, outfit.lightened(0.12))
 
 	# Hair: pickable colour + style. Rebuild the hair cluster when either changes.
 	var style: String = str(cfg.get("head_shape", "square"))
