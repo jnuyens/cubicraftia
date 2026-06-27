@@ -1700,6 +1700,20 @@ const _SHOWCASE_BALLOON_PATH: String = "res://assets/meshes/sky/hot_air_balloon.
 const _SHOWCASE_CAMPFIRE_PATH: String = "res://assets/meshes/campfire.glb"
 const _SHOWCASE_FLAG_PATH: String = "res://assets/meshes/pil4k_clean/flag2.glb"
 const _SHOWCASE_FLAGPOLE_PATH: String = "res://assets/meshes/pil4k_clean/flag2_pole.glb"
+## Enrichment prop paths (trees / fence / floating island) — all existence-checked at use.
+const _SHOWCASE_TREE_PATH: String = "res://assets/meshes/pil4k_clean/tree.glb"
+const _SHOWCASE_CLOUDTREE_PATH: String = "res://assets/meshes/pil4k_clean/cloudtree.glb"
+const _SHOWCASE_FENCE_PATH: String = "res://assets/meshes/pil4k_clean/fence.glb"
+const _SHOWCASE_ISLAND_PATH: String = "res://assets/meshes/pil4k_clean/waterfall_island.glb"
+## Shipwreck used decoratively as a boat at the lake edge (intact ships are missing art).
+const _SHOWCASE_SHIP_ID: String = "structure_shipwreck"
+
+## Showcase decorative trees ringing the cleared green (bearing° / radius m). Placed just inside
+## the clearing radius (48 m) so they frame the village without burying it.
+const _SHOWCASE_TREES: Array = [
+	[122.0, 44.0], [238.0, 44.0], [110.0, 40.0], [250.0, 40.0],
+	[135.0, 46.0], [225.0, 46.0], [160.0, 46.0], [200.0, 46.0],
+]
 
 ## Showcase landmark ring: each entry places one catalog structure GLB (via spawn_structure,
 ## which auto-scales to its longest axis, grounds the base on terrain, and builds collision)
@@ -1734,6 +1748,12 @@ const _SHOWCASE_LANDMARKS: Array = [
 	["structure_1_08",         118.0, 20.0],  # cottage/stall — right edge, foreground
 	["structure_2_00",         248.0, 30.0],  # tower/keep — left side, behind windmill
 	["structure_3_00",         108.0, 30.0],  # market stall/house — right edge, set back
+	# Enrichment: more cottages/towers wrapping the green for the lively reference look.
+	["structure_2_01",         126.0, 38.0],  # tower/keep — right side, set well back
+	["structure_2_02",         254.0, 38.0],  # cottage/keep — left side, set well back
+	["structure_3_01",         150.0, 40.0],  # market stall/house — right-of-centre, far back skyline
+	["structure_3_02",         212.0, 40.0],  # market stall/house — left-of-centre, far back skyline
+	["structure_2_04",         100.0, 24.0],  # cottage — right edge, foreground
 ]
 
 ## A few showcase animals scattered in the spawn clearing (land kinds that ground cleanly via
@@ -1751,6 +1771,11 @@ const _SHOWCASE_ANIMALS: Array = [
 	["penguin", 188.0, 13.0],
 	["sheep",   144.0, 12.0],
 	["panda",   216.0, 12.0],
+	# Enrichment: a few more livestock milling the green.
+	["dog",     180.0, 5.0],
+	["pig",     224.0, 11.0],
+	["sheep",   136.0, 10.0],
+	["panda",   156.0, 14.0],
 ]
 
 
@@ -1837,6 +1862,54 @@ func _spawn_showcase_near_spawn(world_spawn: Vector3) -> void:
 		var flag: Node3D = _spawn_showcase_prop(_SHOWCASE_FLAG_PATH, Vector3(fx, fgy + 3.0, fz), 1.6)
 		if flag != null:
 			flag.add_to_group("spawn_showcase")
+
+	# ── Decorative trees ringing the cleared green (frame the village) ──────────
+	for t: Array in _SHOWCASE_TREES:
+		var tbearing: float = deg_to_rad(float(t[0]))
+		var tradius: float = float(t[1])
+		var tx: float = origin.x + sin(tbearing) * tradius
+		var tz: float = origin.y + cos(tbearing) * tradius
+		var tree: Node3D = _spawn_showcase_prop(_SHOWCASE_TREE_PATH, Vector3(tx, _terrain_surface_at(tx, tz), tz), 7.0)
+		if tree != null:
+			tree.add_to_group("spawn_showcase")
+			tree.rotation.y = tbearing  # vary facing so the trees don't all look identical
+
+	# ── A short rustic fence run along the front of the green (cheap dressing) ──
+	# A gentle arc of fence segments across the foreground (bearing ~150..210) just inside the
+	# flag ring, so the green reads as an enclosed village commons.
+	for fb: float in [150.0, 158.0, 166.0, 214.0, 222.0, 230.0]:
+		var fcb: float = deg_to_rad(fb)
+		var fcx: float = origin.x + sin(fcb) * 11.0
+		var fcz: float = origin.y + cos(fcb) * 11.0
+		var fence: Node3D = _spawn_showcase_prop(_SHOWCASE_FENCE_PATH, Vector3(fcx, _terrain_surface_at(fcx, fcz), fcz), 3.0)
+		if fence != null:
+			fence.add_to_group("spawn_showcase")
+			# Orient the fence run tangent to the ring (perpendicular to the radial direction).
+			fence.rotation.y = fcb + PI / 2.0
+
+	# ── A small floating island, a few metres up, for the reference's sky-isle vibe ──
+	# Off to the right edge and ~14 m up so it hangs over the skyline without blocking the
+	# village. Decorative only (no collision). Skipped silently if the asset is missing.
+	var isle_bearing: float = deg_to_rad(120.0)
+	var isle_x: float = origin.x + sin(isle_bearing) * 34.0
+	var isle_z: float = origin.y + cos(isle_bearing) * 34.0
+	var island: Node3D = _spawn_showcase_prop(
+		_SHOWCASE_ISLAND_PATH,
+		Vector3(isle_x, _terrain_surface_at(isle_x, isle_z) + 16.0, isle_z),
+		11.0)
+	if island != null:
+		island.add_to_group("spawn_showcase")
+
+	# ── A shallow water lake to the left of the green, built from terrain voxels ──
+	# Carved + flooded with WATER voxels on its own retry loop (VoxelTool writes only land on
+	# STREAMED chunks). Started here (before the pyramid) so the lake basin settles while the
+	# pyramid stamps; the ship placement below waits on the lake centre being recorded.
+	_build_spawn_lake(world_spawn)
+
+	# ── Shipwrecks used as decorative boats at the lake edge ────────────────────
+	# Placed once the lake centre is known (the lake builder records _lake_centre after the
+	# footprint chunk streams). Runs on its own short wait so the boats snap to the carved water.
+	_spawn_showcase_ships(world_spawn)
 
 	# ── Stepped sand pyramid, built from TERRAIN VOXELS (not a GLB) ─────────────
 	# Placed off to one side of the spawn green (bearing/radius below), clear of the
@@ -2084,6 +2157,168 @@ func _stamp_pyramid(voxel_tool: Object, cx0: int, cz0: int) -> void:
 		for dx: int in range(-half, half + 1):
 			for dz: int in range(-half, half + 1):
 				voxel_tool.set_voxel(Vector3i(cx0 + dx, yy, cz0 + dz), _PYRAMID_SAND_VOXEL)
+
+
+# ─── Spawn LAKE: a shallow water body carved + filled from terrain voxels ──────
+
+## WATER voxel id (matches terrain.tscn's VoxelBlockyLibrary + multipass_generator.WATER_ID).
+const _LAKE_WATER_VOXEL: int = 7
+## SAND voxel id for the lake's shoreline beach (same id the pyramid uses).
+const _LAKE_SAND_VOXEL: int = 2
+
+## Bearing° (0=+Z, clockwise) and radius m from spawn for the lake centre. Placed to the LEFT
+## of the spawn green (the chase-cam looks toward bearing 180, so bearing ~232 sits left-of-frame),
+## set well back so it reads as a pond beside the village without swallowing the spawn point or
+## the landmark ring. Far enough out (38 m) that the foreground stays dry walkable green.
+const _LAKE_BEARING_DEG: float = 196.0
+const _LAKE_RADIUS_M: float = 18.0
+
+## Lake disc radius (voxels). 13 → a ~26 m pond: big enough to read as a real water body and
+## carry a ship, small enough to stamp cheaply and not flood the whole clearing or reach the
+## spawn point / landmark ring.
+const _LAKE_DISC_R: int = 13
+## How many cells deep the basin is carved below the local surface before flooding with water.
+const _LAKE_DEPTH: int = 4
+
+## Build a shallow water lake near spawn from TERRAIN VOXELS. Carves a smooth bowl-shaped basin
+## (deeper toward the centre), rims it with a thin sand beach, then floods it to one cell below the
+## surrounding surface with WATER voxels. Mirrors the pyramid's retry pattern: VoxelTool writes only
+## land on STREAMED chunks, so it waits (bounded) for the footprint to mesh, stamps, then re-stamps
+## a few times to win the race against late chunk streaming. Fully guarded — no terrain/tool = no-op.
+func _build_spawn_lake(world_spawn: Vector3) -> void:
+	var terrain: Node = get_node_or_null("Terrain")
+	if terrain == null or not terrain.has_method("get_voxel_tool"):
+		return
+	var voxel_tool: Object = terrain.get_voxel_tool()
+	if voxel_tool == null:
+		return
+	if "channel" in voxel_tool:
+		voxel_tool.channel = 0  # VoxelBuffer.CHANNEL_TYPE — the block-id channel
+
+	var bearing: float = deg_to_rad(_LAKE_BEARING_DEG)
+	var cx0: int = floori(world_spawn.x + sin(bearing) * _LAKE_RADIUS_M)
+	var cz0: int = floori(world_spawn.z + cos(bearing) * _LAKE_RADIUS_M)
+
+	# Wait (bounded) for the centre chunk to stream so the writes actually land.
+	var surface_probe: int = int(_terrain_surface_at(float(cx0), float(cz0)))
+	var ready_to_edit: bool = false
+	for _attempt: int in range(30):
+		if voxel_tool.has_method("get_voxel"):
+			var v: int = int(voxel_tool.get_voxel(Vector3i(cx0, surface_probe - 1, cz0)))
+			if v != 0:
+				ready_to_edit = true
+				break
+		await get_tree().create_timer(0.4).timeout
+		if not is_instance_valid(terrain):
+			return
+		voxel_tool = terrain.get_voxel_tool()
+		if voxel_tool == null:
+			return
+		if "channel" in voxel_tool:
+			voxel_tool.channel = 0
+	if not ready_to_edit or not voxel_tool.has_method("set_voxel"):
+		return
+
+	# Stamp the lake centre column for the showcase ship placement to query later.
+	_lake_centre = Vector3(float(cx0), float(surface_probe), float(cz0))
+
+	_stamp_lake(voxel_tool, cx0, cz0)
+	for _pass: int in range(5):
+		await get_tree().create_timer(2.0).timeout
+		if not is_instance_valid(terrain):
+			return
+		voxel_tool = terrain.get_voxel_tool()
+		if voxel_tool == null or not voxel_tool.has_method("set_voxel"):
+			return
+		if "channel" in voxel_tool:
+			voxel_tool.channel = 0
+		_stamp_lake(voxel_tool, cx0, cz0)
+
+
+## Cached lake centre column (world space, x/z; y = surface) so the showcase ship placement can
+## snap boats to the actual carved water surface. Vector3.INF until the lake has been stamped.
+var _lake_centre: Vector3 = Vector3(INF, INF, INF)
+
+
+## One stamp of the lake: carve a bowl (deeper toward the centre), beach the rim with sand, flood
+## with water to one cell below the surrounding surface. Pure VoxelTool writes on streamed chunks.
+func _stamp_lake(voxel_tool: Object, cx0: int, cz0: int) -> void:
+	var r: int = _LAKE_DISC_R
+	var r_sq: float = float(r) * float(r)
+	# Water surface sits one cell BELOW the surrounding land surface so the shore reads as a bank.
+	var rim_surface: int = int(_terrain_surface_at(float(cx0), float(cz0)))  # first AIR cell
+	# Top water cell sits flush with the surrounding grass-top solid cell (rim_surface is the first
+	# AIR cell, so rim_surface-1 is the grass top). Flush water reads as a pond level with the bank.
+	var water_top: int = rim_surface - 1  # flush water surface == surrounding grass-top level
+	for dx: int in range(-r - 1, r + 2):
+		for dz: int in range(-r - 1, r + 2):
+			var d_sq: float = float(dx * dx + dz * dz)
+			if d_sq > (r_sq + float(2 * r + 1)):
+				continue
+			var wx: int = cx0 + dx
+			var wz: int = cz0 + dz
+			var col_surface: int = int(_terrain_surface_at(float(wx), float(wz)))
+			# Beach ring: the band just outside the water disc gets sand for a shoreline.
+			if d_sq > r_sq:
+				# Thin sand cap on the rim columns (only the top solid cell).
+				voxel_tool.set_voxel(Vector3i(wx, col_surface - 1, wz), _LAKE_SAND_VOXEL)
+				continue
+			# Bowl depth: deepest at the centre, shallowing toward the rim (smooth basin).
+			var dist_frac: float = sqrt(d_sq) / float(r)
+			var depth: int = int(round(float(_LAKE_DEPTH) * (1.0 - dist_frac)))
+			var basin_floor: int = water_top - depth  # solid sand floor below the water
+			# Clear everything from the basin floor up to the surrounding surface (carve the bowl).
+			for yy: int in range(basin_floor, col_surface + 1):
+				voxel_tool.set_voxel(Vector3i(wx, yy, wz), 0)  # AIR
+			# Sand basin floor (one cell of sand under the water).
+			voxel_tool.set_voxel(Vector3i(wx, basin_floor, wz), _LAKE_SAND_VOXEL)
+			# Fill water from just above the floor up to water_top.
+			for yy2: int in range(basin_floor + 1, water_top + 1):
+				voxel_tool.set_voxel(Vector3i(wx, yy2, wz), _LAKE_WATER_VOXEL)
+
+
+## Place 1-2 shipwreck GLBs as decorative boats on/by the spawn lake. Waits (bounded) for the
+## lake builder to record _lake_centre (set once the footprint chunk has streamed), then snaps
+## the boats to the carved water surface near the lake edge. Fully fallback-safe: missing ship
+## art or no lake = no-op. The shipwreck is the only boat-ish structure (intact ships are missing).
+func _spawn_showcase_ships(world_spawn: Vector3) -> void:
+	if not ResourceLoader.exists("res://assets/meshes/structures/%s.glb" % _SHOWCASE_SHIP_ID):
+		return
+	# Wait (bounded) for the lake to be carved + its centre recorded (~up to 16 s; the lake
+	# builder probes the same streaming gate the pyramid does).
+	for _attempt: int in range(40):
+		if _lake_centre.x != INF:
+			break
+		await get_tree().create_timer(0.4).timeout
+	if _lake_centre.x == INF:
+		return
+	var lcx: float = _lake_centre.x
+	var lcz: float = _lake_centre.z
+	# Water surface = one cell below the surrounding land surface (matches _stamp_lake's water_top).
+	var water_y: float = _terrain_surface_at(lcx, lcz) - 1.0
+	# Two boats: one nearer the near shore (toward the village), one on the far side, both inside
+	# the lake disc (radius ~_LAKE_DISC_R). Bearings chosen so they don't overlap.
+	var boats: Array = [
+		[float(_LAKE_DISC_R) * 0.45, 200.0],  # near-shore boat
+		[float(_LAKE_DISC_R) * 0.55,  20.0],  # far-shore boat
+	]
+	for b: Array in boats:
+		var off_r: float = float(b[0])
+		var off_bearing: float = deg_to_rad(float(b[1]))
+		var sx: float = lcx + sin(off_bearing) * off_r
+		var sz: float = lcz + cos(off_bearing) * off_r
+		# Place the wreck so it sits low in the water (hull partly submerged). _spawn_showcase_prop
+		# grounds the base at world_pos.y; drop it ~0.6 m below the waterline so it reads as floating.
+		var ship: Node3D = _spawn_showcase_prop(
+			"res://assets/meshes/structures/%s.glb" % _SHOWCASE_SHIP_ID,
+			Vector3(sx, water_y - 0.6, sz),
+			6.0)
+		if ship != null:
+			ship.add_to_group("spawn_showcase")
+			# Face the boat roughly along the lake (toward the spawn green) for a sailing read.
+			var to_spawn := Vector2(world_spawn.x - sx, world_spawn.z - sz)
+			if to_spawn.length() > 0.01:
+				ship.rotation.y = atan2(to_spawn.x, to_spawn.y)
 
 
 ## Chest contents match D-15 verbatim (single source of truth: _STARTER_CHEST_CONTENTS).
