@@ -289,6 +289,12 @@ signal attack_swing(direction: Vector3, damage: int)
 ## AvatarMesh root Node3D (parent of all avatar sub-parts).
 var _avatar_mesh_root: Node3D = null
 
+## The customised box-minifig (res://src/ui/builder_preview.tscn) used as the in-world
+## avatar so the creator's customisation actually appears in the world. When present it
+## is the sole visual and is driven by set_locomotion() each physics frame; the GLB/rig/
+## box fallbacks are skipped. Null on any load failure (then the legacy GLB path runs).
+var _box_minifig: Node3D = null
+
 ## Head MeshInstance3D — skin colour applied here.
 var _head_mesh: MeshInstance3D = null
 
@@ -807,7 +813,9 @@ func _physics_process(delta: float) -> void:
 	# ─── Drive the avatar animation from horizontal speed (v1.1 textured rigged avatar;
 	#     falls back to the MinifigureAnimator rig when the avatar asset is absent) ─
 	var h_speed: float = Vector2(velocity.x, velocity.z).length()
-	if _avatar_anim != null and _avatar_walk_name != "":
+	if _box_minifig != null and _box_minifig.has_method("set_locomotion"):
+		_box_minifig.set_locomotion(h_speed, is_on_floor())
+	elif _avatar_anim != null and _avatar_walk_name != "":
 		if h_speed >= _RIG_IDLE_SPEED_THRESHOLD:
 			if not _avatar_anim.is_playing():
 				_avatar_anim.play(_avatar_walk_name)
@@ -2256,12 +2264,29 @@ func _setup_avatar_mesh_nodes() -> void:
 	_avatar_mesh_root.name = "AvatarMesh"
 	add_child(_avatar_mesh_root)
 
-	# ── Fix(07): Real builder model from .glb ───────────────────────────────
+	# ── Box-minifig avatar (the customised creator figure) ──────────────────
+	# Use the same figure the player designed in the avatar creator so ALL their
+	# customisation (face, hair colour, outfit, accessories, signature gear) shows
+	# in-world. It is the sole visual when present and is animated procedurally via
+	# set_locomotion() each physics frame. Any failure falls through to the GLB path.
+	const _BOX_MINIFIG := "res://src/ui/builder_preview.tscn"
+	if ResourceLoader.exists(_BOX_MINIFIG):
+		var packed_bm := load(_BOX_MINIFIG)
+		if packed_bm is PackedScene:
+			var bm := (packed_bm as PackedScene).instantiate() as Node3D
+			if bm != null and bm.has_method("apply_avatar_config"):
+				bm.name = "BoxMinifig"
+				bm.scale = Vector3.ONE * (1.8 / 2.25)  # ~2.25 u tall → ~1.8 m
+				bm.rotation.y = PI                     # face the walk direction (-Z)
+				_avatar_mesh_root.add_child(bm)
+				_box_minifig = bm
+
+	# ── Fix(07): Real builder model from .glb (skipped when the box-minifig loaded) ─
 	# Try to load builder_default.glb; if successful, add it as the visible model.
-	# The box-mesh nodes below are still created but hidden when the GLB is loaded.
+	# The box-mesh nodes below are still created but hidden when a model is loaded.
 	const _BUILDER_GLB := "res://assets/meshes/builder/builder_default.glb"
-	var _glb_loaded: bool = false
-	if ResourceLoader.exists(_BUILDER_GLB):
+	var _glb_loaded: bool = (_box_minifig != null)
+	if _box_minifig == null and ResourceLoader.exists(_BUILDER_GLB):
 		var packed_builder := load(_BUILDER_GLB)
 		if packed_builder is PackedScene:
 			var glb_instance: Node3D = (packed_builder as PackedScene).instantiate() as Node3D
@@ -2290,7 +2315,7 @@ func _setup_avatar_mesh_nodes() -> void:
 	var _AVATAR_GLB: String = _AVATAR_SKINS.get(_read_selected_skin(), _AVATAR_SKINS[_DEFAULT_SKIN])
 	if not ResourceLoader.exists(_AVATAR_GLB):
 		_AVATAR_GLB = "res://assets/meshes/builder/builder_avatar.glb"
-	if ResourceLoader.exists(_AVATAR_GLB):
+	if _box_minifig == null and ResourceLoader.exists(_AVATAR_GLB):
 		var av := (load(_AVATAR_GLB) as PackedScene).instantiate() as Node3D
 		av.name = "BuilderAvatar"
 		_avatar_mesh_root.add_child(av)
@@ -2306,7 +2331,7 @@ func _setup_avatar_mesh_nodes() -> void:
 		var static_glb0 := _avatar_mesh_root.get_node_or_null("BuilderGLB")
 		if static_glb0 is Node3D:
 			(static_glb0 as Node3D).visible = false
-	elif ResourceLoader.exists("res://assets/meshes/avatars/builder/layout.json"):
+	elif _box_minifig == null and ResourceLoader.exists("res://assets/meshes/avatars/builder/layout.json"):
 		_rig_anim = MinifigureAnimator.new()
 		_rig_anim.mesh_set = "builder"
 		_rig_anim.gait = "idle"
@@ -2511,6 +2536,10 @@ func _setup_avatar_mesh_nodes() -> void:
 ##
 ## T-06-B1 mitigation: all indices are clamped with clampi() before array access.
 func apply_avatar_config(cfg: Dictionary) -> void:
+	# Box-minifig is the in-world visual: drive its full customisation directly.
+	if _box_minifig != null and _box_minifig.has_method("apply_avatar_config"):
+		_box_minifig.apply_avatar_config(cfg)
+
 	# Guard: avatar mesh must be set up (is_inside_tree() ensures SubViewport timing).
 	if _head_mesh == null or _body_mesh == null or _legs_mesh == null:
 		return
