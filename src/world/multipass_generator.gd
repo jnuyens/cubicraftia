@@ -176,6 +176,26 @@ const OCEAN_FLOOR_DEPTH: int = 9
 ## voxels so the floor undulates (deeper troughs, shallower banks) instead of being a flat slab.
 const OCEAN_FLOOR_RELIEF: int = 4
 
+# ─── MOUNTAIN biome tuning ────────────────────────────────────────────────────
+
+## Peak extra height (voxels) added ABOVE the normal rolling-terrain surface at the very top of a
+## mountain (where the elevation noise is at its max). Scaled by how far the column's elevation is
+## past the threshold and by the edge blend weight, so most mountains land in the +40..+90 range
+## with only the highest cores reaching the cap. 90 keeps peaks well within the voxel column range.
+const MOUNTAIN_PEAK_HEIGHT: int = 90
+
+## Minimum extra height (voxels) a column gets the moment it crosses into full mountain weight, so
+## mountains read as a clear step up from neighbouring terrain rather than fading in from zero.
+const MOUNTAIN_BASE_LIFT: int = 40
+
+## Terrace step size (voxels). Mountain height is snapped to multiples of this where terracing is
+## strong, producing flat shelves separated by sheer vertical walls (cliffs). 8 → ~8 m cliffs.
+const MOUNTAIN_TERRACE_STEP: int = 8
+
+## Above this absolute Y the mountain surface is capped with SNOW instead of stone (a snow cap on
+## the high peaks). sea_level(12) + ~50 means only genuinely tall mountains get a white cap.
+const MOUNTAIN_SNOW_CAP_Y: int = 62
+
 ## Noise frequency for the base terrain layer.
 @export var noise_frequency: float = 0.01:
 	set(v):
@@ -187,6 +207,11 @@ const OCEAN_FLOOR_RELIEF: int = 4
 
 ## FastNoiseLite for base terrain height-map (same algorithm as terrain_generator.gd).
 var _noise: FastNoiseLite
+
+## FastNoiseLite that modulates where mountain terracing is STRONG (cliffs) vs WEAK (smooth slopes),
+## so cliffs appear "sometimes" rather than everywhere. Mid-frequency so cliff/slope bands are
+## tens of metres wide. Immutable after _init(); read-only from worker threads.
+var _terrace_noise: FastNoiseLite
 
 ## BiomeMap instance seeded from world_seed. Immutable after _init().
 var _biome_map: BiomeMap
@@ -221,6 +246,16 @@ func _rebuild_noise() -> void:
 	_noise.fractal_gain = 0.5
 	_noise.frequency = noise_frequency
 	_noise.seed = world_seed
+
+	# Terrace-strength noise: decorrelated seed, mid frequency (cliff bands ~tens of metres wide).
+	_terrace_noise = FastNoiseLite.new()
+	_terrace_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_terrace_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	_terrace_noise.fractal_octaves = 3
+	_terrace_noise.fractal_lacunarity = 2.0
+	_terrace_noise.fractal_gain = 0.5
+	_terrace_noise.frequency = 0.012
+	_terrace_noise.seed = world_seed ^ 0x05
 
 
 func _load_pieces() -> void:
@@ -281,6 +316,11 @@ func _generate_base_terrain(voxel_tool: VoxelToolMultipassGenerator) -> void:
 			var is_water: bool = (biome == BiomeMap.Biome.OCEAN) and (surface_y < sea_level)
 
 			var surface_id: int = _surface_block_for(biome)
+			# MOUNTAIN: bare stone, with a SNOW cap on the high peaks (Y-dependent, so only the
+			# top of tall mountains is white). Done here (not in _surface_block_for) because the
+			# cap depends on this column's actual surface_y, not just the biome id.
+			if biome == BiomeMap.Biome.MOUNTAIN and surface_y >= MOUNTAIN_SNOW_CAP_Y:
+				surface_id = SNOW_ID
 
 			for y: int in range(area_min.y, area_max.y):
 				var voxel_id: int
@@ -324,7 +364,45 @@ func _surface_top_for(x: int, z: int, biome: BiomeMap.Biome) -> int:
 	var noise_val: float = _noise.get_noise_2d(float(x), float(z))
 	if biome == BiomeMap.Biome.OCEAN:
 		return sea_level - OCEAN_FLOOR_DEPTH + int(noise_val * OCEAN_FLOOR_RELIEF)
-	return int(noise_val * height_amplitude + float(sea_level))
+	# Base rolling-terrain height (identical to the pre-mountain formula).
+	var base_h: int = int(noise_val * height_amplitude + float(sea_level))
+	# Add the mountain contribution. This is applied to EVERY land column via the blend weight, so
+	# non-mountain columns near a range still ramp up smoothly (no vertical seam at the border).
+	var mtn: int = _mountain_extra_height(x, z)
+	return base_h + mtn
+
+
+## Extra height (voxels) the MOUNTAIN system adds to a land column at world (x, z).
+## Returns 0 far from any mountain (weight 0). Near/inside a mountain it returns a tall, optionally
+## TERRACED lift so peaks rise +MOUNTAIN_BASE_LIFT..+(BASE_LIFT+PEAK_HEIGHT) and snap to vertical
+## cliff steps where the terrace-strength noise is high. Pure noise reads — thread-safe, deterministic.
+func _mountain_extra_height(x: int, z: int) -> int:
+	if _biome_map == null:
+		return 0
+	var e: float = _biome_map.elevation_at(float(x), float(z))
+	var w: float = _biome_map.mountain_weight(e)
+	if w <= 0.0:
+		return 0
+	# How far the elevation reaches past the threshold (0 at threshold, →1 at the noise max ~1.0),
+	# normalised over the remaining headroom so peak height varies with the elevation noise.
+	var headroom: float = 1.0 - BiomeMap.MOUNTAIN_ELEVATION_THRESHOLD
+	var peak_frac: float = 0.0
+	if headroom > 0.0001:
+		peak_frac = clampf((e - BiomeMap.MOUNTAIN_ELEVATION_THRESHOLD) / headroom, 0.0, 1.0)
+	# Raw lift: a base step the moment we enter mountain weight, plus a peak term scaled by how high
+	# the elevation noise is. Both are scaled by the edge blend weight for a smooth border.
+	var raw_lift: float = w * (float(MOUNTAIN_BASE_LIFT) + peak_frac * float(MOUNTAIN_PEAK_HEIGHT))
+	# Terrace MODULATION: where the terrace noise is high, snap the lift to vertical steps (cliffs);
+	# where it is low, leave the lift smooth (slopes). Map terrace noise [-1,1] → strength [0,1].
+	var terr: float = _terrace_noise.get_noise_2d(float(x), float(z))
+	var strength: float = clampf((terr + 1.0) * 0.5, 0.0, 1.0)
+	# Only the upper band of terrace strength produces cliffs, so cliffs appear "sometimes".
+	if strength > 0.55:
+		var stepped: float = floor(raw_lift / float(MOUNTAIN_TERRACE_STEP)) * float(MOUNTAIN_TERRACE_STEP)
+		# Blend between smooth and stepped by how far into the cliff band we are (sharper near 1.0).
+		var cliff_mix: float = clampf((strength - 0.55) / 0.45, 0.0, 1.0)
+		raw_lift = lerpf(raw_lift, stepped, cliff_mix)
+	return int(raw_lift)
 
 
 ## True if the column at world (x, z) is an OCEAN water column — i.e. OCEAN biome whose
@@ -574,6 +652,8 @@ func _surface_block_for(biome: BiomeMap.Biome) -> int:
 			return SAVANNAH_GRASS_ID
 		BiomeMap.Biome.OCEAN:
 			return SAND_ID
+		BiomeMap.Biome.MOUNTAIN:
+			return STONE_ID  # bare rock; high peaks get a SNOW cap in _generate_base_terrain
 	return GRASS_ID
 
 
@@ -593,6 +673,8 @@ func _underground_block_for(biome: BiomeMap.Biome, depth_below_surface: int) -> 
 			return STONE_ID
 		BiomeMap.Biome.OCEAN:
 			return STONE_ID
+		BiomeMap.Biome.MOUNTAIN:
+			return STONE_ID  # solid rock all the way down
 	return STONE_ID
 
 

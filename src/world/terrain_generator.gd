@@ -233,6 +233,8 @@ func _surface_block_for(biome: BiomeMap.Biome) -> int:
 			return SAVANNAH_GRASS_ID
 		BiomeMap.Biome.OCEAN:
 			return SAND_ID  # ocean seabed surface
+		BiomeMap.Biome.MOUNTAIN:
+			return STONE_ID  # bare rock (legacy path; active generator is multipass_generator.gd)
 	return GRASS_ID  # fallback
 
 
@@ -259,4 +261,6 @@ func _underground_block_for(biome: BiomeMap.Biome, depth_below_surface: int) -> 
 		BiomeMap.Biome.OCEAN:
 			# Stone below ocean seabed sand.
 			return STONE_ID
+		BiomeMap.Biome.MOUNTAIN:
+			return STONE_ID  # solid rock all the way down (legacy path)
 	return STONE_ID  # fallback

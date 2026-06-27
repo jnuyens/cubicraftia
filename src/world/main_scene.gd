@@ -241,6 +241,10 @@ var _wildlife_cull_accum: float = 0.0
 ## Cached noise for _terrain_surface_at — mirrors multipass_generator's height noise.
 var _surface_noise: FastNoiseLite = null
 
+## Cached terrace-strength noise for the MOUNTAIN lift in _terrain_surface_at — mirrors
+## multipass_generator._terrace_noise so entity placement agrees with the generated mountain surface.
+var _mtn_terrace_noise: FastNoiseLite = null
+
 ## Per-chunk grass dedup + cached procedural grass-tuft mesh (built once, shared by all
 ## chunk MultiMeshes). Grass scatters on grass/jungle/savannah surfaces as cheap decor.
 var _processed_grass_chunks: Dictionary = {}
@@ -2089,8 +2093,23 @@ const _PYRAMID_MIN_CLEARANCE_M: float = 18.0
 
 ## Radius (voxels) of the sand "desert patch" disc stamped under/around the pyramid when no real
 ## desert biome is found nearby. Comfortably wider than the 23x23 pyramid base so sand reads as
-## ground the monument sits in, not a square plinth.
-const _PYRAMID_SAND_PATCH_R: int = 18
+## a broad sandy desert the monument sits in, not a thin square plinth. Enlarged 18 -> 34 so the
+## pyramid sits in a real desert pad rather than a tight pad hugging the base.
+const _PYRAMID_SAND_PATCH_R: int = 34
+
+## Low sand dunes scattered around the pyramid (only in the FALLBACK sand-patch case). Each dune
+## is a small stepped sand mound, kept clear of the pyramid base (>= _PYRAMID_HALF_BASE+3 from
+## centre) and inside the sand disc, so the desert reads as gently rolling rather than a flat slab.
+## Placement is deterministic (fixed bearings/radii) so it never lands on the village/lake/spawn —
+## those are on the opposite side of spawn from the pyramid's fallback bearing (180°).
+const _PYRAMID_DUNE_OFFSETS: Array[Vector2i] = [
+	Vector2i(-20, -8), Vector2i(18, -14), Vector2i(-14, 16),
+	Vector2i(22, 10), Vector2i(2, 24), Vector2i(-24, 4),
+]
+## Each dune's half-base (voxels) and layer count. A 4-layer mound with half-base 5 is ~11x11 at
+## the base and 4 cells tall — a low dune, never a rival to the 11-tall pyramid.
+const _PYRAMID_DUNE_HALF_BASE: int = 5
+const _PYRAMID_DUNE_LAYERS: int = 4
 
 ## Stepped pyramid geometry: base is (2*_PYRAMID_HALF_BASE+1) voxels per side, shrinking by 1
 ## voxel per side each layer up, for _PYRAMID_LAYERS layers. half_base 11 -> 23x23 base, 11 layers,
@@ -2248,6 +2267,27 @@ func _stamp_sand_patch(voxel_tool: Object, cx0: int, cz0: int) -> void:
 			var col_surface: int = int(_terrain_surface_at(float(wx), float(wz)))
 			# Replace the top solid cell (one below the first AIR cell) with sand.
 			voxel_tool.set_voxel(Vector3i(wx, col_surface - 1, wz), _PYRAMID_SAND_VOXEL)
+	# Scatter a few low sand dunes for gentle height variation, kept clear of the pyramid base.
+	for off: Vector2i in _PYRAMID_DUNE_OFFSETS:
+		_stamp_sand_dune(voxel_tool, cx0 + off.x, cz0 + off.y)
+
+
+## One stamp of a small stepped SAND dune (a low mound) centred on column (dx0, dz0). Like the
+## pyramid but much shorter (_PYRAMID_DUNE_LAYERS tall) so the fallback desert has gentle relief.
+## Ground-snapped to its own centre column so it sits flush on the local surface. Cheap, additive.
+func _stamp_sand_dune(voxel_tool: Object, dx0: int, dz0: int) -> void:
+	var base_y: int = int(_terrain_surface_at(float(dx0), float(dz0)))  # first AIR cell above ground
+	for layer: int in range(_PYRAMID_DUNE_LAYERS):
+		var half: int = _PYRAMID_DUNE_HALF_BASE - layer
+		if half < 0:
+			break
+		var yy: int = base_y + layer
+		for ddx: int in range(-half, half + 1):
+			for ddz: int in range(-half, half + 1):
+				# Round the corners slightly so the mound reads as a dune, not a mini-pyramid.
+				if abs(ddx) == half and abs(ddz) == half and half >= 2:
+					continue
+				voxel_tool.set_voxel(Vector3i(dx0 + ddx, yy, dz0 + ddz), _PYRAMID_SAND_VOXEL)
 
 
 ## One stamp of the stepped sand pyramid centred on column (cx0, cz0). Each layer is a solid
@@ -3527,7 +3567,43 @@ func _terrain_surface_at(x: float, z: float) -> float:
 	# the voxel surface exactly (no off-by-one float at column boundaries).
 	var noise_val: float = _surface_noise.get_noise_2d(float(floori(x)), float(floori(z)))
 	var surface_y: int = int(noise_val * 8.0 + 12.0)  # height_amplitude 8, sea_level 12
+	# MOUNTAIN lift — keep entity placement on the real (raised, possibly terraced) surface so things
+	# don't float/bury on mountains. Mirrors multipass_generator._mountain_extra_height; 0 elsewhere.
+	surface_y += _mountain_lift_at(floori(x), floori(z))
 	return float(surface_y) + 1.0
+
+
+## Extra mountain height (voxels) at column (ix, iz), mirroring
+## multipass_generator._mountain_extra_height so _terrain_surface_at matches the generated surface.
+## Fully guarded: returns 0 if the BiomeMap is unavailable (no mountain math = plain terrain).
+func _mountain_lift_at(ix: int, iz: int) -> int:
+	if _biome_map == null or not _biome_map.has_method("elevation_at"):
+		return 0
+	var e: float = _biome_map.elevation_at(float(ix), float(iz))
+	var w: float = _biome_map.mountain_weight(e)
+	if w <= 0.0:
+		return 0
+	var headroom: float = 1.0 - BiomeMap.MOUNTAIN_ELEVATION_THRESHOLD
+	var peak_frac: float = 0.0
+	if headroom > 0.0001:
+		peak_frac = clampf((e - BiomeMap.MOUNTAIN_ELEVATION_THRESHOLD) / headroom, 0.0, 1.0)
+	var raw_lift: float = w * (40.0 + peak_frac * 90.0)  # MOUNTAIN_BASE_LIFT 40, PEAK_HEIGHT 90
+	if _mtn_terrace_noise == null:
+		_mtn_terrace_noise = FastNoiseLite.new()
+		_mtn_terrace_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+		_mtn_terrace_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+		_mtn_terrace_noise.fractal_octaves = 3
+		_mtn_terrace_noise.fractal_lacunarity = 2.0
+		_mtn_terrace_noise.fractal_gain = 0.5
+		_mtn_terrace_noise.frequency = 0.012
+		_mtn_terrace_noise.seed = _world_seed ^ 0x05
+	var terr: float = _mtn_terrace_noise.get_noise_2d(float(ix), float(iz))
+	var strength: float = clampf((terr + 1.0) * 0.5, 0.0, 1.0)
+	if strength > 0.55:
+		var stepped: float = floor(raw_lift / 8.0) * 8.0  # MOUNTAIN_TERRACE_STEP 8
+		var cliff_mix: float = clampf((strength - 0.55) / 0.45, 0.0, 1.0)
+		raw_lift = lerpf(raw_lift, stepped, cliff_mix)
+	return int(raw_lift)
 
 
 ## SOLID-ground (seabed) surface height at (x, z), accounting for the OCEAN floor deepening that

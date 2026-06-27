@@ -36,6 +36,7 @@ enum Biome {
 	JUNGLE           = 3,
 	SAVANNAH         = 4,
 	OCEAN            = 5,
+	MOUNTAIN         = 6,
 }
 
 # ─── Tuning ───────────────────────────────────────────────────────────────────
@@ -47,6 +48,24 @@ enum Biome {
 ## (its grid was widened to 2000 m so it still contains all 6 biomes).
 const BIOME_NOISE_FREQUENCY: float = 0.0005
 
+## Frequency of the ELEVATION ("continentalness") noise channel. Lower than the biome
+## frequency so mountain ranges are large continental features that span several normal
+## biomes. Wavelength ≈ 1 / frequency metres (~3300 m at 0.0003) — you travel a good while
+## between mountain ranges, and each range is wide enough to walk through.
+const ELEVATION_NOISE_FREQUENCY: float = 0.0003
+
+## Elevation threshold (FastNoiseLite output in [-1, 1]) above which a column is MOUNTAIN.
+## ~0.42 makes mountains an occasional high-ground feature (roughly the top fraction of the
+## elevation noise) rather than carpeting the world. Kept public so the height generators can
+## read the SAME threshold and compute a smooth blend weight at the mountain edge (no seam).
+const MOUNTAIN_ELEVATION_THRESHOLD: float = 0.42
+
+## Width (in elevation-noise units) of the blend band just below the mountain threshold. Columns
+## with elevation in [threshold - band, threshold] are still classified as their normal biome, but
+## the height generator ramps their height up toward mountain height across this band so the
+## mountain rises smoothly out of the surrounding terrain instead of as a vertical wall at the edge.
+const MOUNTAIN_BLEND_BAND: float = 0.18
+
 # ─── Private state ────────────────────────────────────────────────────────────
 
 ## Temperature noise instance. Immutable after _init(). Thread-safe.
@@ -54,6 +73,10 @@ var _temperature_noise: FastNoiseLite
 
 ## Moisture noise instance. Immutable after _init(). Thread-safe.
 var _moisture_noise: FastNoiseLite
+
+## Elevation / continentalness noise instance. Immutable after _init(). Thread-safe.
+## Drives MOUNTAIN classification and the mountain-height ramp.
+var _elevation_noise: FastNoiseLite
 
 ## World seed driving both noise channels.
 var _world_seed: int
@@ -90,6 +113,16 @@ func _rebuild_noises() -> void:
 	_moisture_noise.frequency = BIOME_NOISE_FREQUENCY
 	_moisture_noise.seed = _world_seed ^ 0x02  # decorrelated XOR salt
 
+	# Elevation / continentalness noise — independent seed, lower frequency (bigger features).
+	_elevation_noise = FastNoiseLite.new()
+	_elevation_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_elevation_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	_elevation_noise.fractal_octaves = 4
+	_elevation_noise.fractal_lacunarity = 2.0
+	_elevation_noise.fractal_gain = 0.5
+	_elevation_noise.frequency = ELEVATION_NOISE_FREQUENCY
+	_elevation_noise.seed = _world_seed ^ 0x03  # decorrelated XOR salt
+
 # ─── Public API ───────────────────────────────────────────────────────────────
 
 ## Sample temperature, moisture, and biome at world position (x, z).
@@ -105,7 +138,8 @@ func _rebuild_noises() -> void:
 func sample(x: float, z: float) -> Dictionary:
 	var t: float = _temperature_noise.get_noise_2d(x, z)
 	var m: float = _moisture_noise.get_noise_2d(x, z)
-	var biome: Biome = classify(t, m)
+	var e: float = _elevation_noise.get_noise_2d(x, z)
+	var biome: Biome = classify_with_elevation(t, m, e)
 
 	# Compute blend_weight: sample 4 neighbours at ±2.5 m (half of the 5m blend zone).
 	var same_count: int = 1  # centre cell counts as 1
@@ -114,7 +148,8 @@ func sample(x: float, z: float) -> Dictionary:
 	for off in offsets:
 		var nt: float = _temperature_noise.get_noise_2d(x + off.x, z + off.y)
 		var nm: float = _moisture_noise.get_noise_2d(x + off.x, z + off.y)
-		if classify(nt, nm) == biome:
+		var ne: float = _elevation_noise.get_noise_2d(x + off.x, z + off.y)
+		if classify_with_elevation(nt, nm, ne) == biome:
 			same_count += 1
 	var blend_weight: float = float(same_count) / 5.0  # 5 = centre + 4 neighbours
 
@@ -132,7 +167,43 @@ func sample(x: float, z: float) -> Dictionary:
 func biome_at(x: float, z: float) -> Biome:
 	var t: float = _temperature_noise.get_noise_2d(x, z)
 	var m: float = _moisture_noise.get_noise_2d(x, z)
-	return classify(t, m)
+	var e: float = _elevation_noise.get_noise_2d(x, z)
+	return classify_with_elevation(t, m, e)
+
+
+## Raw elevation ("continentalness") noise value at (x, z), in [-1, 1].
+## Public so the height generators can read the SAME elevation the classifier used and compute
+## a smooth mountain-height ramp / blend weight without re-deriving the noise config.
+## Thread-safe: read-only noise access.
+func elevation_at(x: float, z: float) -> float:
+	return _elevation_noise.get_noise_2d(x, z)
+
+
+## Mountain blend weight in [0, 1] for the column's elevation value `e`:
+##   0.0  well below the blend band — pure normal-biome height
+##   →1.0 ramps up across [threshold - band, threshold]
+##   1.0  at/above the mountain threshold — full mountain height
+## The height generators multiply the extra mountain height by this so the mountain rises
+## smoothly out of neighbouring terrain (no vertical seam at the biome border).
+func mountain_weight(e: float) -> float:
+	var lo: float = MOUNTAIN_ELEVATION_THRESHOLD - MOUNTAIN_BLEND_BAND
+	if e <= lo:
+		return 0.0
+	if e >= MOUNTAIN_ELEVATION_THRESHOLD:
+		return 1.0
+	return (e - lo) / MOUNTAIN_BLEND_BAND
+
+
+## Classification including the elevation channel. High-elevation LAND columns become MOUNTAIN;
+## OCEAN columns are left untouched (mountains don't sprout mid-sea — keeps oceans intact).
+## All non-mountain results are identical to classify(), so existing biomes are NOT reclassified.
+func classify_with_elevation(t: float, m: float, e: float) -> Biome:
+	var base: Biome = classify(t, m)
+	if base == Biome.OCEAN:
+		return base
+	if e >= MOUNTAIN_ELEVATION_THRESHOLD:
+		return Biome.MOUNTAIN
+	return base
 
 
 ## Whittaker-style biome classification from temperature and moisture values.
