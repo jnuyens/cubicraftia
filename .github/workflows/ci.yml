@@ -139,6 +139,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Materialise LFS objects: the .glb/.png/.ogg game assets AND the
+          # addons/zylann.voxel/bin/** GDExtension binaries. Without this they stay
+          # as pointer stubs and the export bundles broken assets / fails to load the
+          # voxel module ("invalid ELF header").
+          lfs: true
 
       # macOS: install Godot natively (container is unavailable on macOS runners)
       - name: Install Godot on macOS
@@ -147,6 +153,28 @@ jobs:
           brew install --cask godot
           # Verify the installed version matches the pinned one
           godot --version || true
+
+      # Export templates are NOT reliably bundled in the godot-ci container for every
+      # platform, and the macOS runner installs Godot fresh — download them explicitly
+      # so every preset can export (mirrors the export_ios job's template step).
+      - name: Install Godot export templates (${{ env.GODOT_VERSION }})
+        run: |
+          set -e
+          TV="${{ env.GODOT_VERSION }}"
+          URL="https://github.com/godotengine/godot/releases/download/${TV}-stable/Godot_v${TV}-stable_export_templates.tpz"
+          if [ "${{ matrix.target.os }}" = "macos-latest" ]; then
+            DEST="$HOME/Library/Application Support/Godot/export_templates/${TV}.stable"
+          else
+            DEST="$HOME/.local/share/godot/export_templates/${TV}.stable"
+            command -v unzip >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq unzip curl; }
+          fi
+          if [ -f "$DEST/version.txt" ]; then echo "Templates already present at $DEST"; exit 0; fi
+          mkdir -p "$DEST"
+          curl -fL "$URL" -o /tmp/templates.tpz
+          unzip -q /tmp/templates.tpz -d /tmp/templates_tmp
+          mv /tmp/templates_tmp/templates/* "$DEST/"
+          rm -rf /tmp/templates_tmp /tmp/templates.tpz
+          echo "Installed export templates to $DEST:"; ls "$DEST" | head
 
       # Create build output directories
       - name: Create build directories
@@ -201,6 +229,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: true  # materialise .glb/.png assets + voxel GDExtension binaries
 
       - name: Install Godot ${{ env.GODOT_VERSION }} (native, macOS)
         run: |
