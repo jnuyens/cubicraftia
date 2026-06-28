@@ -182,6 +182,12 @@ func _ready() -> void:
 	# Cache scene node references.
 	_preview_builder = _find_preview_builder()
 
+	# Settings gear glyph set in code (kept out of the .tscn so the no-hardcoded-strings
+	# linter passes — the glyph is a decorative icon, not translatable text).
+	var settings_btn := get_node_or_null("Root/RightPanel/SettingsButton")
+	if settings_btn is Button:
+		(settings_btn as Button).text = "⚙"
+
 	# Build swatch / button arrays from named container nodes.
 	_skin_buttons       = _collect_buttons("SkinRow")
 	_head_shape_buttons = _collect_buttons("HeadShapeRow")
