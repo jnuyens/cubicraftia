@@ -113,18 +113,22 @@ jobs:
         target:
           - os: ubuntu-latest
             platform: "Linux/X11"
+            artifact_name: "build-linux"      # NB: artifact names can't contain '/'
             artifact_path: "build/Linux/"
             container: "barichello/godot-ci:4.6.3"
           - os: ubuntu-latest
             platform: "Windows Desktop"
+            artifact_name: "build-windows"
             artifact_path: "build/Windows/"
             container: "barichello/godot-ci:4.6.3"
           - os: macos-latest
             platform: "macOS"
+            artifact_name: "build-macos"
             artifact_path: "build/macOS/"
             container: ""
           - os: ubuntu-latest
             platform: "Android"
+            artifact_name: "build-android"
             artifact_path: "build/Android/"
             container: "barichello/godot-ci:4.6.3"
 
@@ -250,6 +254,31 @@ jobs:
             echo "WARNING: SECRET_RELEASE_KEYSTORE_BASE64 is not set — Android export will be unsigned."
           fi
 
+      # Android: Godot needs its editor settings to point at the container's Android SDK + a
+      # JDK, else export fails "A valid Java SDK path is required." Write both the 4.x and 4.6
+      # editor-settings filenames to be safe.
+      - name: Configure Android SDK for Godot
+        if: matrix.target.platform == 'Android'
+        run: |
+          set -e
+          SDK="${ANDROID_HOME:-/usr/lib/android-sdk}"
+          JDK="${JAVA_HOME:-}"
+          if [ -z "$JDK" ] && command -v java >/dev/null 2>&1; then
+            JDK="$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")"
+          fi
+          [ -z "$JDK" ] && JDK="$(ls -d /usr/lib/jvm/* 2>/dev/null | head -1)"
+          echo "Android SDK: $SDK ; JDK: $JDK"
+          for f in "$HOME/.config/godot/editor_settings-4.tres" "$HOME/.config/godot/editor_settings-4.6.tres"; do
+            mkdir -p "$(dirname "$f")"
+            {
+              echo '[gd_resource type="EditorSettings" format=3]'
+              echo ''
+              echo '[resource]'
+              echo "export/android/android_sdk_path = \"$SDK\""
+              echo "export/android/java_sdk_path = \"$JDK\""
+            } > "$f"
+          done
+
       # Export the platform. Do NOT pass the artifact DIRECTORY as the output — Godot then
       # tries to write the binary AS that path and fails ("Failed to copy export template").
       # Omitting it makes Godot use the preset's export_path (build/<Platform>/Cubicraftia.<ext>),
@@ -262,7 +291,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.target.platform }}
+          name: ${{ matrix.target.artifact_name }}
           path: ${{ matrix.target.artifact_path }}
           if-no-files-found: warn
 
