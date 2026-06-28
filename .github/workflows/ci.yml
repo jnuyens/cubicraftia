@@ -166,12 +166,19 @@ jobs:
           echo "LFS pull complete — voxel binary is now real:"
           file addons/zylann.voxel/bin/libvoxel.linux.template_release.x86_64.so 2>/dev/null | head -1 || true
 
-      # macOS: install Godot natively (container is unavailable on macOS runners)
+      # macOS: install the PINNED Godot natively (container is unavailable on macOS runners).
+      # `brew install --cask godot` pulls the LATEST Godot (e.g. 4.7), which mismatches our
+      # 4.6.3 export templates ("No export template found at .../4.7.stable/macos.zip").
       - name: Install Godot on macOS
         if: matrix.target.os == 'macos-latest'
         run: |
-          brew install --cask godot
-          # Verify the installed version matches the pinned one
+          set -e
+          TV="${{ env.GODOT_VERSION }}"
+          curl -fL "https://github.com/godotengine/godot/releases/download/${TV}-stable/Godot_v${TV}-stable_macos.universal.zip" -o /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot_app
+          sudo rm -rf /Applications/Godot.app
+          sudo mv /tmp/godot_app/Godot.app /Applications/Godot.app
+          sudo ln -sf /Applications/Godot.app/Contents/MacOS/Godot /usr/local/bin/godot
           godot --version || true
 
       # Export templates are NOT reliably bundled in the godot-ci container for every
@@ -186,7 +193,10 @@ jobs:
             DEST="$HOME/Library/Application Support/Godot/export_templates/${TV}.stable"
           else
             DEST="$HOME/.local/share/godot/export_templates/${TV}.stable"
-            command -v unzip >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq unzip curl; }
+            # The godot-ci container lacks curl (and maybe unzip) — install both.
+            if ! command -v curl >/dev/null 2>&1 || ! command -v unzip >/dev/null 2>&1; then
+              apt-get update -qq && apt-get install -y -qq curl unzip
+            fi
           fi
           if [ -f "$DEST/version.txt" ]; then echo "Templates already present at $DEST"; exit 0; fi
           mkdir -p "$DEST"
