@@ -1833,3 +1833,18 @@ msgstr "Bouwer aanpassen"
 
 msgid "ui.mystery.orb"
 msgstr "Een groene bol schiet door de lucht… en laat alleen vragen achter."
+
+msgid "recipes.axe_wood.name"
+msgstr "Houten bijl"
+
+msgid "recipes.axe_stone.name"
+msgstr "Stenen bijl"
+
+msgid "recipes.axe_iron.name"
+msgstr "IJzeren bijl"
+
+msgid "recipes.axe_diamond.name"
+msgstr "Diamanten bijl"
+
+msgid "recipes.axe_gold.name"
+msgstr "Gouden bijl"

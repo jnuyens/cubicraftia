@@ -1836,3 +1836,18 @@ msgstr "Wooden Table"
 
 msgid "ui.mystery.orb"
 msgstr "A green orb streaks across the sky… leaving only questions."
+
+msgid "recipes.axe_wood.name"
+msgstr "Wooden axe"
+
+msgid "recipes.axe_stone.name"
+msgstr "Stone axe"
+
+msgid "recipes.axe_iron.name"
+msgstr "Iron axe"
+
+msgid "recipes.axe_diamond.name"
+msgstr "Diamond axe"
+
+msgid "recipes.axe_gold.name"
+msgstr "Golden axe"

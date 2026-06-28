@@ -1,0 +1,20 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_axe_gold.tres — generated to wire the art-crafting card for axe_gold.
+; Classic axe shape (shaped, 3×3 grid): material at slots 0,1,3 (top-left L);
+; centre col: 2 sticks (slots 4,7). D-07: recipe ratios at Claude's discretion.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_axe_gold"
+display_name_key = "recipes.axe_gold.name"
+inputs = [{"def_id": "gold_ingot", "count": 1, "slot": 0}, {"def_id": "gold_ingot", "count": 1, "slot": 1}, {"def_id": "gold_ingot", "count": 1, "slot": 3}, {"def_id": "stick", "count": 1, "slot": 4}, {"def_id": "stick", "count": 1, "slot": 7}]
+output_def_id = "axe"
+output_count = 1
+shaped = true
+grid_size = 3
