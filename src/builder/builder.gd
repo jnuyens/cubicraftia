@@ -289,7 +289,7 @@ signal attack_swing(direction: Vector3, damage: int)
 ## AvatarMesh root Node3D (parent of all avatar sub-parts).
 var _avatar_mesh_root: Node3D = null
 
-## The customised box-minifig (res://src/ui/builder_preview.tscn) used as the in-world
+## The customised box-builder (res://src/ui/builder_preview.tscn) used as the in-world
 ## avatar so the creator's customisation actually appears in the world. When present it
 ## is the sole visual and is driven by set_locomotion() each physics frame; the GLB/rig/
 ## box fallbacks are skipped. Null on any load failure (then the legacy GLB path runs).
@@ -2265,11 +2265,11 @@ func _setup_avatar_mesh_nodes() -> void:
 	add_child(_avatar_mesh_root)
 
 	# ── Avatar model = the textured, rigged skin .glb (the original builder look). ──
-	# (The voxel box-minifig experiment was reverted: it didn't read well in-world, and
+	# (The voxel box-builder experiment was reverted: it didn't read well in-world, and
 	# the skin GLBs carry real authored Walking/Running/Jump animations. _box_minifig
 	# stays null, so the GLB path below runs and the forwarding guards are inert.)
 
-	# ── Fix(07): Real builder model from .glb (skipped when the box-minifig loaded) ─
+	# ── Fix(07): Real builder model from .glb (skipped when the box-builder loaded) ─
 	# Try to load builder_default.glb; if successful, add it as the visible model.
 	# The box-mesh nodes below are still created but hidden when a model is loaded.
 	const _BUILDER_GLB := "res://assets/meshes/builder/builder_default.glb"
@@ -2524,7 +2524,7 @@ func _setup_avatar_mesh_nodes() -> void:
 ##
 ## T-06-B1 mitigation: all indices are clamped with clampi() before array access.
 func apply_avatar_config(cfg: Dictionary) -> void:
-	# Box-minifig is the in-world visual: drive its full customisation directly.
+	# Box-builder is the in-world visual: drive its full customisation directly.
 	if _box_minifig != null and _box_minifig.has_method("apply_avatar_config"):
 		_box_minifig.apply_avatar_config(cfg)
 

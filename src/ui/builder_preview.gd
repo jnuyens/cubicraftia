@@ -4,7 +4,7 @@
 # builder_preview.gd — avatar-creator preview that shows the SELECTED character's
 # textured, rigged skin .glb (the "original builder" look), matching what spawns
 # in-world. Picking a builder card swaps the model. (Replaces the earlier voxel
-# box-minifig, which didn't read well.)
+# box-builder, which didn't read well.)
 #
 # The avatar_creator rotates this node (rotation.y) for the turntable; apply_avatar_config
 # swaps the model on a character change. Per-part colour customisation is limited: the skin

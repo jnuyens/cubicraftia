@@ -790,7 +790,7 @@ func _ready() -> void:
 	# A ring of landmark GLB structures (castle, lighthouse, windmill, market stall,
 	# houses), a floating hot-air balloon, a campfire, decorative flags, and a few
 	# friendly animals arranged around the spawn clearing — so a fresh world reads as
-	# a lively, hand-built LEGO-voxel world rather than empty wilderness. Runs in BOTH
+	# a lively, hand-built brick-voxel world rather than empty wilderness. Runs in BOTH
 	# game modes (it is pure decorative world dressing, not survival starter gear), and
 	# is fully fallback-safe: every asset load is existence-checked, every node null-
 	# guarded, so a missing GLB never crashes or stalls the spawn. Deferred a couple of
