@@ -1980,7 +1980,10 @@ func _spawn_showcase_prop(path: String, world_pos: Vector3, target_m: float) -> 
 ## Radius (m) of the cleared showcase green — trees inside this disc around spawn are removed
 ## so the landmark village is visible instead of buried behind a forest canopy. Sized to wrap
 ## the landmark ring (farthest landmark ~28 m) plus a little margin.
-const _SHOWCASE_CLEARING_RADIUS_M: float = 48.0
+# Tree-clearing disc around spawn. Trimmed 48→36 so natural forest (the FTUE "chop a tree" step)
+# is reachable just outside the village ring instead of a 48 m bald patch — and the immediate
+# spawn stays open.
+const _SHOWCASE_CLEARING_RADIUS_M: float = 36.0
 
 ## Vertical span (cells above the surface) scanned for tree voxels to remove. Trees in this world
 ## are ~10-14 cells tall; 24 comfortably covers the tallest jungle tree without runaway cost.
@@ -2079,7 +2082,10 @@ const _PYRAMID_SAND_VOXEL: int = 2
 ## desert monument. When desert IS found nearby the pyramid relocates to the nearest desert column
 ## (see _build_spawn_pyramid), ignoring these.
 const _PYRAMID_BEARING_DEG: float = 180.0
-const _PYRAMID_RADIUS_M: float = 20.0
+## Distance (m) spawn→pyramid CENTRE. Must clear the spawn bubble by the pyramid's half-base
+## (11) plus walking room: at 50 m the near face sits ~39 m out, so the player is never walled
+## in at spawn (was 20 m → a 9 m wall dead-ahead).
+const _PYRAMID_RADIUS_M: float = 50.0
 
 ## Maximum search radius (m) from spawn for an actual DESERT-biome column to anchor the pyramid on.
 ## Beyond this we fall back to the fixed bearing above + a stamped sand patch. ~150 m keeps the
@@ -2089,7 +2095,9 @@ const _PYRAMID_DESERT_SEARCH_R_M: float = 150.0
 
 ## Minimum clearance (m) the relocated pyramid keeps from spawn, the lake centre, and the starter
 ## kit so it never overlaps the village green / water / chest-bed-sign cluster.
-const _PYRAMID_MIN_CLEARANCE_M: float = 18.0
+## Min distance a candidate pyramid CENTRE must keep from spawn/lake. Raised 18→34 to account
+## for the pyramid's 11 m half-base so the structure edge (not just its centre) clears the spawn.
+const _PYRAMID_MIN_CLEARANCE_M: float = 34.0
 
 ## Radius (voxels) of the sand "desert patch" disc stamped under/around the pyramid when no real
 ## desert biome is found nearby. Comfortably wider than the 23x23 pyramid base so sand reads as
@@ -2320,8 +2328,11 @@ const _LAKE_SAND_VOXEL: int = 2
 ## of the spawn green (the chase-cam looks toward bearing 180, so bearing ~232 sits left-of-frame),
 ## set well back so it reads as a pond beside the village without swallowing the spawn point or
 ## the landmark ring. Far enough out (38 m) that the foreground stays dry walkable green.
-const _LAKE_BEARING_DEG: float = 196.0
-const _LAKE_RADIUS_M: float = 18.0
+# Lake sits BEHIND the player (bearing 0 = behind the chase-cam's forward 180°) and well out, so
+# its 20 m disc never overlaps the spawn point (was 196°/18 m → the basin reached 2 m PAST spawn,
+# dropping the player into water). Front stays the pyramid + village; turn around for the lake.
+const _LAKE_BEARING_DEG: float = 0.0
+const _LAKE_RADIUS_M: float = 44.0
 
 ## Lake disc radius (voxels). 20 → a ~40 m pond: enlarged from 13 so it reads clearly from the
 ## low chase-cam as a real water body carrying ships, while staying clear of the spawn point,
