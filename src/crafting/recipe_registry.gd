@@ -49,6 +49,7 @@ const CRAFTING_ITEM_PATHS: Array[String] = [
 	"res://src/bricks/bow.tres",
 	"res://src/bricks/flint_and_steel.tres",
 	"res://src/bricks/chestplate_iron.tres",
+	"res://src/bricks/chestplate_diamond.tres",
 	"res://src/bricks/chestplate_leather.tres",
 	"res://src/bricks/helmet_diamond.tres",
 	"res://src/bricks/helmet_gold.tres",

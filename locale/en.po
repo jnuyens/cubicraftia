@@ -1851,3 +1851,30 @@ msgstr "Diamond axe"
 
 msgid "recipes.axe_gold.name"
 msgstr "Golden axe"
+
+msgid "recipes.sword_stone.name"
+msgstr "Stone sword"
+
+msgid "recipes.sword_iron.name"
+msgstr "Iron sword"
+
+msgid "recipes.sword_gold.name"
+msgstr "Golden sword"
+
+msgid "recipes.fishing_rod.name"
+msgstr "Fishing rod"
+
+msgid "recipes.hammer.name"
+msgstr "Hammer"
+
+msgid "recipes.compass.name"
+msgstr "Compass"
+
+msgid "recipes.map.name"
+msgstr "Map"
+
+msgid "recipes.chestplate_diamond.name"
+msgstr "Diamond chestplate"
+
+msgid "bricks.chestplate_diamond.name"
+msgstr "Diamond chestplate"

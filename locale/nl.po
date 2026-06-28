@@ -1848,3 +1848,30 @@ msgstr "Diamanten bijl"
 
 msgid "recipes.axe_gold.name"
 msgstr "Gouden bijl"
+
+msgid "recipes.sword_stone.name"
+msgstr "Stenen zwaard"
+
+msgid "recipes.sword_iron.name"
+msgstr "IJzeren zwaard"
+
+msgid "recipes.sword_gold.name"
+msgstr "Gouden zwaard"
+
+msgid "recipes.fishing_rod.name"
+msgstr "Hengel"
+
+msgid "recipes.hammer.name"
+msgstr "Hamer"
+
+msgid "recipes.compass.name"
+msgstr "Kompas"
+
+msgid "recipes.map.name"
+msgstr "Kaart"
+
+msgid "recipes.chestplate_diamond.name"
+msgstr "Diamanten harnas"
+
+msgid "bricks.chestplate_diamond.name"
+msgstr "Diamanten harnas"

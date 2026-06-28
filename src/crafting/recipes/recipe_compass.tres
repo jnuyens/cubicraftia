@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_compass — generated to wire the art-crafting card. D-07: ratios at Claude's discretion.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_compass"
+display_name_key = "recipes.compass.name"
+inputs = [{"def_id": "iron_ore", "count": 1, "slot": 1}, {"def_id": "iron_ore", "count": 1, "slot": 3}, {"def_id": "iron_ore", "count": 1, "slot": 5}, {"def_id": "iron_ore", "count": 1, "slot": 7}, {"def_id": "gold_ingot", "count": 1, "slot": 4}]
+output_def_id = "compass"
+output_count = 1
+shaped = true
+grid_size = 3

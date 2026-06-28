@@ -1,0 +1,18 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; recipe_fishing_rod — generated to wire the art-crafting card. D-07: ratios at Claude's discretion.
+
+[gd_resource type="Resource" script_class="Recipe" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/crafting/recipe.gd" id="1_recipe"]
+
+[resource]
+script = ExtResource("1_recipe")
+recipe_id = "recipe_fishing_rod"
+display_name_key = "recipes.fishing_rod.name"
+inputs = [{"def_id": "stick", "count": 1, "slot": 2}, {"def_id": "stick", "count": 1, "slot": 4}, {"def_id": "stick", "count": 1, "slot": 6}, {"def_id": "string", "count": 1, "slot": 5}, {"def_id": "string", "count": 1, "slot": 8}]
+output_def_id = "fishing_rod"
+output_count = 1
+shaped = true
+grid_size = 3
