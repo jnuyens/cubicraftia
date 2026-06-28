@@ -139,12 +139,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          # Materialise LFS objects: the .glb/.png/.ogg game assets AND the
-          # addons/zylann.voxel/bin/** GDExtension binaries. Without this they stay
-          # as pointer stubs and the export bundles broken assets / fails to load the
-          # voxel module ("invalid ELF header").
-          lfs: true
+        # Do NOT set lfs:true — actions/checkout targets GitHub's LFS endpoint, which is
+        # EMPTY for this repo (objects live on the self-hosted server). We pull LFS below.
+
+      # The LFS objects (.glb/.png/.ogg assets + addons/zylann.voxel/bin/** GDExtension
+      # binaries) live on the self-hosted LFS server (lfs.cubicraftia.com, per .lfsconfig),
+      # NOT GitHub LFS. Pull them with the basic-auth credential from the LFS_PASSWORD secret,
+      # otherwise the export bundles pointer stubs and the voxel module fails ("invalid ELF
+      # header").
+      - name: Fetch LFS assets (self-hosted server)
+        env:
+          LFS_PASSWORD: ${{ secrets.LFS_PASSWORD }}
+        run: |
+          set -e
+          if [ -z "${LFS_PASSWORD:-}" ]; then echo "::error::LFS_PASSWORD secret not set"; exit 1; fi
+          command -v git-lfs >/dev/null 2>&1 || { apt-get update -qq && apt-get install -y -qq git-lfs; }
+          git lfs install --local
+          git config --global credential.helper store
+          printf 'https://cubicraftia:%s@lfs.cubicraftia.com\n' "$LFS_PASSWORD" > "$HOME/.git-credentials"
+          git lfs pull
+          rm -f "$HOME/.git-credentials"
+          echo "LFS pull complete — voxel binary is now real:"
+          file addons/zylann.voxel/bin/libvoxel.linux.template_release.x86_64.so 2>/dev/null | head -1 || true
 
       # macOS: install Godot natively (container is unavailable on macOS runners)
       - name: Install Godot on macOS
@@ -229,8 +245,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          lfs: true  # materialise .glb/.png assets + voxel GDExtension binaries
+        # No lfs:true — GitHub LFS is empty; objects are on the self-hosted server (pulled below).
+
+      # Pull LFS assets + voxel binaries from the self-hosted server (see export job for rationale).
+      - name: Fetch LFS assets (self-hosted server)
+        env:
+          LFS_PASSWORD: ${{ secrets.LFS_PASSWORD }}
+        run: |
+          set -e
+          if [ -z "${LFS_PASSWORD:-}" ]; then echo "::error::LFS_PASSWORD secret not set"; exit 1; fi
+          command -v git-lfs >/dev/null 2>&1 || brew install git-lfs
+          git lfs install --local
+          git config --global credential.helper store
+          printf 'https://cubicraftia:%s@lfs.cubicraftia.com\n' "$LFS_PASSWORD" > "$HOME/.git-credentials"
+          git lfs pull
+          rm -f "$HOME/.git-credentials"
 
       - name: Install Godot ${{ env.GODOT_VERSION }} (native, macOS)
         run: |
