@@ -192,9 +192,16 @@ const MOUNTAIN_BASE_LIFT: int = 40
 ## strong, producing flat shelves separated by sheer vertical walls (cliffs). 8 → ~8 m cliffs.
 const MOUNTAIN_TERRACE_STEP: int = 8
 
-## Above this absolute Y the mountain surface is capped with SNOW instead of stone (a snow cap on
-## the high peaks). sea_level(12) + ~50 means only genuinely tall mountains get a white cap.
+## Around this absolute Y the mountain surface caps with SNOW instead of stone (a snow cap on the
+## high peaks). sea_level(12) + ~50 means only genuinely tall mountains get a white cap. The line
+## is not flat — it wanders ±JITTER per column and snow gets patchy in a band just below it.
 const MOUNTAIN_SNOW_CAP_Y: int = 62
+
+## The snow line wanders this many voxels up/down per column (a wavy, natural snow line, not a flat
+## horizontal cut) and snow appears patchily within this band just below the line (bare rock pokes
+## through, denser snow toward the top).
+const MOUNTAIN_SNOW_LINE_JITTER: int = 8
+const MOUNTAIN_SNOW_PATCH_BAND: int = 7
 
 ## Noise frequency for the base terrain layer.
 @export var noise_frequency: float = 0.01:
@@ -212,6 +219,10 @@ var _noise: FastNoiseLite
 ## so cliffs appear "sometimes" rather than everywhere. Mid-frequency so cliff/slope bands are
 ## tens of metres wide. Immutable after _init(); read-only from worker threads.
 var _terrace_noise: FastNoiseLite
+
+## FastNoiseLite that makes the mountain SNOW line wavy (sampled at column scale) and the
+## transition band patchy (sampled at ~4× scale for finer speckle). Immutable after _init().
+var _snow_noise: FastNoiseLite
 
 ## BiomeMap instance seeded from world_seed. Immutable after _init().
 var _biome_map: BiomeMap
@@ -256,6 +267,13 @@ func _rebuild_noise() -> void:
 	_terrace_noise.fractal_gain = 0.5
 	_terrace_noise.frequency = 0.012
 	_terrace_noise.seed = world_seed ^ 0x05
+
+	# Snow-cap noise: low frequency so the snow line waves over tens of metres; a 4× coordinate
+	# sample of the same noise gives finer speckle for the patchy transition band.
+	_snow_noise = FastNoiseLite.new()
+	_snow_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+	_snow_noise.frequency = 0.025
+	_snow_noise.seed = world_seed ^ 0x09
 
 
 func _load_pieces() -> void:
@@ -316,11 +334,22 @@ func _generate_base_terrain(voxel_tool: VoxelToolMultipassGenerator) -> void:
 			var is_water: bool = (biome == BiomeMap.Biome.OCEAN) and (surface_y < sea_level)
 
 			var surface_id: int = _surface_block_for(biome)
-			# MOUNTAIN: bare stone, with a SNOW cap on the high peaks (Y-dependent, so only the
-			# top of tall mountains is white). Done here (not in _surface_block_for) because the
-			# cap depends on this column's actual surface_y, not just the biome id.
-			if biome == BiomeMap.Biome.MOUNTAIN and surface_y >= MOUNTAIN_SNOW_CAP_Y:
-				surface_id = SNOW_ID
+			# MOUNTAIN: bare stone, with a SNOW cap on the high peaks. The snow LINE is wavy
+			# (jittered per column) and snow is PATCHY in a band just below it (rock pokes
+			# through, denser toward the top) — a natural cap, not a flat white cut. Done here
+			# (not in _surface_block_for) because it depends on this column's actual surface_y.
+			if biome == BiomeMap.Biome.MOUNTAIN:
+				var jitter: float = _snow_noise.get_noise_2d(world_x, world_z)  # [-1,1]
+				var snow_line: float = float(MOUNTAIN_SNOW_CAP_Y) + jitter * float(MOUNTAIN_SNOW_LINE_JITTER)
+				if float(surface_y) >= snow_line:
+					surface_id = SNOW_ID
+				elif float(surface_y) >= snow_line - float(MOUNTAIN_SNOW_PATCH_BAND):
+					# Patchy band: snow where the fine speckle noise falls under the closeness
+					# to the line (frac → 1 at the line), so coverage thickens toward the top.
+					var frac: float = (float(surface_y) - (snow_line - float(MOUNTAIN_SNOW_PATCH_BAND))) / float(MOUNTAIN_SNOW_PATCH_BAND)
+					var speckle: float = _snow_noise.get_noise_2d(world_x * 4.0 + 1000.0, world_z * 4.0 - 1000.0) * 0.5 + 0.5  # [0,1]
+					if speckle < frac:
+						surface_id = SNOW_ID
 
 			for y: int in range(area_min.y, area_max.y):
 				var voxel_id: int
