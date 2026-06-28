@@ -206,6 +206,33 @@ jobs:
           rm -rf /tmp/templates_tmp /tmp/templates.tpz
           echo "Installed export templates to $DEST:"; ls "$DEST" | head
 
+      # webrtc-native + godot-sqlite native binaries are NOT committed (only their
+      # .gdextension descriptors are) — install-deps.sh normally fetches them. Pull them here
+      # so the exported game has multiplayer + SQLite (their absence is non-fatal at export but
+      # ships a crippled build). Versions MIRROR scripts/install-deps.sh; idempotent. (We do NOT
+      # run install-deps.sh wholesale because it also installs GUT, an editor-only test addon.)
+      - name: Install native addon binaries (webrtc-native + godot-sqlite)
+        run: |
+          set -e
+          if ! command -v curl >/dev/null 2>&1 || ! command -v unzip >/dev/null 2>&1; then
+            command -v apt-get >/dev/null 2>&1 && { apt-get update -qq && apt-get install -y -qq curl unzip; } || true
+          fi
+          if [ ! -e addons/webrtc-native/bin/libwebrtc_native.linux.template_release.x86_64.so ] \
+             && [ ! -e addons/webrtc-native/bin/libwebrtc_native.windows.template_release.x86_64.dll ]; then
+            curl -fL --max-time 300 -o /tmp/webrtc.zip "https://github.com/godotengine/webrtc-native/releases/download/1.1.0-stable/godot-extension-webrtc.zip"
+            mkdir -p addons/webrtc-native/bin
+            unzip -q /tmp/webrtc.zip "webrtc/lib/*" -d /tmp/webrtc_x
+            cp -r /tmp/webrtc_x/webrtc/lib/. addons/webrtc-native/bin/
+          fi
+          if [ ! -f addons/godot-sqlite/gdsqlite.gdextension ]; then
+            curl -fL --max-time 120 -o /tmp/sqlite.zip "https://github.com/2shady4u/godot-sqlite/releases/download/v4.7/demo.zip"
+            unzip -q /tmp/sqlite.zip "demo/addons/godot-sqlite/*" -d /tmp/sqlite_x
+            mkdir -p addons/godot-sqlite
+            cp -r /tmp/sqlite_x/demo/addons/godot-sqlite/. addons/godot-sqlite/
+          fi
+          echo "webrtc-native/bin:"; ls addons/webrtc-native/bin/ 2>/dev/null | head -4 || true
+          echo "godot-sqlite:";     ls addons/godot-sqlite/ 2>/dev/null | head -4 || true
+
       # Create build output directories
       - name: Create build directories
         run: mkdir -p "${{ matrix.target.artifact_path }}"
@@ -223,10 +250,13 @@ jobs:
             echo "WARNING: SECRET_RELEASE_KEYSTORE_BASE64 is not set — Android export will be unsigned."
           fi
 
-      # Export the platform
+      # Export the platform. Do NOT pass the artifact DIRECTORY as the output — Godot then
+      # tries to write the binary AS that path and fails ("Failed to copy export template").
+      # Omitting it makes Godot use the preset's export_path (build/<Platform>/Cubicraftia.<ext>),
+      # which the mkdir above already created.
       - name: Export — ${{ matrix.target.platform }}
         run: |
-          godot --headless --export-release "${{ matrix.target.platform }}" "${{ matrix.target.artifact_path }}"
+          godot --headless --export-release "${{ matrix.target.platform }}"
 
       # Upload build artifact
       - name: Upload artifact
@@ -275,6 +305,24 @@ jobs:
           printf 'https://cubicraftia:%s@lfs.cubicraftia.com\n' "$LFS_PASSWORD" > "$HOME/.git-credentials"
           git lfs pull
           rm -f "$HOME/.git-credentials"
+
+      # Pull the install-deps-provisioned native addons (webrtc-native + godot-sqlite) so the
+      # iOS build ships multiplayer + SQLite. Versions mirror scripts/install-deps.sh.
+      - name: Install native addon binaries (webrtc-native + godot-sqlite)
+        run: |
+          set -e
+          if [ ! -e addons/webrtc-native/bin/libwebrtc_native.ios.template_release.arm64.dylib ]; then
+            curl -fL --max-time 300 -o /tmp/webrtc.zip "https://github.com/godotengine/webrtc-native/releases/download/1.1.0-stable/godot-extension-webrtc.zip"
+            mkdir -p addons/webrtc-native/bin
+            unzip -q /tmp/webrtc.zip "webrtc/lib/*" -d /tmp/webrtc_x
+            cp -r /tmp/webrtc_x/webrtc/lib/. addons/webrtc-native/bin/
+          fi
+          if [ ! -f addons/godot-sqlite/gdsqlite.gdextension ]; then
+            curl -fL --max-time 120 -o /tmp/sqlite.zip "https://github.com/2shady4u/godot-sqlite/releases/download/v4.7/demo.zip"
+            unzip -q /tmp/sqlite.zip "demo/addons/godot-sqlite/*" -d /tmp/sqlite_x
+            mkdir -p addons/godot-sqlite
+            cp -r /tmp/sqlite_x/demo/addons/godot-sqlite/. addons/godot-sqlite/
+          fi
 
       - name: Install Godot ${{ env.GODOT_VERSION }} (native, macOS)
         run: |
