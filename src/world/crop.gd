@@ -60,7 +60,15 @@ func _apply_model() -> void:
 	var path: String = _MODEL_DIR + crop_kind + ".glb"
 	if not ResourceLoader.exists(path):
 		return
-	var m := (load(path) as PackedScene).instantiate() as Node3D
+	# Null-check the LOADED scene BEFORE instantiate(): ResourceLoader.exists() can return
+	# true while load() still fails (e.g. an .import remap present but the imported resource
+	# missing/broken in an export) — calling .instantiate() on a null PackedScene SEGFAULTS
+	# the engine (this crashed the game when riding the balloon into a fresh crop chunk).
+	var scene := load(path) as PackedScene
+	if scene == null:
+		push_warning("Crop: model failed to load: %s" % path)
+		return
+	var m := scene.instantiate() as Node3D
 	if m == null:
 		return
 	add_child(m)
