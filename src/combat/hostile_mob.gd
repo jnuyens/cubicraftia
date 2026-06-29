@@ -362,7 +362,15 @@ func _setup_skinned_rig() -> void:
 		# animator on the static art mesh so the mob still animates instead of standing dead.
 		_proc_anim = ProceduralCreatureAnimator.new(ProceduralCreatureAnimator.Motion.LAND)
 		return
-	var glb := (load(path) as PackedScene).instantiate() as Node3D
+	# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+	# return true while load() still fails (broken/missing imported resource in an export) —
+	# calling .instantiate() on a null PackedScene SEGFAULTS the engine.
+	var _ps := load(path) as PackedScene
+	if _ps == null:
+		push_warning("HostileMob: rigged model failed to load: %s" % path)
+		_proc_anim = ProceduralCreatureAnimator.new(ProceduralCreatureAnimator.Motion.LAND)
+		return
+	var glb := _ps.instantiate() as Node3D
 	if glb == null:
 		_proc_anim = ProceduralCreatureAnimator.new(ProceduralCreatureAnimator.Motion.LAND)
 		return

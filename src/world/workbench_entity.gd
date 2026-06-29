@@ -82,7 +82,14 @@ func _apply_model() -> void:
 	var path := "res://assets/meshes/furniture/workbench.glb"
 	if not ResourceLoader.exists(path):
 		return
-	var m := (load(path) as PackedScene).instantiate() as Node3D
+	# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+	# return true while load() still fails (broken/missing imported resource in an export) —
+	# calling .instantiate() on a null PackedScene SEGFAULTS the engine.
+	var _ps := load(path) as PackedScene
+	if _ps == null:
+		push_warning("WorkbenchEntity: model failed to load: %s" % path)
+		return
+	var m := _ps.instantiate() as Node3D
 	if m == null:
 		return
 	add_child(m)

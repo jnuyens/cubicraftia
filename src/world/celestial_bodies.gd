@@ -164,7 +164,14 @@ func _drop_question(pos: Vector3) -> void:
 func _load_sky_model(path: String, target_width: float, glowing: bool) -> Node3D:
 	if not ResourceLoader.exists(path):
 		return null
-	var inst := (load(path) as PackedScene).instantiate() as Node3D
+	# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+	# return true while load() still fails (broken/missing imported resource in an export) —
+	# calling .instantiate() on a null PackedScene SEGFAULTS the engine.
+	var _ps := load(path) as PackedScene
+	if _ps == null:
+		push_warning("CelestialBodies: sky model failed to load: %s" % path)
+		return null
+	var inst := _ps.instantiate() as Node3D
 	if inst == null:
 		return null
 	var ab: AABB = _model_aabb(inst)
@@ -213,7 +220,14 @@ func _spawn_clouds() -> void:
 		var path: String = _CLOUD_MODELS[i % _CLOUD_MODELS.size()]
 		if not ResourceLoader.exists(path):
 			continue
-		var inst := (load(path) as PackedScene).instantiate() as Node3D
+		# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+		# return true while load() still fails (broken/missing imported resource in an export) —
+		# calling .instantiate() on a null PackedScene SEGFAULTS the engine.
+		var _ps := load(path) as PackedScene
+		if _ps == null:
+			push_warning("CelestialBodies: cloud model failed to load: %s" % path)
+			continue
+		var inst := _ps.instantiate() as Node3D
 		if inst == null:
 			continue
 		var ab: AABB = _model_aabb(inst)

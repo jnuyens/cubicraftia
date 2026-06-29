@@ -326,7 +326,14 @@ func _apply_rigged_figure() -> bool:
 	var path: String = "%sfigure_%02d.glb" % [_RIGGED_DIR, idx]
 	if not ResourceLoader.exists(path):
 		return false
-	var glb := (load(path) as PackedScene).instantiate() as Node3D
+	# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+	# return true while load() still fails (broken/missing imported resource in an export) —
+	# calling .instantiate() on a null PackedScene SEGFAULTS the engine.
+	var _ps := load(path) as PackedScene
+	if _ps == null:
+		push_warning("VillageNPC: rigged figure failed to load: %s" % path)
+		return false
+	var glb := _ps.instantiate() as Node3D
 	if glb == null:
 		return false
 	add_child(glb)
@@ -499,7 +506,14 @@ func _apply_static_figure() -> void:
 	var path: String = "%sfigure_%02d.glb" % [_FIGURE_DIR, idx]
 	if not ResourceLoader.exists(path):
 		return
-	var m := (load(path) as PackedScene).instantiate() as Node3D
+	# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+	# return true while load() still fails (broken/missing imported resource in an export) —
+	# calling .instantiate() on a null PackedScene SEGFAULTS the engine.
+	var _ps := load(path) as PackedScene
+	if _ps == null:
+		push_warning("VillageNPC: static figure failed to load: %s" % path)
+		return
+	var m := _ps.instantiate() as Node3D
 	if m == null:
 		return
 	add_child(m)

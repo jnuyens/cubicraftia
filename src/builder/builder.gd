@@ -2191,7 +2191,16 @@ func _apply_pickaxe_model() -> void:
 		c.queue_free()
 	var path: String = _PICKAXE_TIER_MODELS.get(_pickaxe_tier, _PICKAXE_TIER_MODELS["wood"])
 	if ResourceLoader.exists(path):
-		var pm := (load(path) as PackedScene).instantiate() as Node3D
+		# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+		# return true while load() still fails (broken/missing imported resource in an export) —
+		# calling .instantiate() on a null PackedScene SEGFAULTS the engine. Fall back to the
+		# procedural pickaxe in that case (same as the no-asset else branch).
+		var _ps := load(path) as PackedScene
+		if _ps == null:
+			push_warning("Builder: pickaxe model failed to load: %s" % path)
+			_build_procedural_pickaxe(pickaxe_mi)
+			return
+		var pm := _ps.instantiate() as Node3D
 		pm.name = "model"
 		pickaxe_mi.add_child(pm)
 		# Static mesh: AABB is valid immediately. Scale longest axis to the held size and
@@ -2303,8 +2312,17 @@ func _setup_avatar_mesh_nodes() -> void:
 	var _AVATAR_GLB: String = _AVATAR_SKINS.get(_read_selected_skin(), _AVATAR_SKINS[_DEFAULT_SKIN])
 	if not ResourceLoader.exists(_AVATAR_GLB):
 		_AVATAR_GLB = "res://assets/meshes/builder/builder_avatar.glb"
+	# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+	# return true while load() still fails (broken/missing imported resource in an export) —
+	# calling .instantiate() on a null PackedScene SEGFAULTS the engine. When the avatar GLB
+	# fails to load, treat it like an absent asset so we fall through to the rig/box fallbacks.
+	var _avatar_ps: PackedScene = null
 	if _box_minifig == null and ResourceLoader.exists(_AVATAR_GLB):
-		var av := (load(_AVATAR_GLB) as PackedScene).instantiate() as Node3D
+		_avatar_ps = load(_AVATAR_GLB) as PackedScene
+		if _avatar_ps == null:
+			push_warning("Builder: avatar model failed to load: %s" % _AVATAR_GLB)
+	if _avatar_ps != null:
+		var av := _avatar_ps.instantiate() as Node3D
 		av.name = "BuilderAvatar"
 		_avatar_mesh_root.add_child(av)
 		_glb_loaded = true

@@ -88,7 +88,14 @@ func _ready() -> void:
 func _apply_model() -> void:
 	if not ResourceLoader.exists(_MODEL_PATH):
 		return
-	var m := (load(_MODEL_PATH) as PackedScene).instantiate() as Node3D
+	# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+	# return true while load() still fails (broken/missing imported resource in an export) —
+	# calling .instantiate() on a null PackedScene SEGFAULTS the engine.
+	var _ps := load(_MODEL_PATH) as PackedScene
+	if _ps == null:
+		push_warning("Strawberry: model failed to load: %s" % _MODEL_PATH)
+		return
+	var m := _ps.instantiate() as Node3D
 	if m == null:
 		return
 	add_child(m)

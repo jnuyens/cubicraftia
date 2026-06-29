@@ -177,9 +177,16 @@ func _find_cameras(root: Node) -> Array[Camera3D]:
 func _spawn_flower(x: float, z: float) -> void:
 	var p := "res://assets/meshes/flower.glb"
 	if ResourceLoader.exists(p):
-		var f := (load(p) as PackedScene).instantiate() as Node3D
-		add_child(f)
-		f.global_position = Vector3(x, 0.0, z)
+		# Null-check the LOADED PackedScene BEFORE instantiate(): ResourceLoader.exists() can
+		# return true while load() still fails (broken/missing imported resource in an export) —
+		# calling .instantiate() on a null PackedScene SEGFAULTS the engine.
+		var _ps := load(p) as PackedScene
+		if _ps == null:
+			push_warning("ModelGallery: flower model failed to load: %s" % p)
+		else:
+			var f := _ps.instantiate() as Node3D
+			add_child(f)
+			f.global_position = Vector3(x, 0.0, z)
 	_name_label("flower", x, z, 0.2)
 
 
