@@ -45,6 +45,10 @@ ReportModal="*res://src/ui/report_modal.gd"
 OnboardingTelemetry="*res://src/autoload/onboarding_telemetry.gd"
 BuildInfo="*res://src/autoload/build_info.gd"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/build_stamp/plugin.cfg")
+
 [cubicraftia]
 
 features/snow_thunder_lightning=false
