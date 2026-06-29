@@ -33,10 +33,19 @@ static func compute_version() -> String:
 	var sha: String = str(out[0]).strip_edges() if out.size() > 0 else ""
 	if sha == "":
 		sha = "unknown"
-	# "+" only for TRACKED uncommitted changes — untracked build artifacts (downloaded
-	# addon binaries, version.txt itself) must not falsely mark a clean release build dirty.
-	var dirty: Array = []
-	OS.execute("git", ["status", "--porcelain", "--untracked-files=no"], dirty)
-	var suffix: String = "+" if (dirty.size() > 0 and str(dirty[0]).strip_edges() != "") else ""
+	# "+" only for TRACKED CODE changes. Ignore untracked build artifacts (downloaded addon
+	# binaries, version.txt) AND the .planning/ GSD docs, which are intentionally left
+	# uncommitted (commit_docs=false) and don't represent a different build.
+	var dirty_out: Array = []
+	OS.execute("git", ["status", "--porcelain", "--untracked-files=no"], dirty_out)
+	var is_dirty: bool = false
+	if dirty_out.size() > 0:
+		for line in str(dirty_out[0]).split("\n", false):
+			var path: String = line.strip_edges().substr(2).strip_edges()  # drop the 2-char status code
+			if path == "" or path.begins_with(".planning/"):
+				continue
+			is_dirty = true
+			break
+	var suffix: String = "+" if is_dirty else ""
 	var date: String = Time.get_date_string_from_system()
 	return "%s%s %s" % [sha, suffix, date]
