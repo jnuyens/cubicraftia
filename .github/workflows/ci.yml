@@ -287,13 +287,18 @@ jobs:
         run: |
           godot --headless --export-release "${{ matrix.target.platform }}"
 
-      # Upload build artifact
+      # Upload build artifact ONLY on tag (release) runs. Each platform build is ~450 MB, so
+      # uploading on every workflow_dispatch/push debug run blows the GitHub Actions artifact
+      # quota fast (a full matrix is ~1.8 GB/run). Debug runs still verify the export succeeds;
+      # they just don't keep the output. retention-days caps how long release artifacts linger.
       - name: Upload artifact
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.target.artifact_name }}
           path: ${{ matrix.target.artifact_path }}
           if-no-files-found: warn
+          retention-days: 30
 
   # ── Job 3: iOS export + TestFlight upload ────────────────────────────────────
   # Phase 5: iOS CI — closes Phase 1 D-04 deviation (manual export → automated CI)
@@ -418,10 +423,12 @@ jobs:
           api-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           ipa-path: build/iOS/Cubicraftia.ipa
 
+      # IPA already went to TestFlight above; only keep the artifact copy on tag runs.
       - name: Upload IPA artifact
-        if: env.IOS_SIGNING_AVAILABLE == 'true'
+        if: env.IOS_SIGNING_AVAILABLE == 'true' && startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: build-iOS
           path: build/iOS/
           if-no-files-found: warn
+          retention-days: 30
