@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Content & Polish
-status: executing
-stopped_at: Phase 9 planned (3 plans, plan-checker passed)
-last_updated: "2026-06-21T19:25:39.841Z"
-last_activity: 2026-06-21 -- Phase 09 execution started
+status: Awaiting next milestone
+stopped_at: Phase 8 complete (6/6 plans done); Phases 7, 8, 9 all complete — v1.1 content phases done
+last_updated: "2026-07-08T08:37:50.468Z"
+last_activity: 2026-07-08 — Milestone v1.1 completed and archived
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 13
-  completed_plans: 10
-  percent: 20
+  completed_phases: 3
+  total_plans: 14
+  completed_plans: 14
+  percent: 60
 ---
 
 # Cubicraftia — STATE
@@ -38,16 +38,19 @@ progress:
 
 ## Current Position
 
-Phase: 09 (nl-localisation-review) — EXECUTING
-Plan: 2 of 3
-Status: Executing Phase 09
-Last activity: 2026-06-21 -- Phase 09 execution started
+Phase: Milestone v1.1 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-07-08 — Milestone v1.1 completed and archived
 
 ## Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260611-qyz | Add include_filter to all export presets so non-resource data files ship in the pck | 2026-06-11 | f2c42ab | [260611-qyz-add-include-filter-to-all-export-presets](./quick/260611-qyz-add-include-filter-to-all-export-presets/) |
+| 260621-ur7 | Coral reefs on seabed, climbable (solid) whales, villagers gated to correct biome | 2026-06-21 | 51b60b0 | [260621-ur7-coral-whale-villager-fixes](./quick/260621-ur7-coral-whale-villager-fixes/) |
+| 260622-t2n | Add tools/render_ui_scene.gd — Godot UI-scene + locale capture-to-PNG tool | 2026-06-22 | 2af4784 | [260622-t2n-add-tools-render-ui-scene-gd-godot-ui-sc](./quick/260622-t2n-add-tools-render-ui-scene-gd-godot-ui-sc/) |
+| 260622-tkz | Redesign builder creator to match choose-builder art (cards + backdrop + live preview) | 2026-06-22 | da27083 | [260622-tkz-redesign-avatar-builder-creator-to-match](./quick/260622-tkz-redesign-avatar-builder-creator-to-match/) |
 
 ## Phase Roster
 
@@ -56,7 +59,7 @@ Last activity: 2026-06-21 -- Phase 09 execution started
 | Phase | Goal (one line) | Requirements | Status |
 |-------|-----------------|--------------|--------|
 | 7 | Wire all committed art into live scenes; zero placeholder stubs remain | ASSET-01..07 | Not started |
-| 8 | All creatures and builder animate (idle + locomotion) with no perf regression | ANIM-01..06 | Executing |
+| 8 | All creatures and builder animate (idle + locomotion) with no perf regression | ANIM-01..06 | Complete |
 | 9 | NL profanity wordlist and 478 translations reviewed by native Dutch speaker; locale clean in-game | LOCALE-01..03 | Not started |
 
 ### v1.0 Public Release (completed 2026-05-30)
@@ -136,6 +139,7 @@ Last activity: 2026-06-21 -- Phase 09 execution started
 - Phase 4 VERIFICATION: 6 multi-device WebRTC tests (handover SLA, relay badge, nameplates, freeze UI, NAT traversal); deferred.
 - Phase 5 VERIFICATION: 6 operator/legal items (attorney, Apple/Google creds, SMTP); deferred.
 - Phase 6 VERIFICATION: 4 live-device items (FTUE walkthrough, deep-link, 3D avatar preview, NL locale); deferred.
+- Phase 9 LOCALE-03: in-game visual screenshot pass across 12 surfaces; hardware-gated, deferred (profanity regression 15/15 + native sign-off done). Follow-up: force NL locale, F5 in Godot 4.6, walk 09-03-SCREENSHOTS.md.
 
 All items documented in `.planning/v1.0-MILESTONE-AUDIT.md` § Tech Debt.
 
@@ -333,13 +337,14 @@ None — v1.1 roadmap authored. Ready for `/gsd:plan-phase 7`.
 - **anim-04-visual-verify-deferred:** in-world fish-wobble/tint + panda leg-rig visual confirmation auto-approved-but-deferred per auto-mode (code + headless tests done, 0 failing); exact how-to-verify preserved in 08-04-SUMMARY.md; mirrors the 08-03 Tier-3 deferral precedent
 - **anim-05-hostile-soft-body-wobble-live:** 08-05 re-wired cube_slime (all 3 tiers, sized via _art_target_height 0.6/0.9/1.3 so SMALL<MEDIUM<LARGE) + ghost to ShaderWobbleAnimator (BodyType.SLIME #3DB560 / GHOST #F1F0EA); _setup_procedural_anim calls removed; _art_mesh_root hidden so textured Meshy art does not double-render; full unit suite 340 tests 0 failing; combat (hop/split/wall-pass/bed-bubble/chime) preserved — completes SC1's soft-body set (3 slime tiers + ghost, fish from 08-04) (SC1/ANIM-01)
 - **anim-05-visual-verify-deferred:** in-viewport slime squash/stretch + tier sizing + split and ghost float/alpha + wall-pass + bed-bubble repel (no doubled mesh) confirmation auto-approved-but-deferred per auto-mode (code + headless tests done, 0 failing); blocking checkpoint how-to-verify preserved verbatim in 08-05-SUMMARY.md; mirrors 08-03/08-04 deferral precedent
+- **locale-03-deferred-hardware-gated:** LOCALE-03 visual in-game pass deferred following the established hardware-gated deferral pattern (same precedent as UAT-01/02/03, Phase 1/2/3/4/6 deferrals); code-side NL correctness confirmed: 552 msgid keys translated, wordlist corrected (3 typos, 10 false positives, 7 Flemish additions), 7 GUT regression tests green, native Flemish speaker sign-off in nl.po header (jnuyens 2026-06-21); visual pass requires display (see 09-03-SCREENSHOTS.md) (09-03)
 
 ## Session Continuity
 
-- **Last workflow:** `/gsd:execute-phase` (08-05: cube_slime + ghost hostile soft-body wobble re-wire, gap closure)
-- **Last update:** 2026-06-10
-- **Stopped at:** Phase 9 planned (3 plans, plan-checker passed)
-- **Next workflow:** `/gsd:execute-phase 08 06` (or phase verification)
+- **Last workflow:** `/gsd:execute-phase` (08-06: doc-only gap-closure — corrected D-RECON-01 in 08-CONTEXT.md, confirmed ANIM-02 Complete; Phase 8 now 6/6, closing the last dangling v1.1 plan)
+- **Last update:** 2026-07-08
+- **Stopped at:** Phase 8 complete (6/6 plans done); Phases 7, 8, 9 all complete — v1.1 content phases done
+- **Next workflow:** `/gsd:verify-work 08` to close the gaps_found verification, or `/gsd:complete-milestone` for v1.1
 
 ## Deferred Items
 
@@ -359,11 +364,22 @@ Items acknowledged and deferred at milestone v1.0 close on 2026-05-30:
 
 All items documented in `.planning/v1.0-MILESTONE-AUDIT.md` § Tech Debt.
 Code-side requirements 11/11 satisfied; remaining items are operator-provisioned infrastructure, hardware-gated UAT, attorney review, and content drops (artwork, audio, NL locale UAT).
-| Phase 07-asset-integration P01 | 1min | 1 tasks | 1 files |
-| Phase 07-asset-integration P02 | 10 | 3 tasks | 3 files |
-| Phase 07-asset-integration P03 | 8 | 2 tasks | 5 files |
-| Phase 08-creature-builder-animation P01 | 5 | 2 tasks | 1 files |
-| Phase 08-creature-builder-animation P02 | 3m | 2 tasks | 2 files |
-| Phase 08-creature-builder-animation P03 | 15min | 2 tasks | 3 files |
-| Phase 08-creature-builder-animation P04 | 8min | 2 tasks | 3 files |
-| Phase 08-creature-builder-animation P05 | 4min | 3 tasks | 3 files |
+
+Items acknowledged and deferred at milestone v1.1 close on 2026-07-08:
+
+| Category | Item | Status |
+|----------|------|--------|
+| Verification | Phase 07 — 07-VERIFICATION.md | human_needed — live-device visual confirmation of integrated art across scenes |
+| Verification | Phase 08 — 08-VERIFICATION.md (ANIM-06) | human_needed — Tier-3 device animation frame-budget benchmark (desktop smoke PASS 0.00085 ms/creature; hardware run deferred) |
+| Verification | Phase 09 — 09-VERIFICATION.md (LOCALE-03) | human_needed — in-game NL visual screenshot pass across 12 surfaces (see 09-03-SCREENSHOTS.md) |
+| UAT gap | Phase 09 — 09-UAT.md | diagnosed — avatar-creator UAT gaps closed by quick task 260622-tkz; kept for record |
+| Debug session | avatar-creator-uat-gaps | diagnosed — three root causes fixed via quick task 260622-tkz (builder-creator redesign) |
+| Bookkeeping | 5 quick-task STATUS files missing | tasks complete per Quick Tasks Completed table; STATUS.md artifacts absent only |
+
+Carried-forward v1.0 hardware/operator deferrals (Phases 01–06) remain open and unchanged; they are pre-public-release gates, not v1.1 scope.
+
+Note: 08-VERIFICATION.md frontmatter still reads `gaps_found` from 2026-06-09; the two gaps it flagged (fish/slime/ghost shader-wobble + panda quadruped dead code) were closed afterward by plans 08-04, 08-05, 08-06 — the file was simply never re-stamped. ANIM-01 and ANIM-02 are Complete in REQUIREMENTS/ROADMAP.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone

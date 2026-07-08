@@ -12,16 +12,11 @@ Cubicraftia is een 3D game waarin de hele wereld gemaakt is van **bricks** (Lego
 
 **Het Lego-bouwgevoel in een Minecraft-achtige sandbox — alleen of met je vrienden.** De rijkere vormtaal van echte Lego (geen 1×1 cubes) maakt bouwen expressiever. Je begint solo, en wanneer een vriend joint groeit dezelfde sessie naar multiplayer — geen aparte modi.
 
-## Current Milestone: v1.1 Content & Polish
+## Current Milestone: (none active — planning next)
 
-**Goal:** Make Cubicraftia *look and feel* shipped — bring the art that's already drawn into the live game, give every creature and the builder life through locomotion animation, and validate the Dutch localisation with a native speaker.
+**v1.1 Content & Polish shipped 2026-07-08.** Cubicraftia now looks and feels shipped: the drawn art appears in the live game, every creature and the builder animate through idle + locomotion, and the Dutch localisation carries a native-speaker sign-off. Run `/gsd:new-milestone` to open the next cycle.
 
-**Target tracks:**
-- **Asset integration** — Wire the already-committed art into live scenes; replace the 1×1 transparent placeholder stubs (title_bg, FTUE arrow, avatar preset thumbnails, world thumbnail, HUD/toast/marker icons, badges, borders, biome tiles) with the real assets so drawn art actually appears in-game.
-- **Creature & builder animation (locomotion-first)** — Productionize the three POC rig archetypes (shader-wobble soft bodies, quadruped wildlife, rigid-piece humanoids) into idle + movement animation for *all* entities: the 5 hostiles, wildlife, and a rigged/animated builder. Combat/death polish deferred.
-- **NL native review** — Native Dutch speaker + gaming-context review of the profanity wordlist and the ~478 msgid translations shipped in v1.0.
-
-**Out of scope for v1.1 (deferred to later milestones):** audio (title music + SFX), launch readiness (Apple/Google signing, coturn/Supabase deploy, SMTP, app links, attorney reviews), hardware UAT discharge, new gameplay (avatar progression, voice chat, public lobbies, Discord SSO).
+**Likely candidates for the next milestone** (from the Future list below): audio pass (title music + SFX), launch readiness (Apple/Google signing, coturn/Supabase deploy, SMTP, app links, attorney reviews), combat/death animation polish, and discharging the hardware-gated UAT backlog.
 
 ## Requirements
 
@@ -38,24 +33,18 @@ Cubicraftia is een 3D game waarin de hele wereld gemaakt is van **bricks** (Lego
 - ✓ DOC-08 — Block/report 3 surfaces, profanity (LDNOOBW 5-lang), parental consent (COPPA email-plus), EULA + Privacy — v1.0
 - ✓ DOC-09 — Deferred-list scope discipline — v1.0
 - ✓ DOC-10 — Glossary lock (no "Lego" in player-facing UI) — v1.0
+- ✓ ASSET — Committed art wired into every live scene; zero 1×1 placeholder stubs remain (title hero, FTUE arrow + storyboards, avatar preset thumbnails, world thumbnail, HUD hearts) — v1.1
+- ✓ ANIM-01 — Shader-wobble soft bodies (3 slime tiers, fish, ghost) animate idle + movement — v1.1
+- ✓ ANIM-02 — Quadruped wildlife (panda) animate idle + movement via the quadruped rig — v1.1
+- ✓ ANIM — Rigid-piece / Meshy builder + humanoid hostiles animate idle + walk; all entities animate in-world — v1.1 (desktop perf smoke PASS 0.00085 ms/creature; Tier-3 hardware benchmark deferred)
+- ✓ LOCALE-01 — Native Flemish speaker reviewed + signed off the profanity wordlist — v1.1
+- ✓ LOCALE-02 — All NL msgid translations (552 keys) reviewed and corrected by a native speaker — v1.1
 
-### Active (v1.1 Content & Polish — in scope)
+### Active (no milestone in progress)
 
-**Asset integration** — wire committed art into live scenes:
-- [ ] Replace placeholder stubs with real assets (title_bg, FTUE arrow, 8 avatar preset thumbnails, world thumbnail, HUD/toast/marker icons, badges, rarity borders, biome minimap tiles)
-- [ ] Verify integrated art renders correctly across scenes (title, avatar creator, world select, FTUE, in-game HUD)
+_v1.1 shipped 2026-07-08. Start the next milestone with `/gsd:new-milestone` to populate this section._
 
-**Creature & builder animation (locomotion-first):**
-- [ ] Productionize shader-wobble archetype (soft bodies: slime tiers, fish, ghost) — idle + movement
-- [ ] Productionize quadruped archetype (wildlife) — idle + movement
-- [ ] Productionize rigid-piece humanoid archetype (builder + humanoid hostiles) — idle + walk
-- [ ] All 5 hostiles + wildlife + builder animate in-world (combat/death polish deferred)
-
-**NL native review:**
-- [ ] Native Dutch speaker + gaming-context review of profanity wordlist
-- [ ] Native Dutch review of ~478 msgid translations
-
-### Future (deferred beyond v1.1)
+### Future (candidates for the next milestone)
 
 **Audio:**
 - [ ] Title music track (silent placeholder ships in v1.0)
@@ -226,6 +215,8 @@ This document evolves at phase transitions and milestone boundaries.
 ---
 ## Current State
 
+**Milestone v1.1 Content & Polish SHIPPED 2026-07-08.** Phases 7-9 complete (14 plans). The drawn art is wired into every live scene (no placeholder stubs), all creatures and the builder animate via the three rig archetypes, and the NL locale carries a native Flemish speaker sign-off (552 keys). Release build tagged `v1.1` on 2026-06-30; all platforms green. Remaining v1.1 items are hardware/operator/visual-pass gated deferrals (Tier-3 animation benchmark, in-game NL screenshot pass) documented in STATE.md § Deferred Items.
+
 **Milestone v1.0 SHIPPED 2026-05-30.** All 6 phases complete, all 11 DOC-* requirements validated, all 7 e2e flows verified, 11/11 cross-phase wiring checks pass.
 
 **Codebase:**
@@ -251,7 +242,7 @@ This document evolves at phase transitions and milestone boundaries.
 
 **Post-v1.0 work in flight:** ~56 commits of raw art + animation POCs landed after the v1.0 tag (procedural brick library, ~390-item art catalogue, creature meshes via TripoSR, avatar presets, HUD sprites, biome tiles, shader-wobble animation POCs). Milestone v1.1 formalizes and completes that work.
 
-**Next:** Milestone **v1.1 Content & Polish** started 2026-06-01 — asset integration, creature/builder locomotion animation, NL native review. Phases continue from 6 → start at Phase 7.
+**Next:** No milestone in progress. Run `/gsd:new-milestone` to open the next cycle — likely an audio + launch-readiness pass, combat/death animation polish, or discharging the hardware-gated UAT backlog. Phases continue from 9 → start at Phase 10.
 
 ---
-*Last updated: 2026-06-01 after starting v1.1 milestone*
+*Last updated: 2026-07-08 after v1.1 Content & Polish milestone*

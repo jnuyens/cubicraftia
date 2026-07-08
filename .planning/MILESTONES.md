@@ -1,5 +1,35 @@
 # Cubicraftia — Milestones
 
+## v1.1 — Content & Polish
+
+**Shipped:** 2026-07-08 (release build tagged `v1.1` on 2026-06-30)
+**Phases:** 3 (Phases 7-9)
+**Plans:** 14 (all complete)
+**Tasks:** 19 (across 14 plans)
+**Timeline:** ~3.5 weeks (2026-06-11 → 2026-07-04)
+**Commits:** 220 since v1.0
+**Files changed:** 3,554 (+47,158 / -1,455 — mostly committed art assets)
+**Known deferred items at close:** hardware/operator/visual-pass gated (see STATE.md § Deferred Items, v1.1 block)
+
+### Delivered
+
+v1.1 makes Cubicraftia look and feel shipped. The art that was already drawn now appears in the live game, every creature and the player's builder animate through idle + locomotion, and the Dutch localisation carries a native-speaker sign-off. Beyond the three formal phases, a large wave of world and avatar polish landed: a MOUNTAIN biome with wavy snow caps, a spawn-showcase diorama (voxel lake, shipwrecks, landmark village), completed crafting recipes (axes, swords, tools), iterative box-minifig avatar work, and crash-guard fixes for null-PackedScene segfaults across spawners.
+
+### Key Accomplishments
+
+1. **Asset integration (Phase 7)** — Every 1×1 transparent placeholder stub replaced with real committed art: title hero composition (VRAM-optimised import), FTUE arrow + 4 storyboard panels, HUD heart icons, world thumbnails, avatar preset thumbnails via SubViewport capture. A headless GUT stub-detection harness scans all shipped `.tscn`/`.gd` for sub-200 B PNG references and stays green.
+2. **Creature & builder animation (Phase 8)** — All three rig archetypes productionised into idle + locomotion: shader-wobble soft bodies (3 slime tiers + fish + ghost), quadruped wildlife (panda), and the rigid-piece / Meshy-avatar builder shared with humanoid hostiles. Desktop perf smoke PASS at 0.00085 ms/creature (1180× under the < 1 ms target); Tier-3 hardware benchmark deferred as explicit debt.
+3. **NL localisation review (Phase 9)** — 552 msgid keys translated with a native Flemish speaker sign-off in `nl.po`; profanity wordlist corrected (3 typos, 10 false positives, 7 Flemish additions) with 7 GUT regression tests green. Avatar-creator Character section localised (Bouwer / Avonturier / Verkenner), grey-capsule preview replaced by a live SubViewport builder that re-renders on every selection, and a ScrollContainer fix made every section plus the footer reachable.
+4. **World & avatar polish (out-of-phase)** — MOUNTAIN biome (terraced cliffs, wavy snow line, clouds around peaks), enriched spawn diorama, full crafting recipe set, textured rigged builder avatar, build-stamp version plugin, CI artifact retention tuning.
+5. **Stability** — Null-guard crash fixes across crop/balloon/generic spawners eliminating engine segfaults on null `PackedScene`; all-platform builds green (the `v1.1` release tag).
+
+### Archives
+
+- `milestones/v1.1-ROADMAP.md` — full Phase 7-9 breakdown
+- `milestones/v1.1-REQUIREMENTS.md` — ASSET / ANIM / LOCALE requirements with outcomes
+
+---
+
 ## v1.0 — Public Release
 
 **Shipped:** 2026-05-30
