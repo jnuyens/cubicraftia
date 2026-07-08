@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Content & Polish
-status: Awaiting next milestone
-stopped_at: Phase 8 complete (6/6 plans done); Phases 7, 8, 9 all complete — v1.1 content phases done
-last_updated: "2026-07-08T08:37:50.468Z"
-last_activity: 2026-07-08 — Milestone v1.1 completed and archived
+milestone: v1.2
+milestone_name: Multiplayer & Distribution
+status: planning
+last_updated: "2026-07-08T21:41:40.995Z"
+last_activity: 2026-07-08
 progress:
-  total_phases: 5
-  completed_phases: 3
-  total_plans: 14
-  completed_plans: 14
-  percent: 60
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Cubicraftia — STATE
@@ -38,10 +37,10 @@ progress:
 
 ## Current Position
 
-Phase: Milestone v1.1 complete
+Phase: Not started (defining requirements)
 Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-07-08 — Milestone v1.1 completed and archived
+Status: Defining requirements
+Last activity: 2026-07-08 — Milestone v1.2 started
 
 ## Quick Tasks Completed
 

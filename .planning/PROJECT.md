@@ -12,11 +12,22 @@ Cubicraftia is een 3D game waarin de hele wereld gemaakt is van **bricks** (Lego
 
 **Het Lego-bouwgevoel in een Minecraft-achtige sandbox — alleen of met je vrienden.** De rijkere vormtaal van echte Lego (geen 1×1 cubes) maakt bouwen expressiever. Je begint solo, en wanneer een vriend joint groeit dezelfde sessie naar multiplayer — geen aparte modi.
 
-## Current Milestone: (none active — planning next)
+## Current Milestone: v1.2 Multiplayer & Distribution
 
-**v1.1 Content & Polish shipped 2026-07-08.** Cubicraftia now looks and feels shipped: the drawn art appears in the live game, every creature and the builder animate through idle + locomotion, and the Dutch localisation carries a native-speaker sign-off. Run `/gsd:new-milestone` to open the next cycle.
+**Goal:** Take Cubicraftia from code-complete to actually-live and actually-downloadable. Deploy the multiplayer backend so friends connect over the internet, prove it works on real devices, and ship the game through direct download, a one-click join link, and both mobile app stores, with auto-update keeping every peer on the same build.
 
-**Likely candidates for the next milestone** (from the Future list below): audio pass (title music + SFX), launch readiness (Apple/Google signing, coturn/Supabase deploy, SMTP, app links, attorney reviews), combat/death animation polish, and discharging the hardware-gated UAT backlog.
+**Target features:**
+- **Go-live multiplayer** — deploy the Go discovery/signaling server + coturn TURN/STUN + self-hosted Supabase on the existing Linux host (m1.linuxbe.com / cubicraftia.com) with TLS, DNS, and secrets management
+- **Real-device validation** — discharge the 6 deferred multi-device WebRTC tests (host-failover SLA, relay badge, nameplates, freeze UI, NAT traversal)
+- **Reliability hardening** — reconnect flows, connection-failure UX, session recovery, invite-link robustness
+- **Desktop direct download** — signed, installable Mac / Windows / Linux builds (itch.io / GitHub Releases / own site)
+- **Mobile app stores** — full submission pipeline (signed builds, store metadata/assets, IAP wiring) for Apple App Store + Google Play
+- **One download link** — platform-auto-detecting landing page + "join my friend's session" flow
+- **Auto-update** — version-match so multiplayer peers never mismatch
+
+**Operator/legal prerequisites (user-provided, in parallel with the engineering):** root + DNS on the existing host, Apple Developer + Google Play Console enrollment, COPPA / EULA attorney sign-off (deferred from v1.0), signing credentials + backend secrets.
+
+**Out of scope for v1.2:** combat/death animation polish, new multiplayer features (dream-view, voice chat), public lobbies / open discovery, audio pass.
 
 ## Requirements
 
@@ -40,9 +51,21 @@ Cubicraftia is een 3D game waarin de hele wereld gemaakt is van **bricks** (Lego
 - ✓ LOCALE-01 — Native Flemish speaker reviewed + signed off the profanity wordlist — v1.1
 - ✓ LOCALE-02 — All NL msgid translations (552 keys) reviewed and corrected by a native speaker — v1.1
 
-### Active (no milestone in progress)
+### Active (v1.2 Multiplayer & Distribution — in scope)
 
-_v1.1 shipped 2026-07-08. Start the next milestone with `/gsd:new-milestone` to populate this section._
+**Go-live multiplayer:**
+- [ ] Deploy discovery/signaling server + coturn + Supabase on the existing Linux host with TLS/DNS/secrets
+- [ ] Friends can find and connect to each other over the internet end-to-end
+- [ ] Discharge the 6 multi-device WebRTC tests on real machines/networks
+- [ ] Harden reconnect, connection-failure UX, session recovery, invite-link robustness
+
+**Distribution:**
+- [ ] Signed desktop builds (Mac/Windows/Linux) published for direct download
+- [ ] Mobile store submission pipeline (signing, metadata, IAP) for Apple App Store + Google Play
+- [ ] One platform-detecting download + join link
+- [ ] Auto-update keeping peers on matching builds
+
+_Requirements are finalized in REQUIREMENTS.md during this milestone's definition step._
 
 ### Future (candidates for the next milestone)
 
@@ -242,7 +265,7 @@ This document evolves at phase transitions and milestone boundaries.
 
 **Post-v1.0 work in flight:** ~56 commits of raw art + animation POCs landed after the v1.0 tag (procedural brick library, ~390-item art catalogue, creature meshes via TripoSR, avatar presets, HUD sprites, biome tiles, shader-wobble animation POCs). Milestone v1.1 formalizes and completes that work.
 
-**Next:** No milestone in progress. Run `/gsd:new-milestone` to open the next cycle — likely an audio + launch-readiness pass, combat/death animation polish, or discharging the hardware-gated UAT backlog. Phases continue from 9 → start at Phase 10.
+**Next:** Milestone **v1.2 Multiplayer & Distribution** started 2026-07-08 — deploy the live backend, validate + harden multiplayer, and ship via desktop download + mobile stores + one-link + auto-update. Phases continue from 9 → start at Phase 10.
 
 ---
-*Last updated: 2026-07-08 after v1.1 Content & Polish milestone*
+*Last updated: 2026-07-08 after starting v1.2 milestone*
