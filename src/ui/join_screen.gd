@@ -129,4 +129,7 @@ func _get_host_username() -> String:
 		var host_uid: String = SessionRegistry.get_host_uid() if SessionRegistry.has_method("get_host_uid") else ""
 		if host_uid != "":
 			return host_uid
-	return "your host"
+	# IN-02: use the shared ui.common.generic_host i18n key (added by Plan 13-05 for
+	# ConnectionProblemOverlay) instead of a hardcoded English literal, so the Dutch
+	# locale doesn't ship English text here.
+	return tr("ui.common.generic_host")
