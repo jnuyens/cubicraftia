@@ -125,6 +125,9 @@ msgstr "Done"
 msgid "ui.common.back"
 msgstr "Back"
 
+msgid "ui.common.generic_host"
+msgstr "your host"
+
 # ─── Brick names ──────────────────────────────────────────────────────────────
 
 msgid "bricks.brick_1x1.name"
@@ -842,20 +845,43 @@ msgstr "Loading world…"
 msgid "ui.join.new_friends_toast"
 msgstr "You and {username} are now friends."
 
-msgid "ui.join.error_session_full"
-msgstr "The session is full."
-
-msgid "ui.join.error_expired"
-msgstr "The invite has expired."
-
-msgid "ui.join.error_connection"
-msgstr "Connection failed — check your internet."
-
 msgid "ui.join.back"
 msgstr "Back"
 
 msgid "ui.join.error_unverified_session_age"
 msgstr "This session is too old to join with an unverified account. Verify your email first."
+
+# ─── Connection-problem overlay (Surface A) ──────────────────────────────────
+
+msgid "ui.connproblem.heading"
+msgstr "Couldn't connect"
+
+msgid "ui.connproblem.reason_expired"
+msgstr "This invite has expired. Ask {host} for a new one."
+
+msgid "ui.connproblem.reason_full"
+msgstr "This session is full (4 of 4 builders)."
+
+msgid "ui.connproblem.reason_ended"
+msgstr "This session has ended."
+
+msgid "ui.connproblem.reason_blocked"
+msgstr "Couldn't join this session."
+
+msgid "ui.connproblem.reason_version_mismatch"
+msgstr "Your build doesn't match {host}'s. Update Cubicraftia and try again."
+
+msgid "ui.connproblem.reason_relay_failed"
+msgstr "Couldn't connect to {host}. Check your connection or try again."
+
+msgid "ui.connproblem.reason_timeout"
+msgstr "This is taking longer than expected. Check your connection and try again."
+
+msgid "ui.connproblem.action_retry"
+msgstr "Retry"
+
+msgid "ui.connproblem.action_back"
+msgstr "Back to menu"
 
 # ─── Pause menu — Players tab (Surface 6) ────────────────────────────────────
 

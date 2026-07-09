@@ -126,6 +126,9 @@ msgstr "Klaar"
 msgid "ui.common.back"
 msgstr "Terug"
 
+msgid "ui.common.generic_host"
+msgstr "je host"
+
 # ─── Brick names ──────────────────────────────────────────────────────────────
 
 msgid "bricks.brick_1x1.name"
@@ -828,20 +831,43 @@ msgstr "Wereld laden…"
 msgid "ui.join.new_friends_toast"
 msgstr "Jij en {username} zijn nu vrienden."
 
-msgid "ui.join.error_session_full"
-msgstr "De sessie is vol."
-
-msgid "ui.join.error_expired"
-msgstr "De uitnodiging is verlopen."
-
-msgid "ui.join.error_connection"
-msgstr "Verbinding mislukt — controleer je internetverbinding."
-
 msgid "ui.join.back"
 msgstr "Terug"
 
 msgid "ui.join.error_unverified_session_age"
 msgstr "Deze sessie is te oud om aan deel te nemen met een niet-geverifieerd account. Verifieer eerst je e-mailadres."
+
+# ─── Connection-problem overlay (Surface A) ──────────────────────────────────
+
+msgid "ui.connproblem.heading"
+msgstr "Verbinden mislukt"
+
+msgid "ui.connproblem.reason_expired"
+msgstr "Deze uitnodiging is verlopen. Vraag {host} om een nieuwe."
+
+msgid "ui.connproblem.reason_full"
+msgstr "Deze sessie is vol (4 van 4 bouwers)."
+
+msgid "ui.connproblem.reason_ended"
+msgstr "Deze sessie is beëindigd."
+
+msgid "ui.connproblem.reason_blocked"
+msgstr "Kan niet deelnemen aan deze sessie."
+
+msgid "ui.connproblem.reason_version_mismatch"
+msgstr "Jouw versie komt niet overeen met die van {host}. Werk Cubicraftia bij en probeer het opnieuw."
+
+msgid "ui.connproblem.reason_relay_failed"
+msgstr "Verbinden met {host} is niet gelukt. Controleer je verbinding of probeer het opnieuw."
+
+msgid "ui.connproblem.reason_timeout"
+msgstr "Dit duurt langer dan verwacht. Controleer je verbinding en probeer het opnieuw."
+
+msgid "ui.connproblem.action_retry"
+msgstr "Opnieuw proberen"
+
+msgid "ui.connproblem.action_back"
+msgstr "Terug naar menu"
 
 # ─── Pause menu — Players tab (Surface 6) ────────────────────────────────────
 
