@@ -50,10 +50,13 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Depends on**: Nothing (first phase; runs in parallel with Phase 11)
 **Requirements**: LICENSE-01
 **Success Criteria** (what must be TRUE):
-  1. LICENSE/COPYING contains an attorney-blessed GPLv3 §7 "App Store" supplemental permission clause, landed while git history remains 100% single-author.
+  1. The project's REUSE-declared license (LICENSES/ + LICENSING.md) grants an attorney-blessed GPLv3 §7 "App Store" supplemental permission, landed while git history remains 100% single-author.
   2. The exact clause wording is reviewed and signed off by the retained attorney before any iOS signing work (Phase 14, SIGN-05) begins.
   3. Android, desktop, and backend work (Phases 11-13, and the non-iOS parts of Phase 14) proceed without waiting on this phase — this gate blocks only the Apple/iOS track.
-**Plans**: TBD
+**Plans**: 1 plan
+
+Plans:
+- [ ] 10-01-PLAN.md — Draft and land the GPLv3 §7 App Store Distribution Exception (LICENSES/LicenseRef-AppStore-Exception.txt, LICENSING.md, README, CONTRIBUTING.md), gated on attorney sign-off
 
 ### Phase 11: Backend Go-Live
 **Goal**: The multiplayer backend is deployed, TLS-secured, and reachable in production on the existing host, with secrets, backups, and release endpoints correctly wired — proven by a first end-to-end smoke test before any real-device validation begins.
@@ -145,7 +148,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 | 7. Asset Integration | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 8. Creature & Builder Animation | v1.1 | 6/6 | Complete | 2026-07-08 |
 | 9. NL Localisation Review | v1.1 | 4/4 | Complete | 2026-06-27 |
-| 10. Licensing Gate | v1.2 | 0/TBD | Not started | - |
+| 10. Licensing Gate | v1.2 | 0/1 | Not started | - |
 | 11. Backend Go-Live | v1.2 | 0/TBD | Not started | - |
 | 12. Real-Device Multiplayer Validation | v1.2 | 0/TBD | Not started | - |
 | 13. Reliability & Version-Match Hardening | v1.2 | 0/TBD | Not started | - |
