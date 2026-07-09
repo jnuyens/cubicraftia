@@ -1,0 +1,5 @@
+# Never commit real secrets or generated env files. Templates (*.template) ARE committed.
+secrets/
+secrets.env
+*.env
+!*.env.template

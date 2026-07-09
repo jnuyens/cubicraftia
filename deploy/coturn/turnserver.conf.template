@@ -1,0 +1,34 @@
+# /etc/turnserver.conf  (Phase 11 DEPLOY-04)
+# coturn STUN/TURN for Cubicraftia. Uses the SAME shared secret as the signaling server
+# (HMAC-SHA1 ephemeral TURN credentials). TLS cert shared from certbot for turn.cubicraftia.com,
+# reloaded by a certbot deploy-hook so renewal never silently breaks TURN.
+#
+# Fill static-auth-secret from /etc/cubicraftia/secrets.env TURN_SHARED_SECRET.
+listening-port=3478
+tls-listening-port=5349
+# Public relay range (must match `ufw allow 49152:65535/udp`):
+min-port=49152
+max-port=65535
+
+fingerprint
+use-auth-secret
+static-auth-secret=__TURN_SHARED_SECRET_from_secrets.env__
+realm=cubicraftia.com
+server-name=turn.cubicraftia.com
+
+# Bind to the public interface (coturn does NOT sit behind nginx):
+listening-ip=88.99.136.145
+# relay-ip / external-ip left to auto-detect; set external-ip=88.99.136.145 if needed.
+
+# TLS (certbot cert for turn.cubicraftia.com); deploy-hook copies+reloads on renewal:
+cert=/etc/coturn/certs/turn.cubicraftia.com/fullchain.pem
+pkey=/etc/coturn/certs/turn.cubicraftia.com/privkey.pem
+
+# Hardening: relay only, no loopback/multicast, deny private ranges by default.
+no-cli
+no-tcp-relay
+denied-peer-ip=10.0.0.0-10.255.255.255
+denied-peer-ip=172.16.0.0-172.31.255.255
+denied-peer-ip=192.168.0.0-192.168.255.255
+# (allow the host's own public IP if same-host relay is ever needed)
+stale-nonce=600
