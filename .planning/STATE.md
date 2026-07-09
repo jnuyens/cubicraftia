@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multiplayer & Distribution
 status: completed
-stopped_at: Completed 13-01-PLAN.md (NetworkManager connection-problem plumbing + bounded timeouts)
-last_updated: "2026-07-09T20:40:28.889Z"
-last_activity: "2026-07-09: Phase 10 Plan 01 Tasks 1-2 executed; Task 3 (checkpoint:human-verify, gate=blocking) reached and awaiting attorney review, not auto-approved"
+stopped_at: Completed 13-04-PLAN.md (PROTOCOL_VERSION join-handshake reject gate + ICE connection-type tracking)
+last_updated: "2026-07-09T20:58:20Z"
+last_activity: "2026-07-09: Phase 13 Plan 04 (PROTOCOL_VERSION P2P join-handshake + host-authoritative reject gate, VER-01/VER-02; ICE candidate-type tracking, RELY-05 backend) executed and committed (99198be); Phase 10 Plan 01 Task 3 (attorney sign-off, checkpoint:human-verify gate=blocking) remains open and not auto-approved"
 progress:
   total_phases: 9
   completed_phases: 1
   total_plans: 8
-  completed_plans: 3
+  completed_plans: 6
   percent: 11
 ---
 
@@ -357,12 +357,14 @@ All items documented in `.planning/v1.0-MILESTONE-AUDIT.md` § Tech Debt.
 - [Phase 13]: Single generic 'expired' reason used for all zero-row invite-redeem causes (expired/already-redeemed/nonexistent), per plan's accepted information-disclosure disposition
 - [Phase 13]: NetworkManager.report_connection_problem call guarded with has_method() so 13-03 works standalone regardless of sibling plan 13-01 landing order
 - [Phase 13]: connection-problem-single-funnel: NetworkManager.report_connection_problem(reason) is the single funnel for all connection failures (server-side reject, connecting timeout, failover-reconnect timeout); future failure paths call it rather than inventing new signals (13-01)
+- [Phase 13]: version-handshake-gate-host-only: _on_peer_connected's peer_connected.emit gate is deferred only on the host side (multiplayer.is_server()); the joining peer's own local emission (peer_id==1) still fires immediately since only a reject RPC exists, not an accept RPC (13-04)
+- [Phase 13]: ice-candidate-type-heuristic: get_connection_type() classifies host/srflx candidates as direct and relay-only as relay, srflx/host always overrides a prior relay-only classification; real-world accuracy validated on real devices in Phase 12, per plan's own scope boundary (13-04)
 
 ## Session Continuity
 
 - **Last workflow:** `/gsd:new-milestone` (roadmapper step) — v1.2 ROADMAP.md authored (Phases 10-16), REQUIREMENTS.md traceability filled (35/35 mapped), STATE.md phase roster updated
 - **Last update:** 2026-07-09
-- **Stopped at:** Completed 13-01-PLAN.md (NetworkManager connection-problem plumbing + bounded timeouts)
+- **Stopped at:** Completed 13-04-PLAN.md (PROTOCOL_VERSION join-handshake reject gate + ICE connection-type tracking)
 - **Next workflow:** `/gsd:plan-phase 10` (Licensing Gate) once the roadmap is approved — Phase 11 (Backend Go-Live) can plan in parallel since it has no dependency on Phase 10
 
 ## Deferred Items
@@ -400,6 +402,7 @@ Carried-forward v1.0 hardware/operator deferrals (Phases 01–06) remain open an
 Note: 08-VERIFICATION.md frontmatter still reads `gaps_found` from 2026-06-09; the two gaps it flagged (fish/slime/ghost shader-wobble + panda quadruped dead code) were closed afterward by plans 08-04, 08-05, 08-06 — the file was simply never re-stamped. ANIM-01 and ANIM-02 are Complete in REQUIREMENTS/ROADMAP.
 | Phase 13 P03 | 25min | 2 tasks | 3 files |
 | Phase 13 P01 | 25min | 2 tasks | 4 files |
+| Phase 13 P04 | 55min | 2 tasks | 3 files |
 
 ## Operator Next Steps
 

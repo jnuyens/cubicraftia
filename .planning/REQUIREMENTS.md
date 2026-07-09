@@ -47,8 +47,8 @@ Requirements for this milestone. Each maps to a roadmap phase.
 
 ### Version — build compatibility gate
 
-- [ ] **VER-01**: A coarse `protocol_version` field accompanies the build stamp and is exchanged in the join handshake
-- [ ] **VER-02**: Version-mismatched peers are cleanly rejected (never connect-and-silently-desync), including when evaluated as a host-failover candidate
+- [x] **VER-01**: A coarse `protocol_version` field accompanies the build stamp and is exchanged in the join handshake
+- [x] **VER-02**: Version-mismatched peers are cleanly rejected (never connect-and-silently-desync), including when evaluated as a host-failover candidate
 
 ### Sign — cross-platform code signing
 
@@ -130,8 +130,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | RELY-03 | Phase 13 | Complete |
 | RELY-04 | Phase 13 | Complete |
 | RELY-05 | Phase 13 | Pending |
-| VER-01 | Phase 13 | Pending |
-| VER-02 | Phase 13 | Pending |
+| VER-01 | Phase 13 | Complete |
+| VER-02 | Phase 13 | Complete |
 | SIGN-01 | Phase 14 | Pending |
 | SIGN-02 | Phase 14 | Pending |
 | SIGN-03 | Phase 14 | Pending |
