@@ -21,6 +21,20 @@ extends Node
 ## (the console line still prints). Subtle build labels are for test builds only.
 const IS_MAJOR_RELEASE: bool = false
 
+## Coarse, hand-bumped P2P build-compatibility integer (D-07, VER-01).
+## This is DELIBERATELY separate from two other version-shaped fields that live
+## at different layers, do not conflate them:
+##   - version_string()'s per-commit git-sha stamp (above) is too fine-grained for a
+##     compatibility gate: it changes on every commit, but most commits do not break
+##     the P2P RPC/serialization contract.
+##   - The Go signaling server's own wire-protocol field ("v":1 in
+##     signaling-server/internal/hub/hub.go) governs client <-> signaling-server
+##     framing only; it says nothing about whether two game builds can safely
+##     interoperate over the resulting P2P connection.
+## Bump PROTOCOL_VERSION only when the P2P RPC/serialization contract in
+## network_manager.gd actually changes, never on every commit.
+const PROTOCOL_VERSION: int = 1
+
 ## Path to the stamped build identifier (res:// so it resolves in exports too).
 const _VERSION_PATH: String = "res://version.txt"
 
