@@ -1,0 +1,126 @@
+; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
+; SPDX-License-Identifier: GPL-3.0-or-later
+;
+; connection_problem_overlay.tscn — Shared connection-problem overlay (Surface A).
+;
+; Root: CanvasLayer layer=110 (ConnectionProblemOverlay, script=connection_problem_overlay.gd),
+;       visible=false. One layer above the Handover Screen (Surface 9, layer=100) so it can
+;       supersede an in-progress "Switching host…" screen.
+; Children:
+;   Overlay — ColorRect: full-rect, navy 0.88α, mouse_filter=STOP (blocks all clicks beneath it).
+;     Content — VBoxContainer: centered, max-width 400px, separation 16px.
+;       Icon        — TextureRect: 32×32, icon_error.png, brick-white tint.
+;       Heading     — Label: tr("ui.connproblem.heading"), 20px semibold, brick red.
+;       Body        — Label: per-reason body copy, 16px regular, brick white, autowrap.
+;       ButtonRow   — HBoxContainer: separation 8px.
+;         PrimaryButton   — Button: 160px min-width, StyleBox_button_normal (theme default).
+;         SecondaryButton — Button: 160px min-width, border-only secondary style; hidden
+;                           unless the current reason is relay_failed/timeout.
+;
+; No Escape handler, no scrim click-through — not dismissible except by its own buttons.
+
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/ui/connection_problem_overlay.gd" id="1_overlay"]
+[ext_resource type="Texture2D" path="res://assets/textures/icons/icon_error.png" id="2_icon_error"]
+
+; Secondary button style — border-only, brick-white border on transparent background.
+; Copied verbatim from assets/themes/cubicraftia.tres StyleBox_button_secondary (zero new
+; design tokens; embedded locally because .tscn sub_resources cannot reference a named
+; sub_resource inside a separate .tres file).
+[sub_resource type="StyleBoxFlat" id="StyleBox_secondary_local"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.945, 0.941, 0.918, 0.80)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_left = 8
+corner_radius_bottom_right = 8
+content_margin_left = 16.0
+content_margin_top = 10.0
+content_margin_right = 16.0
+content_margin_bottom = 10.0
+
+[node name="ConnectionProblemOverlay" type="CanvasLayer"]
+layer = 110
+script = ExtResource("1_overlay")
+visible = false
+
+; ─── Full-screen navy scrim — mouse_filter=STOP blocks clicks reaching anything below ──
+[node name="Overlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.106, 0.173, 0.337, 0.88)
+mouse_filter = 0
+
+; ─── Centred content container (max-width 400px) ───────────────────────────────
+[node name="Content" type="VBoxContainer" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -110.0
+offset_right = 200.0
+offset_bottom = 110.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+; ─── Icon (32×32, upscaled icon_error.png, brick-white tint) ──────────────────
+[node name="Icon" type="TextureRect" parent="Overlay/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(32.0, 32.0)
+size_flags_horizontal = 4
+texture = ExtResource("2_icon_error")
+expand_mode = 1
+stretch_mode = 5
+modulate = Color(0.945, 0.941, 0.918, 1.0)
+
+; ─── Heading label (shared across all 7 reasons) ──────────────────────────────
+[node name="Heading" type="Label" parent="Overlay/Content"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = ""
+horizontal_alignment = 1
+theme_type_variation = &"DisplaySemibold"
+modulate = Color(0.839, 0.220, 0.157, 1.0)
+
+; ─── Body label (per-reason copy, autowrap) ───────────────────────────────────
+[node name="Body" type="Label" parent="Overlay/Content"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = ""
+horizontal_alignment = 1
+autowrap_mode = 3
+modulate = Color(0.945, 0.941, 0.918, 1.0)
+
+; ─── Button row (Primary always present; Secondary shown only for retryable reasons) ──
+[node name="ButtonRow" type="HBoxContainer" parent="Overlay/Content"]
+layout_mode = 2
+size_flags_horizontal = 4
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="PrimaryButton" type="Button" parent="Overlay/Content/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(160.0, 0.0)
+text = ""
+
+[node name="SecondaryButton" type="Button" parent="Overlay/Content/ButtonRow"]
+layout_mode = 2
+custom_minimum_size = Vector2(160.0, 0.0)
+theme_override_styles/normal = SubResource("StyleBox_secondary_local")
+text = ""
