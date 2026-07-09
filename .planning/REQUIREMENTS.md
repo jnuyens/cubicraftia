@@ -17,7 +17,7 @@ Requirements for this milestone. Each maps to a roadmap phase.
 
 ### License (phase-0 gate)
 
-- [ ] **LICENSE-01**: GPLv3 §7 "App Store" supplemental-permission clause added to the project's REUSE-declared license (LICENSES/ + LICENSING.md, attorney-blessed wording), unblocking Apple distribution while copyright is 100% solo-held
+- [x] **LICENSE-01**: GPLv3 §7 "App Store" supplemental-permission clause added to the project's REUSE-declared license (LICENSES/ + LICENSING.md, attorney-blessed 2026-07-10), unblocking Apple distribution while copyright is 100% solo-held
 
 ### Deploy — go-live backend (single host: m1.linuxbe.com / cubicraftia.com)
 

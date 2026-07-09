@@ -174,6 +174,7 @@ All items documented in `.planning/v1.0-MILESTONE-AUDIT.md` § Tech Debt.
 
 ## Decisions Made
 
+- **license-01-attorney-signoff:** 2026-07-10 — attorney sign-off on the GPLv3 §7 App Store Distribution Exception CONFIRMED by project owner (jnuyens); the drafted clause wording in `LICENSES/LicenseRef-AppStore-Exception.txt` is blessed as-is (no wording changes requested). LICENSE-01 is now COMPLETE. The Apple/iOS track (Phase 14 SIGN-05, Phase 16 STORE-02) is UNBLOCKED. This closes Phase 10's Task 3 human-verify checkpoint.
 - **mobile-renderer-locked:** `renderer/rendering_method.mobile="mobile"` enforced in project.godot (Pitfall 8 fix — required for Mali-class GPUs on Android; CONTEXT.md D-01)
 - **reuse-dep5-blanket:** `.reuse/dep5` format used for blanket SPDX coverage before source files exist; LICENSES/ directory added for REUSE 3.3 compliance
 - **no-ios-preset:** export_presets.cfg has exactly macOS/Windows Desktop/Linux X11/Android presets — no iOS (D-04 defers iOS CI to Phase 5)
