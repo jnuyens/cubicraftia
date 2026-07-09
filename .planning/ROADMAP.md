@@ -35,7 +35,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 
 ### 🚧 v1.2 Multiplayer & Distribution (Phases 10-16) — in progress
 
-- [ ] **Phase 10: Licensing Gate** - GPLv3 §7 App Store exception lands while the codebase is solo-authored, unblocking the Apple track
+- [x] **Phase 10: Licensing Gate** - GPLv3 §7 App Store exception landed + attorney-blessed 2026-07-10; Apple track unblocked
 - [ ] **Phase 11: Backend Go-Live** - nginx+certbot, Go signaling, Supabase, and coturn deployed and smoke-tested in production
 - [ ] **Phase 12: Real-Device Multiplayer Validation** - the 6 deferred WebRTC scenarios discharged on real devices, real networks
 - [ ] **Phase 13: Reliability & Version-Match Hardening** - connection failures are always explained, recoverable, and never silently desynced
@@ -56,7 +56,7 @@ Full details: `.planning/milestones/v1.1-ROADMAP.md`
 **Plans**: 1 plan
 
 Plans:
-- [ ] 10-01-PLAN.md — Draft and land the GPLv3 §7 App Store Distribution Exception (LICENSES/LicenseRef-AppStore-Exception.txt, LICENSING.md, README, CONTRIBUTING.md), gated on attorney sign-off
+- [x] 10-01-PLAN.md — Draft and land the GPLv3 §7 App Store Distribution Exception (LICENSES/LicenseRef-AppStore-Exception.txt, LICENSING.md, README, CONTRIBUTING.md); attorney-blessed 2026-07-10
 
 ### Phase 11: Backend Go-Live
 **Goal**: The multiplayer backend is deployed, TLS-secured, and reachable in production on the existing host, with secrets, backups, and release endpoints correctly wired — proven by a first end-to-end smoke test before any real-device validation begins.
@@ -159,7 +159,7 @@ Plans:
 | 7. Asset Integration | v1.1 | 4/4 | Complete | 2026-06-01 |
 | 8. Creature & Builder Animation | v1.1 | 6/6 | Complete | 2026-07-08 |
 | 9. NL Localisation Review | v1.1 | 4/4 | Complete | 2026-06-27 |
-| 10. Licensing Gate | v1.2 | 0/1 | Not started | - |
+| 10. Licensing Gate | v1.2 | 1/1 | Complete | 2026-07-10 |
 | 11. Backend Go-Live | v1.2 | 0/TBD | Not started | - |
 | 12. Real-Device Multiplayer Validation | v1.2 | 0/TBD | Not started | - |
 | 13. Reliability & Version-Match Hardening | v1.2 | 7/7 | Code-complete (human_needed) | 2026-07-10 |
