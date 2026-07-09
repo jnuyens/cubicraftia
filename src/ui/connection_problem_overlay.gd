@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# connection_problem_overlay.gd — Shared connection-problem overlay (Surface A).
+# connection_problem_overlay.gd: Shared connection-problem overlay (Surface A).
 #
 # The ONE reusable "connection problem" screen for the whole codebase (D-01/D-02).
 # Driven exclusively by NetworkManager.connection_problem(reason: String); never
@@ -11,13 +11,13 @@
 # ("expired", "full", "ended", "blocked", "version_mismatch", "relay_failed",
 # "timeout") share one heading and differ only in body copy + button set.
 #
-# Not dismissible by Escape or by clicking the background scrim — only its own
+# Not dismissible by Escape or by clicking the background scrim: only its own
 # PrimaryButton/SecondaryButton close it (13-UI-SPEC.md Surface A, "Modal / Focus /
 # Input Behavior"). There is intentionally no _unhandled_key_input override here.
 #
 # Threat mitigations:
 #   T-13-05-01: the `blocked` reason's body copy is a static, pre-authored i18n
-#     string that never references block status — verified by an automated
+#     string that never references block status, verified by an automated
 #     substring-absence test (test_connection_problem_overlay_reasons.gd), not
 #     merely by the presence of the key.
 #   T-13-05-02: {host} interpolation reads locally-trusted SessionRegistry state,
@@ -25,9 +25,9 @@
 #
 # References:
 #   13-05-PLAN.md Task 2
-#   13-UI-SPEC.md Surface A — Connection-Problem Overlay
-#   src/ui/handover_screen.gd — structural precedent (CanvasLayer scrim + content)
-#   src/ui/join_screen.gd _get_host_username() — host-name-resolution precedent
+#   13-UI-SPEC.md Surface A: Connection-Problem Overlay
+#   src/ui/handover_screen.gd: structural precedent (CanvasLayer scrim + content)
+#   src/ui/join_screen.gd _get_host_username(): host-name-resolution precedent
 
 class_name ConnectionProblemOverlay
 extends CanvasLayer
@@ -39,7 +39,7 @@ extends CanvasLayer
 const _REASONS_WITH_SECONDARY: Array[String] = ["relay_failed", "timeout"]
 
 ## Reasons whose body copy contains a "{host}" placeholder that must be resolved
-## (13-UI-SPEC.md Copywriting Contract — only these 3 reasons reference the host).
+## (13-UI-SPEC.md Copywriting Contract: only these 3 reasons reference the host).
 const _REASONS_WITH_HOST_INTERP: Array[String] = ["expired", "version_mismatch", "relay_failed"]
 
 ## Reason → i18n body key. No fallback "echo the raw reason string" path exists
@@ -107,7 +107,7 @@ func show_reason(reason: String) -> void:
 	_primary_button.grab_focus()
 
 
-# ─── Pure helpers (off-tree-testable — no node access) ───────────────────────
+# ─── Pure helpers (off-tree-testable, no node access) ───────────────────────
 
 ## True only for the two genuinely retryable reasons ("relay_failed", "timeout").
 func _reason_has_secondary_action(reason: String) -> bool:
@@ -135,7 +135,7 @@ func _on_secondary_pressed() -> void:
 
 
 ## Retry entry point for relay_failed/timeout. Best-effort re-run of start_peer for
-## the current session — exact reconnect semantics may be refined by a later plan.
+## the current session; exact reconnect semantics may be refined by a later plan.
 func _attempt_retry() -> void:
 	if is_instance_valid(NetworkManager) and NetworkManager.get_session_id() != "":
 		NetworkManager.call("start_peer", NetworkManager.get_session_id(), 0)
@@ -148,7 +148,7 @@ func _do_back_to_menu() -> void:
 		NetworkManager.call("begin_graceful_disconnect")
 		get_tree().change_scene_to_file("res://src/ui/title_scene.tscn")
 	# Else: no session was ever active (e.g. a stale invite rejected before join
-	# completed) — the overlay is already hidden and the current scene is already
+	# completed): the overlay is already hidden and the current scene is already
 	# correct; nothing further to do.
 
 
@@ -156,7 +156,7 @@ func _do_back_to_menu() -> void:
 
 ## Return the host's display name for {host} interpolation. Mirrors the resolution
 ## logic in JoinScreen._get_host_username() (SessionRegistry.get_host_uid(), falling
-## back to a generic string) but localizes the fallback via tr() — JoinScreen's
+## back to a generic string) but localizes the fallback via tr(): JoinScreen's
 ## existing fallback is a hardcoded English literal; this overlay must never show
 ## English text under the Dutch locale, so its fallback uses the newly-added
 ## ui.common.generic_host key ("your host" / "je host") instead of a second

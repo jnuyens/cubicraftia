@@ -1,30 +1,30 @@
 ; SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 ; SPDX-License-Identifier: GPL-3.0-or-later
 ;
-; connection_problem_overlay.tscn — Shared connection-problem overlay (Surface A).
+; connection_problem_overlay.tscn: Shared connection-problem overlay (Surface A).
 ;
 ; Root: CanvasLayer layer=110 (ConnectionProblemOverlay, script=connection_problem_overlay.gd),
 ;       visible=false. One layer above the Handover Screen (Surface 9, layer=100) so it can
 ;       supersede an in-progress "Switching host…" screen.
 ; Children:
-;   Overlay — ColorRect: full-rect, navy 0.88α, mouse_filter=STOP (blocks all clicks beneath it).
-;     Content — VBoxContainer: centered, max-width 400px, separation 16px.
-;       Icon        — TextureRect: 32×32, icon_error.png, brick-white tint.
-;       Heading     — Label: tr("ui.connproblem.heading"), 20px semibold, brick red.
-;       Body        — Label: per-reason body copy, 16px regular, brick white, autowrap.
-;       ButtonRow   — HBoxContainer: separation 8px.
-;         PrimaryButton   — Button: 160px min-width, StyleBox_button_normal (theme default).
-;         SecondaryButton — Button: 160px min-width, border-only secondary style; hidden
-;                           unless the current reason is relay_failed/timeout.
+;   Overlay, ColorRect: full-rect, navy 0.88α, mouse_filter=STOP (blocks all clicks beneath it).
+;     Content, VBoxContainer: centered, max-width 400px, separation 16px.
+;       Icon, TextureRect: 32×32, icon_error.png, brick-white tint.
+;       Heading, Label: tr("ui.connproblem.heading"), 20px semibold, brick red.
+;       Body, Label: per-reason body copy, 16px regular, brick white, autowrap.
+;       ButtonRow, HBoxContainer: separation 8px.
+;         PrimaryButton, Button: 160px min-width, StyleBox_button_normal (theme default).
+;         SecondaryButton, Button: 160px min-width, border-only secondary style; hidden
+;                          unless the current reason is relay_failed/timeout.
 ;
-; No Escape handler, no scrim click-through — not dismissible except by its own buttons.
+; No Escape handler, no scrim click-through: not dismissible except by its own buttons.
 
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/ui/connection_problem_overlay.gd" id="1_overlay"]
 [ext_resource type="Texture2D" path="res://assets/textures/icons/icon_error.png" id="2_icon_error"]
 
-; Secondary button style — border-only, brick-white border on transparent background.
+; Secondary button style: border-only, brick-white border on transparent background.
 ; Copied verbatim from assets/themes/cubicraftia.tres StyleBox_button_secondary (zero new
 ; design tokens; embedded locally because .tscn sub_resources cannot reference a named
 ; sub_resource inside a separate .tres file).
@@ -49,7 +49,7 @@ layer = 110
 script = ExtResource("1_overlay")
 visible = false
 
-; ─── Full-screen navy scrim — mouse_filter=STOP blocks clicks reaching anything below ──
+; ─── Full-screen navy scrim: mouse_filter=STOP blocks clicks reaching anything below ──
 [node name="Overlay" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
