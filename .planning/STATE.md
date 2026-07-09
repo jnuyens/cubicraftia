@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multiplayer & Distribution
-status: "Roadmap created (Phases 10-16), ready for `/gsd:plan-phase 10`"
-stopped_at: v1.2 roadmap created, awaiting user approval
-last_updated: "2026-07-09T19:38:58.543Z"
-last_activity: 2026-07-09 — v1.2 roadmap authored (Phases 10-16, 35/35 requirements mapped, 0 unmapped)
+status: completed
+stopped_at: Completed 13-03-PLAN.md (RELY-04 invite-redeem fail-closed fix)
+last_updated: "2026-07-09T20:35:49.232Z"
+last_activity: "2026-07-09: Phase 10 Plan 01 Tasks 1-2 executed; Task 3 (checkpoint:human-verify, gate=blocking) reached and awaiting attorney review, not auto-approved"
 progress:
   total_phases: 9
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 8
+  completed_plans: 2
   percent: 11
 ---
 
@@ -354,12 +354,14 @@ All items documented in `.planning/v1.0-MILESTONE-AUDIT.md` § Tech Debt.
 - **anim-05-visual-verify-deferred:** in-viewport slime squash/stretch + tier sizing + split and ghost float/alpha + wall-pass + bed-bubble repel (no doubled mesh) confirmation auto-approved-but-deferred per auto-mode (code + headless tests done, 0 failing); blocking checkpoint how-to-verify preserved verbatim in 08-05-SUMMARY.md; mirrors 08-03/08-04 deferral precedent
 - **locale-03-deferred-hardware-gated:** LOCALE-03 visual in-game pass deferred following the established hardware-gated deferral pattern (same precedent as UAT-01/02/03, Phase 1/2/3/4/6 deferrals); code-side NL correctness confirmed: 552 msgid keys translated, wordlist corrected (3 typos, 10 false positives, 7 Flemish additions), 7 GUT regression tests green, native Flemish speaker sign-off in nl.po header (jnuyens 2026-06-21); visual pass requires display (see 09-03-SCREENSHOTS.md) (09-03)
 - **licensing-gate-tasks-1-2-landed:** LICENSES/LicenseRef-AppStore-Exception.txt, LICENSING.md, README.md License section, and CONTRIBUTING.md landed 2026-07-09 (commits 1a6d232, 4af6030); reuse lint confirmed zero new non-compliance. LICENSE-01 remains OPEN pending attorney sign-off on the exact clause wording (D-04); Phase 14 SIGN-05 and Phase 16 STORE-02 stay blocked until that sign-off is recorded here. (10-01)
+- [Phase 13]: Single generic 'expired' reason used for all zero-row invite-redeem causes (expired/already-redeemed/nonexistent), per plan's accepted information-disclosure disposition
+- [Phase 13]: NetworkManager.report_connection_problem call guarded with has_method() so 13-03 works standalone regardless of sibling plan 13-01 landing order
 
 ## Session Continuity
 
 - **Last workflow:** `/gsd:new-milestone` (roadmapper step) — v1.2 ROADMAP.md authored (Phases 10-16), REQUIREMENTS.md traceability filled (35/35 mapped), STATE.md phase roster updated
 - **Last update:** 2026-07-09
-- **Stopped at:** v1.2 roadmap created, awaiting user approval
+- **Stopped at:** Completed 13-03-PLAN.md (RELY-04 invite-redeem fail-closed fix)
 - **Next workflow:** `/gsd:plan-phase 10` (Licensing Gate) once the roadmap is approved — Phase 11 (Backend Go-Live) can plan in parallel since it has no dependency on Phase 10
 
 ## Deferred Items
@@ -395,6 +397,7 @@ Items acknowledged and deferred at milestone v1.1 close on 2026-07-08:
 Carried-forward v1.0 hardware/operator deferrals (Phases 01–06) remain open and unchanged; they are pre-public-release gates, not v1.1 scope.
 
 Note: 08-VERIFICATION.md frontmatter still reads `gaps_found` from 2026-06-09; the two gaps it flagged (fish/slime/ghost shader-wobble + panda quadruped dead code) were closed afterward by plans 08-04, 08-05, 08-06 — the file was simply never re-stamped. ANIM-01 and ANIM-02 are Complete in REQUIREMENTS/ROADMAP.
+| Phase 13 P03 | 25min | 2 tasks | 3 files |
 
 ## Operator Next Steps
 
