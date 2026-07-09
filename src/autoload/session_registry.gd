@@ -79,6 +79,12 @@ var _join_counter: int = 0
 ## Incremented by Plan 04-06 keepalive ticker; reset to 0 on each RTT update.
 var _missed_keepalive_count: Dictionary = {}
 
+## Per-peer reported PROTOCOL_VERSION: { peer_id (int) → version (int) }
+## Populated by set_peer_protocol_version() once a peer's build-compatibility handshake
+## (Plan 13-04) reports its BuildInfo.PROTOCOL_VERSION. A peer with no entry here has not
+## yet reported a version and is treated as compatible by default (13-CONTEXT.md D-09).
+var _peer_protocol_version: Dictionary = {}
+
 ## Per-session published_at cache: { session_id (String) → published_at_unix (int) }
 ## Populated by NetworkManager (Plan 04-05) via set_session_published_at().
 ## Used by client gate: unverified accounts cannot join sessions published >24h ago.
@@ -116,6 +122,7 @@ func unregister_peer(peer_id: int) -> void:
 	_join_order.erase(peer_id)
 	_surviving_peers.erase(peer_id)
 	_missed_keepalive_count.erase(peer_id)
+	_peer_protocol_version.erase(peer_id)
 
 
 ## Return a shallow copy of the full peer list.
@@ -193,6 +200,14 @@ func compute_elected_host() -> int:
 	# If no failover has been initiated, fall back to full peer list.
 	if candidates.is_empty():
 		candidates = _peer_list.keys()
+	# Version-mismatch exclusion filter (D-09, VER-02): a peer whose reported
+	# PROTOCOL_VERSION differs from the local build's can never be elected host, even
+	# if it has the best RTT. Deadlock avoidance: if filtering would leave zero
+	# candidates (every survivor somehow recorded as mismatched), fall back to the
+	# unfiltered set rather than crash on an empty array: election must never deadlock.
+	var compatible: Array = candidates.filter(func(pid: int) -> bool: return is_protocol_version_compatible(pid))
+	if not compatible.is_empty():
+		candidates = compatible
 	candidates.sort_custom(func(a: int, b: int) -> bool:
 		var rtt_a: float = _rtt_rolling_avg.get(a, INF)
 		var rtt_b: float = _rtt_rolling_avg.get(b, INF)
@@ -219,6 +234,49 @@ func set_local_peer_id(peer_id: int) -> void:
 func am_i_elected() -> bool:
 	var my_id: int = _local_peer_id_override if _local_peer_id_override != 0 else multiplayer.get_unique_id()
 	return compute_elected_host() == my_id
+
+
+## Override the local PROTOCOL_VERSION used for compatibility comparisons in tests.
+## Mirrors the set_local_peer_id() / _local_peer_id_override pattern above: in
+## production, is_protocol_version_compatible() reads BuildInfo.PROTOCOL_VERSION; in
+## headless unit tests (no autoload BuildInfo present), call
+## set_local_protocol_version_override() in before_each so comparisons resolve without
+## a live BuildInfo instance.
+var _local_protocol_version_override: int = 0
+
+
+func set_local_protocol_version_override(v: int) -> void:
+	_local_protocol_version_override = v
+
+
+## Record a peer's self-reported PROTOCOL_VERSION (Plan 13-04 handshake).
+##
+## @param peer_id  Godot multiplayer peer ID.
+## @param version  The peer's reported BuildInfo.PROTOCOL_VERSION.
+func set_peer_protocol_version(peer_id: int, version: int) -> void:
+	_peer_protocol_version[peer_id] = version
+
+
+## Return true if the given peer's reported PROTOCOL_VERSION matches the effective
+## local version, or if no version has been recorded for that peer yet.
+##
+## Defensive default: an unrecorded version never pre-emptively excludes a peer whose
+## build-compatibility handshake simply hasn't completed in this local view (13-CONTEXT.md D-09).
+##
+## Effective local version resolution order:
+##   1. _local_protocol_version_override, when non-zero (test override).
+##   2. BuildInfo.PROTOCOL_VERSION, when the BuildInfo autoload is present.
+##   3. 1, as a last-resort default for isolated unit tests with no BuildInfo present.
+func is_protocol_version_compatible(peer_id: int) -> bool:
+	if not _peer_protocol_version.has(peer_id):
+		return true
+	var effective_local_version: int = _local_protocol_version_override
+	if effective_local_version == 0:
+		if is_instance_valid(BuildInfo) and "PROTOCOL_VERSION" in BuildInfo:
+			effective_local_version = BuildInfo.PROTOCOL_VERSION
+		else:
+			effective_local_version = 1
+	return _peer_protocol_version[peer_id] == effective_local_version
 
 
 ## Populate the surviving-peers set by copying the full peer list minus the failed host.
