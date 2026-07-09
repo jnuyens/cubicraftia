@@ -1,0 +1,26 @@
+Additional Permission under GNU GPL version 3, section 7: App Store Distribution Exception
+
+This exception applies to Cubicraftia, which is otherwise licensed under the GNU
+General Public License version 3 or later (GPL-3.0-or-later).
+
+As an additional permission under GNU GPL version 3, section 7, the copyright
+holders of Cubicraftia grant you permission to convey a covered work in
+object code form through the Apple App Store, or through any other
+application-distribution platform whose terms and conditions would
+otherwise be incompatible with this License, provided that the source code
+of the conveyed work is also available under this License (with or without
+this additional permission) through a channel without those incompatible
+terms and conditions, for example GitHub or a direct download from
+cubicraftia.com.
+
+This permission applies solely to the extent that the distribution
+platform's own terms and conditions require it, and only to the act of
+conveying the covered work through that platform. It does not waive,
+diminish, or restrict any other right granted to you under GPL-3.0-or-later,
+including, without limitation, your right to receive or request the
+Corresponding Source, your right to run, study, and modify the software,
+and your right to convey copies or modified versions of the software
+through any channel that does not impose such incompatible terms and
+conditions.
+
+If you convey a copy of the covered work, you may at your option remove this additional permission from that copy, or from any part of it. This does not affect the rest of this License, which continues to apply in full.

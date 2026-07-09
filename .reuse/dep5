@@ -58,6 +58,11 @@ Files: NOTICE
 Copyright: 2026 Cubicraftia contributors
 License: GPL-3.0-or-later
 
+# App Store Distribution Exception (additional permission under GPLv3 section 7)
+Files: LICENSES/LicenseRef-AppStore-Exception.txt
+Copyright: 2026 Cubicraftia contributors
+License: LicenseRef-AppStore-Exception
+
 # Zylann/godot_voxel pre-built GDExtension (MIT licence)
 # Source: https://github.com/Zylann/godot_voxel (release v1.6x)
 Files: addons/zylann.voxel/*
