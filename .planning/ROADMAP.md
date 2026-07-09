@@ -102,7 +102,9 @@ Plans:
 - [x] 13-04-PLAN.md — PROTOCOL_VERSION P2P join-handshake + host-authoritative reject + ICE candidate-type tracking for the relay badge (VER-01/02, RELY-05)
 - [x] 13-05-PLAN.md — ConnectionProblemOverlay (Surface A) + 10 new i18n keys (RELY-01)
 - [x] 13-06-PLAN.md — JoinScreen migration (spinner + delegate to overlay) + NetworkHud Direct/Relay badge (RELY-01/02/03/05)
-- [ ] 13-07-PLAN.md — Wire all three UI surfaces into title_scene/main_scene + human-verify checkpoint (RELY-01/02/03/05)
+- [x] 13-07-PLAN.md — Wire all three UI surfaces into title_scene/main_scene (engineering done; in-viewport human-verify checkpoint deferred to Phase 12 real-device pass)
+
+**Status**: Code-complete (7/7 plans; verification `human_needed`). All RELY-01..05 + VER-01/02 verified at the code/behavioral layer (493 tests, 464 passing, 0 failing); a Critical join-hang regression (CR-01) was found in code-review and fixed with a regression test. Remaining: 13-07's in-viewport human-verify (overlay/spinner/badge rendering + a live two-build PROTOCOL_VERSION mismatch), folded into Phase 12's real-device validation.
 **UI hint**: yes
 
 ### Phase 14: Cross-Platform Code Signing
@@ -160,7 +162,7 @@ Plans:
 | 10. Licensing Gate | v1.2 | 0/1 | Not started | - |
 | 11. Backend Go-Live | v1.2 | 0/TBD | Not started | - |
 | 12. Real-Device Multiplayer Validation | v1.2 | 0/TBD | Not started | - |
-| 13. Reliability & Version-Match Hardening | v1.2 | 6/7 | In Progress|  |
+| 13. Reliability & Version-Match Hardening | v1.2 | 7/7 | Code-complete (human_needed) | 2026-07-10 |
 | 14. Cross-Platform Code Signing | v1.2 | 0/TBD | Not started | - |
 | 15. Desktop Distribution & Auto-Update | v1.2 | 0/TBD | Not started | - |
 | 16. Mobile Store Submission | v1.2 | 0/TBD | Not started | - |
