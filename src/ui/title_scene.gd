@@ -651,6 +651,8 @@ func _redeem_invite_and_join(token: String) -> void:
 		fc.friendship_created.connect(_on_friendship_created.bind(token), CONNECT_ONE_SHOT)
 	if fc.has_signal("invite_creation_failed"):
 		fc.invite_creation_failed.connect(_on_invite_creation_failed, CONNECT_ONE_SHOT)
+	if fc.has_signal("invite_redeem_failed"):
+		fc.invite_redeem_failed.connect(_on_invite_redeem_failed, CONNECT_ONE_SHOT)
 
 	if fc.has_method("redeem_invite"):
 		fc.call("redeem_invite", token)
@@ -662,6 +664,14 @@ func _redeem_invite_and_join(token: String) -> void:
 ## Write pending_ftue_complete marker before main_scene loads so FTUE overlay
 ## never appears for invite joiners (T-06-T2: applied only after join initiated).
 func _on_friendship_created(host_uid: String, _token: String) -> void:
+	# RELY-04 (D-05) defense-in-depth: an empty host_uid must never proceed to
+	# start_peer/scene change, regardless of which code path emitted it.
+	# FriendsClient._on_invite_completed() already prevents this in practice
+	# (see invite_redeem_failed), but fail closed here too.
+	if host_uid.is_empty():
+		_on_invite_redeem_failed("expired")
+		return
+
 	# Pre-set pending_ftue_complete so main_scene reads and applies it before the
 	# FTUE overlay would trigger.
 	_write_pending_ftue_complete()
@@ -731,6 +741,24 @@ func _on_invite_creation_failed(reason: String) -> void:
 	if _joining_label != null:
 		_joining_label.visible = false
 	_pending_invite_token = ""
+
+
+## Called when FriendsClient.invite_redeem_failed fires (RELY-04, D-05): the
+## redeem_invite PATCH matched zero rows (the token was expired, already
+## redeemed, or never existed). Restore the title UI (never leave the player
+## stuck on a permanent "Joining..." label) and surface the failure via
+## NetworkManager.report_connection_problem when available.
+func _on_invite_redeem_failed(reason: String) -> void:
+	push_warning("title_scene._on_invite_redeem_failed: " + reason)
+	if _content_column != null:
+		_content_column.visible = true
+	if _joining_label != null:
+		_joining_label.visible = false
+	_pending_invite_token = ""
+
+	var nm: Node = get_node_or_null("/root/NetworkManager")
+	if nm != null and nm.has_method("report_connection_problem"):
+		nm.call("report_connection_problem", reason)
 
 # ─── FTUE marker helpers ──────────────────────────────────────────────────────
 
