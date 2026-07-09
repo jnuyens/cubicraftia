@@ -1064,8 +1064,14 @@ func _on_invite_completed(result: int, code: int, _headers: PackedStringArray, b
 		var row: Variant = (json as Array)[0]
 		if row is Dictionary:
 			host_uid = str((row as Dictionary).get("host_uid", ""))
+		# WR-01: a non-empty row with a missing/empty host_uid is just as unusable as
+		# the zero-row case above: fail closed the same way instead of ever emitting
+		# friendship_created("").
+		if host_uid.is_empty():
+			invite_redeem_failed.emit("expired")
+			return
 		# Create the mutual friendship.
-		if host_uid != "" and host_uid != _user_id:
+		if host_uid != _user_id:
 			create_friendship(host_uid)
 		friendship_created.emit(host_uid)
 
