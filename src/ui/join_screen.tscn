@@ -10,7 +10,7 @@
 ;       - Spinner: AnimatedSprite2D (icon_spinner, 2 Hz)
 ;       - StatusLabel: Label (14px, brick-white 70%)
 ;
-; All error rendering has moved to ConnectionProblemOverlay (13-05/13-06 — D-01
+; All error rendering has moved to ConnectionProblemOverlay (13-05/13-06, D-01
 ; migration); JoinScreen owns no local error UI of its own anymore.
 ;
 ; All text set at runtime — zero hardcoded English strings.
