@@ -154,6 +154,21 @@ var _broadcast_rate_limit: float = 1.0 / 20.0
 ## { peer_id (int) -> frozen (bool) }
 var _frozen_peers: Dictionary = {}
 
+## Host-side gate (VER-01/VER-02): peers whose WebRTC connection has opened but whose
+## PROTOCOL_VERSION has not yet been confirmed to match. peer_connected is withheld for
+## these peer_ids until _handle_reported_protocol_version() resolves the version check.
+## { peer_id (int) → true }
+var _pending_version_peers: Dictionary = {}
+
+## Per-peer ICE candidate-type tracking (RELY-05 backend): the set of candidate types
+## (host / srflx / relay) ever seen for a peer, across both locally generated and
+## remotely received candidates. Used by get_connection_type() to derive an honest
+## Direct-vs-Relay heuristic. Godot's WebRTCPeerConnection has no selected-candidate-pair
+## API, so this is a best-effort classification: real-world accuracy is validated on
+## real devices in Phase 12 (NETVAL-04).
+## { peer_id (int) → { "host": bool, "srflx": bool, "relay": bool } }
+var _ice_candidate_types: Dictionary = {}
+
 ## Host-side chat rate tracking: message count per peer in current window.
 ## { peer_id (int) → count (int) }
 ## Reset per-peer after CHAT_RATE_WINDOW_S seconds (rolling via timer).
@@ -249,6 +264,13 @@ signal snapshot_reset_applied()
 
 ## Emitted when the host changes the build-freeze state for a peer.
 signal freeze_build_changed(peer_id: int, frozen: bool)
+
+## Emitted once a peer's connection is confirmed (the same points where peer_connected
+## now fires), reporting the heuristic ICE candidate-type classification for that peer
+## (RELY-05 backend). is_relay is true when only relay-typed candidates were ever seen
+## for this peer; false otherwise (direct or unknown, both rendered as "direct", never
+## alarm the player without evidence).
+signal connection_type_changed(peer_id: int, is_relay: bool)
 
 ## Emitted when a session join attempt is blocked because the local account is
 ## under-13 and has not yet received parental consent.
@@ -587,7 +609,9 @@ func _on_signaling_peer_offer(peer_id: int, sdp: String) -> void:
 	conn.session_description_created.connect(
 		func(type: String, s: String) -> void: _signaling_send_answer(peer_id, type, s))
 	conn.ice_candidate_created.connect(
-		func(m: String, i: int, c: String) -> void: _signaling_send_ice(peer_id, m, i, c))
+		func(m: String, i: int, c: String) -> void:
+			_track_ice_candidate_type(peer_id, c)
+			_signaling_send_ice(peer_id, m, i, c))
 	_rtc_mp.add_peer(conn, peer_id)
 	# CR-04: Set _remote_sdp_set BEFORE set_remote_description so that any ICE
 	# candidates arriving synchronously during SDP processing (via the signaling
@@ -610,7 +634,9 @@ func _start_as_peer_rtc(my_peer_id: int) -> void:
 	conn.session_description_created.connect(
 		func(type: String, s: String) -> void: _signaling_send_offer(1, type, s))
 	conn.ice_candidate_created.connect(
-		func(m: String, i: int, c: String) -> void: _signaling_send_ice(1, m, i, c))
+		func(m: String, i: int, c: String) -> void:
+			_track_ice_candidate_type(1, c)
+			_signaling_send_ice(1, m, i, c))
 	_rtc_mp.add_peer(conn, 1)
 	conn.create_offer()
 
@@ -663,6 +689,8 @@ func _disconnect_peer(peer_id: int) -> void:
 	_laggy_peers.erase(peer_id)
 	_pending_ice_candidates.erase(peer_id)
 	_remote_sdp_set.erase(peer_id)
+	_pending_version_peers.erase(peer_id)
+	_ice_candidate_types.erase(peer_id)
 	peer_disconnected.emit(peer_id)
 
 
@@ -769,6 +797,89 @@ func _receive_kicked_notice() -> void:
 	if is_instance_valid(_rtc_mp):
 		_rtc_mp.close()
 	_set_state(STATE_DISCONNECTED)
+
+
+## Peer → host: report this peer's BuildInfo.PROTOCOL_VERSION as part of the join
+## handshake (VER-01). @rpc("any_peer") but the HOST is the sole decision-maker
+## (T-13-04-01): a no-op for non-host receivers, so a peer cannot forge an accept/
+## reject decision for another peer, only report its own version.
+## Thin RPC wrapper: the actual comparison/reject logic lives in
+## _handle_reported_protocol_version() so it stays directly testable headlessly
+## without relying on live multiplayer.get_remote_sender_id() resolution.
+@rpc("any_peer", "call_remote", "reliable")
+func _report_protocol_version(their_version: int) -> void:
+	if not multiplayer.is_server():
+		return
+	var sender_id: int = multiplayer.get_remote_sender_id()
+	_handle_reported_protocol_version(sender_id, their_version)
+
+
+## Host-side handler for a peer's self-reported PROTOCOL_VERSION (VER-01/VER-02).
+## Records the version in SessionRegistry (so compute_elected_host() can exclude
+## mismatched peers everywhere per Plan 13-02), broadcasts it to every other peer's
+## local SessionRegistry, then either confirms the pending connection (peer_connected
+## emitted) or rejects it (peer told why, then disconnected; peer_connected NEVER
+## emitted for this peer_id).
+##
+## @param sender_id     The reporting peer's multiplayer peer_id.
+## @param their_version  The reporting peer's self-reported BuildInfo.PROTOCOL_VERSION.
+func _handle_reported_protocol_version(sender_id: int, their_version: int) -> void:
+	if is_instance_valid(SessionRegistry):
+		SessionRegistry.set_peer_protocol_version(sender_id, their_version)
+		# Broadcast so every OTHER peer's local SessionRegistry also learns this
+		# peer's version (D-09: every surviving peer computes election locally).
+		_sync_peer_protocol_version.rpc(sender_id, their_version)
+
+	var our_version: int = their_version  # Defensive default: treat as compatible
+	# if BuildInfo is somehow unavailable (non-blocking fallback).
+	if is_instance_valid(BuildInfo):
+		our_version = BuildInfo.PROTOCOL_VERSION
+
+	if their_version != our_version:
+		_pending_version_peers.erase(sender_id)
+		_reject_connecting_peer(sender_id, "version_mismatch")
+		return
+
+	if _pending_version_peers.get(sender_id, false):
+		_pending_version_peers.erase(sender_id)
+		peer_connected.emit(sender_id)
+		# RELY-05: report this peer's heuristic candidate-type classification now
+		# that the connection is confirmed (host-side confirmation point).
+		connection_type_changed.emit(sender_id, get_connection_type(sender_id) == "relay")
+
+
+## Host → all peers: broadcast a reporting peer's confirmed PROTOCOL_VERSION so every
+## OTHER peer's local SessionRegistry also learns it (D-09 election model: every
+## surviving peer computes compute_elected_host() locally from shared data).
+@rpc("authority", "call_remote", "reliable")
+func _sync_peer_protocol_version(peer_id: int, version: int) -> void:
+	if is_instance_valid(SessionRegistry):
+		SessionRegistry.set_peer_protocol_version(peer_id, version)
+
+
+## Host → rejected peer: notify why the join was rejected (VER-02). This is
+## intentionally a NEW, separate RPC from _receive_kicked_notice() (Players-tab admin
+## Kick): they serve different, independently-evolving features and must not be
+## merged. @rpc("authority") ensures only peer_id=1 (host) can send this
+## (T-13-04-03: a peer cannot forge its own rejection or another peer's).
+@rpc("authority", "call_remote", "reliable")
+func _receive_connection_rejected(reason: String) -> void:
+	report_connection_problem(reason)
+	if is_instance_valid(_rtc_mp):
+		_rtc_mp.close()
+	_set_state(STATE_DISCONNECTED)
+
+
+## Host-side helper (VER-02): tell a connecting peer why it was rejected, then
+## disconnect it. Mirrors the exact pattern already used in kick_peer() to let the
+## RPC flush before disconnecting.
+##
+## @param peer_id  The rejected peer's multiplayer peer_id.
+## @param reason   One of CONNECTION_PROBLEM_REASONS (e.g. "version_mismatch").
+func _reject_connecting_peer(peer_id: int, reason: String) -> void:
+	_receive_connection_rejected.rpc_id(peer_id, reason)
+	await get_tree().process_frame
+	_disconnect_peer(peer_id)
 
 
 ## Host → new peer: push the world snapshot during failover promotion.
@@ -968,6 +1079,7 @@ func _on_signaling_message(msg: Dictionary) -> void:
 ## Queue an ICE candidate if remote SDP is not yet set; otherwise apply immediately.
 ## Implements Pitfall 7 guard.
 func _on_signaling_ice_candidate(peer_id: int, mid: String, index: int, candidate: String) -> void:
+	_track_ice_candidate_type(peer_id, candidate)
 	if not _remote_sdp_set.get(peer_id, false):
 		# Queue until after set_remote_description().
 		if not _pending_ice_candidates.has(peer_id):
@@ -991,6 +1103,47 @@ func _flush_pending_ice_candidates(peer_id: int, conn: WebRTCPeerConnection) -> 
 		conn.add_ice_candidate(entry["mid"], entry["index"], entry["candidate"])
 	_pending_ice_candidates.erase(peer_id)
 
+
+## Track the ICE candidate type (host / srflx / relay) seen for a peer, across both
+## locally generated and remotely received candidates (RELY-05 backend). Standard ICE
+## candidate SDP attribute syntax:
+##   candidate:<foundation> <component> <protocol> <priority> <ip> <port> typ <type> ...
+##
+## This is an explicitly acknowledged heuristic -- Godot's WebRTCPeerConnection does not
+## expose a selected-candidate-pair / getStats API. Real-world accuracy is validated on
+## real devices in Phase 12 (NETVAL-04); this only needs to be internally consistent and
+## testable against known candidate strings.
+##
+## @param peer_id        The peer this candidate belongs to.
+## @param candidate_sdp  The raw ICE candidate SDP string.
+func _track_ice_candidate_type(peer_id: int, candidate_sdp: String) -> void:
+	if not _ice_candidate_types.has(peer_id):
+		_ice_candidate_types[peer_id] = {"host": false, "srflx": false, "relay": false}
+	var types: Dictionary = _ice_candidate_types[peer_id]
+	if candidate_sdp.contains(" typ host"):
+		types["host"] = true
+	elif candidate_sdp.contains(" typ srflx"):
+		types["srflx"] = true
+	elif candidate_sdp.contains(" typ relay"):
+		types["relay"] = true
+
+
+## Return the heuristic Direct-vs-Relay connection-type classification for a peer
+## (RELY-05 backend). "direct" if a host or srflx candidate was ever seen for that
+## peer, "relay" if only relay-typed candidates were ever seen, or "unknown" if
+## nothing has been tracked yet (treated as direct by the UI consumer in Plan 13-06 --
+## never alarm the player without evidence).
+##
+## @param peer_id  The peer to classify.
+## @return         One of "direct", "relay", "unknown".
+func get_connection_type(peer_id: int) -> String:
+	var types: Dictionary = _ice_candidate_types.get(peer_id, {})
+	if types.get("host", false) or types.get("srflx", false):
+		return "direct"
+	elif types.get("relay", false):
+		return "relay"
+	return "unknown"
+
 # ─── Multiplayer signal handlers ──────────────────────────────────────────────
 
 func _on_peer_connected(peer_id: int) -> void:
@@ -1010,7 +1163,12 @@ func _on_peer_connected(peer_id: int) -> void:
 				_connecting_timeout_timer.stop()
 			if _state == STATE_CONNECTING:
 				_set_state(STATE_CONNECTED_AS_PEER)
-		# VER-01 protocol-version report hook added in Plan 13-04
+				# RELY-05: report this connection's heuristic candidate-type
+				# classification (peer_id 1 = the host, from this peer's view).
+				connection_type_changed.emit(1, get_connection_type(1) == "relay")
+			# VER-01: report our PROTOCOL_VERSION to the host so it can decide
+			# whether to accept or reject this join (host-authoritative, D-08).
+			_report_protocol_version.rpc_id(1, BuildInfo.PROTOCOL_VERSION)
 		# Phase 5 (Plan 05-10): Block-aware peer display suppression.
 		# Resolve the peer's UID from SessionRegistry and check if blocked locally.
 		# If blocked: peer is still connected at the WebRTC level (server-side hard gate
@@ -1021,6 +1179,15 @@ func _on_peer_connected(peer_id: int) -> void:
 			peer_uid = SessionRegistry.get_peer_uid(peer_id)
 		if not peer_uid.is_empty() and _is_blocked_locally(peer_uid):
 			# Peer is blocked — do NOT emit peer_connected. Hide from peer list.
+			return
+		if multiplayer.is_server():
+			# VER-02: host-authoritative reject-before-emit gate. Do NOT emit
+			# peer_connected yet, this peer's self-reported PROTOCOL_VERSION has
+			# not been confirmed compatible. The deferred emission (or rejection)
+			# happens in _handle_reported_protocol_version() once the version RPC
+			# round-trip completes. No Inventory event or snapshot is ever
+			# addressed to a peer for which peer_connected was never emitted.
+			_pending_version_peers[peer_id] = true
 			return
 		peer_connected.emit(peer_id)
 
