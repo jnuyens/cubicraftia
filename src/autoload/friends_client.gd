@@ -93,6 +93,12 @@ signal invite_creation_failed(reason: String)
 ## Emitted when a friendship is created (after redeeming an invite).
 signal friendship_created(friend_uid: String)
 
+## Emitted when redeeming an invite token fails to match any row (expired,
+## already redeemed, or nonexistent). RELY-04 (D-05): PostgREST returns HTTP 200
+## with an EMPTY array in all three cases; friendship_created must never fire
+## with an empty host_uid.
+signal invite_redeem_failed(reason: String)
+
 ## Emitted when a friendship is deleted.
 signal friendship_deleted()
 
@@ -1047,11 +1053,17 @@ func _on_invite_completed(result: int, code: int, _headers: PackedStringArray, b
 	if action == "redeem_invite":
 		# Redemption succeeded — body contains the updated invite row with host_uid.
 		var json: Variant = JSON.parse_string(body.get_string_from_utf8())
+		# RELY-04 (D-05): a zero-row PATCH result means the token was expired,
+		# already redeemed, or never existed. PostgREST still returns HTTP 200,
+		# so the only signal is an empty array. Fail closed: never emit
+		# friendship_created with an empty host_uid.
+		if not (json is Array and (json as Array).size() > 0):
+			invite_redeem_failed.emit("expired")
+			return
 		var host_uid := ""
-		if json is Array and (json as Array).size() > 0:
-			var row: Variant = (json as Array)[0]
-			if row is Dictionary:
-				host_uid = str((row as Dictionary).get("host_uid", ""))
+		var row: Variant = (json as Array)[0]
+		if row is Dictionary:
+			host_uid = str((row as Dictionary).get("host_uid", ""))
 		# Create the mutual friendship.
 		if host_uid != "" and host_uid != _user_id:
 			create_friendship(host_uid)
