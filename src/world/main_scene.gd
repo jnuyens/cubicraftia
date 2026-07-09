@@ -911,6 +911,11 @@ func _ready() -> void:
 	#    so under-13 unconsented session joins get user-visible feedback (not silent fail).
 	_install_parental_gate_wiring()
 
+	# Plan 13-07: instantiate JoinScreen when this scene loads mid-handshake
+	# (peer role, still connecting) so the "Connecting…" spinner is reachable
+	# in a real running game session, not just orphaned in join_screen.tscn.
+	_install_network_ui_wiring()
+
 
 func _process(delta: float) -> void:
 	# Distance-cull roaming wildlife so the active-cap frees as the player explores.
@@ -1067,6 +1072,43 @@ func _install_parental_gate_wiring() -> void:
 	if nm != null and nm.has_signal("join_blocked") and panel.has_method("show_join_blocked_modal"):
 		if not nm.join_blocked.is_connected(panel.show_join_blocked_modal):
 			nm.join_blocked.connect(panel.show_join_blocked_modal)
+
+
+## Plan 13-07: instantiate JoinScreen (Surface 5) when this scene loads while
+## the local peer is still mid-handshake (STATE_CONNECTING) and is not the
+## session host. Hosts never see JoinScreen (they are not "joining" anyone).
+## Reuses the same defensive load-then-instantiate sequence as
+## _install_parental_gate_wiring() above (ResourceLoader.exists() /
+## load()-as-PackedScene / null-check / instantiate()) per the project's
+## null-guard convention for load-then-instantiate call sites.
+func _install_network_ui_wiring() -> void:
+	if not is_instance_valid(NetworkManager):
+		return
+	if NetworkManager.get_state() != NetworkManager.STATE_CONNECTING:
+		return
+	if NetworkManager.is_session_host():
+		return
+
+	const _JOIN_SCREEN_PATH := "res://src/ui/join_screen.tscn"
+	if not ResourceLoader.exists(_JOIN_SCREEN_PATH):
+		return
+	var scn: PackedScene = load(_JOIN_SCREEN_PATH) as PackedScene
+	if scn == null:
+		return
+	var join_screen: Node = scn.instantiate()
+	if join_screen == null:
+		return
+	add_child(join_screen)
+	if join_screen.has_method("setup"):
+		join_screen.call("setup", NetworkManager.get_session_id(), "")
+	# JoinScreen's own script only shows itself in reaction to a
+	# session_state_changed signal firing AFTER it is in the tree; since the
+	# state is already STATE_CONNECTING at instantiation time (that is the
+	# very condition checked above), no such signal will fire again, so it
+	# would otherwise stay invisible (visible=false at scene load). Show it
+	# explicitly here to match the state that is already true.
+	if join_screen.has_method("show"):
+		join_screen.call("show")
 
 
 ## _notification handler: log app_resumed telemetry when the app returns from

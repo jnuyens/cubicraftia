@@ -26,7 +26,7 @@
 ;   - StudGrid (Plan 05): sparse stud-grid for placed bricks
 ;   - BrickRenderer (Plan 05): MultiMeshInstance3D for GPU-batched brick rendering
 
-[gd_scene load_steps=25 format=3]
+[gd_scene load_steps=27 format=3]
 
 [ext_resource type="PackedScene" path="res://src/world/terrain.tscn" id="1_terrain"]
 [ext_resource type="PackedScene" path="res://src/builder/builder.tscn" id="2_builder"]
@@ -43,6 +43,8 @@
 [ext_resource type="PackedScene" path="res://src/ui/death_screen.tscn" id="13_death_screen"]
 [ext_resource type="PackedScene" path="res://src/ui/inventory_slide_in_sidebar.tscn" id="14_inventory_slide_in"]
 [ext_resource type="PackedScene" path="res://src/ui/compass.tscn" id="15_compass"]
+[ext_resource type="PackedScene" path="res://src/ui/network_hud.tscn" id="16_network_hud"]
+[ext_resource type="PackedScene" path="res://src/ui/connection_problem_overlay.tscn" id="17_connproblem"]
 
 ; ─── Sky shader material (procedural sky bound to sky_procedural.gdshader) ────
 ; day_progress = 0.5 initial (mid-day). main_scene.gd updates per-frame.
@@ -195,6 +197,12 @@ multimesh = SubResource("4_multimesh")
 [node name="GhostPreview" type="MeshInstance3D" parent="."]
 script = ExtResource("10_ghost_preview")
 
+; ─── Plan 13-07: ConnectionProblemOverlay (Surface A, layer=110) ─────────────
+; Own CanvasLayer (layer=110), sibling of UI (layer=10), not nested inside it.
+; Self-subscribes to NetworkManager.connection_problem in its own _ready();
+; no additional wiring is required here beyond instancing it into the tree.
+[node name="ConnectionProblemOverlay" parent="." instance=ExtResource("17_connproblem")]
+
 ; ─── UI CanvasLayer (Plan 06) ─────────────────────────────────────────────────
 ; Contains MobileOverlay (hides on desktop), Toast (Toasts autoload drives it),
 ; Crosshair (centre-of-screen reticle), and FirstLaunchDisclaimer.
@@ -223,6 +231,11 @@ offset_bottom = -160.0
 ; Compass (top-centre): scrolling N/E/S/W heading strip. compass.gd reads the
 ; local builder's yaw each frame and hides itself when no builder exists yet.
 [node name="Compass" parent="UI" instance=ExtResource("15_compass")]
+
+; ─── Plan 13-07: NetworkHud (top-right Direct/Relay badge + peer state) ──────
+; Hidden at scene load (network_hud.tscn's own script controls visibility via
+; NetworkManager.session_state_changed). No session = never shown.
+[node name="NetworkHud" parent="UI" instance=ExtResource("16_network_hud")]
 
 ; ─── RainVignette (Plan 02-14): subtle full-screen overlay when raining ───────
 ; Colour = #1B2C56 at 0.08α per UI-SPEC.md "Surface (rain overlay)".
