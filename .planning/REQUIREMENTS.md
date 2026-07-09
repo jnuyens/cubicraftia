@@ -39,9 +39,9 @@ Requirements for this milestone. Each maps to a roadmap phase.
 
 ### Reliability — connection UX hardening
 
-- [ ] **RELY-01**: A single shared "connection problem" screen shows a specific reason (expired / full / ended / blocked / version-mismatch / relay-failed / timeout)
-- [ ] **RELY-02**: A brief network blip triggers a silent auto-reconnect grace window before surfacing failure
-- [ ] **RELY-03**: The "Connecting…" state is non-frozen, with a sane timeout and a clear failure path
+- [x] **RELY-01**: A single shared "connection problem" screen shows a specific reason (expired / full / ended / blocked / version-mismatch / relay-failed / timeout)
+- [x] **RELY-02**: A brief network blip triggers a silent auto-reconnect grace window before surfacing failure
+- [x] **RELY-03**: The "Connecting…" state is non-frozen, with a sane timeout and a clear failure path
 - [x] **RELY-04**: Stale or invalid invite links resolve to a clear, actionable error
 - [ ] **RELY-05**: A relay-vs-direct connection-quality badge shows the honest connection type
 
@@ -125,9 +125,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | NETVAL-03 | Phase 12 | Pending |
 | NETVAL-04 | Phase 12 | Pending |
 | NETVAL-05 | Phase 12 | Pending |
-| RELY-01 | Phase 13 | Pending |
-| RELY-02 | Phase 13 | Pending |
-| RELY-03 | Phase 13 | Pending |
+| RELY-01 | Phase 13 | Complete |
+| RELY-02 | Phase 13 | Complete |
+| RELY-03 | Phase 13 | Complete |
 | RELY-04 | Phase 13 | Complete |
 | RELY-05 | Phase 13 | Pending |
 | VER-01 | Phase 13 | Pending |
