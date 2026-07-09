@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multiplayer & Distribution
 status: planning
-last_updated: "2026-07-08T21:41:40.995Z"
-last_activity: 2026-07-08
+last_updated: "2026-07-09T09:00:00.000Z"
+last_activity: 2026-07-09
 progress:
-  total_phases: 0
+  total_phases: 7
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -37,10 +37,10 @@ progress:
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 10 (Licensing Gate) — not started
 Plan: —
-Status: Defining requirements
-Last activity: 2026-07-08 — Milestone v1.2 started
+Status: Roadmap created (Phases 10-16), ready for `/gsd:plan-phase 10`
+Last activity: 2026-07-09 — v1.2 roadmap authored (Phases 10-16, 35/35 requirements mapped, 0 unmapped)
 
 ## Quick Tasks Completed
 
@@ -53,7 +53,19 @@ Last activity: 2026-07-08 — Milestone v1.2 started
 
 ## Phase Roster
 
-### v1.1 Content & Polish (active milestone)
+### v1.2 Multiplayer & Distribution (active milestone)
+
+| Phase | Goal (one line) | Requirements | Depends on | Status |
+|-------|-----------------|--------------|------------|--------|
+| 10 | GPLv3 §7 App Store exception lands while codebase is solo-authored | LICENSE-01 | Nothing (parallel w/ 11) | Not started |
+| 11 | nginx+certbot, Go signaling, Supabase, coturn deployed + smoke-tested in prod | DEPLOY-01..07 | Nothing (parallel w/ 10) | Not started |
+| 12 | 6 deferred WebRTC scenarios discharged on real devices, real networks | NETVAL-01..05 | Phase 11 | Not started |
+| 13 | Connection failures always explained/recoverable; version-mismatch gate | RELY-01..05, VER-01..02 | Phase 12 | Not started |
+| 14 | Signed builds: macOS/Windows/Linux/Android (must-ship) + iOS (spike-gated) | SIGN-01..05 | Phase 10 (iOS only) | Not started |
+| 15 | itch.io + GitHub Releases + one-link landing page + update prompt | DIST-01..05 | Phase 13, Phase 14 | Not started |
+| 16 | Google Play (must-ship) + Apple (spike-gated) submission, IAP, pre-listing audits | STORE-01..05 | Phase 10, 11, 14, 15 | Not started |
+
+### v1.1 Content & Polish (completed 2026-07-08)
 
 | Phase | Goal (one line) | Requirements | Status |
 |-------|-----------------|--------------|--------|
@@ -144,9 +156,11 @@ All items documented in `.planning/v1.0-MILESTONE-AUDIT.md` § Tech Debt.
 
 ### Blockers
 
-None — v1.1 roadmap authored. Ready for `/gsd:plan-phase 7`.
+None — v1.2 roadmap authored (Phases 10-16, 35/35 requirements mapped). Ready for `/gsd:plan-phase 10`. Note: iOS work in Phases 14/16 is spike-gated/best-effort per the licensing (Phase 10) and CI-export-spike dependencies; Android + all desktop channels are must-ship and unaffected.
 
 ## Research Trail
+
+**v1.2 research (2026-07-08):** `.planning/research/{SUMMARY,STACK,FEATURES,ARCHITECTURE,PITFALLS}.md` — go-live backend topology (nginx+certbot override of the research-recommended Caddy, coturn/cert-renewal hooks), real-device NAT/CGNAT validation risk, GPLv3 §7 Apple App Store exception (HARD BLOCKER, Phase 10), code-signing per platform, iOS CI export + desktop IAP flagged as the two research-spike-warranting phases.
 
 - `.planning/research/SUMMARY.md` — synthesis across stack, features, architecture, pitfalls
 - `.planning/research/STACK.md` — Godot 4.6 + voxel + WebRTC + Go + Supabase rationale
@@ -340,10 +354,10 @@ None — v1.1 roadmap authored. Ready for `/gsd:plan-phase 7`.
 
 ## Session Continuity
 
-- **Last workflow:** `/gsd:execute-phase` (08-06: doc-only gap-closure — corrected D-RECON-01 in 08-CONTEXT.md, confirmed ANIM-02 Complete; Phase 8 now 6/6, closing the last dangling v1.1 plan)
-- **Last update:** 2026-07-08
-- **Stopped at:** Phase 8 complete (6/6 plans done); Phases 7, 8, 9 all complete — v1.1 content phases done
-- **Next workflow:** `/gsd:verify-work 08` to close the gaps_found verification, or `/gsd:complete-milestone` for v1.1
+- **Last workflow:** `/gsd:new-milestone` (roadmapper step) — v1.2 ROADMAP.md authored (Phases 10-16), REQUIREMENTS.md traceability filled (35/35 mapped), STATE.md phase roster updated
+- **Last update:** 2026-07-09
+- **Stopped at:** v1.2 roadmap created, awaiting user approval
+- **Next workflow:** `/gsd:plan-phase 10` (Licensing Gate) once the roadmap is approved — Phase 11 (Backend Go-Live) can plan in parallel since it has no dependency on Phase 10
 
 ## Deferred Items
 

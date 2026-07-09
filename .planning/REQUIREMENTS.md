@@ -112,47 +112,47 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LICENSE-01 | TBD | Pending |
-| DEPLOY-01 | TBD | Pending |
-| DEPLOY-02 | TBD | Pending |
-| DEPLOY-03 | TBD | Pending |
-| DEPLOY-04 | TBD | Pending |
-| DEPLOY-05 | TBD | Pending |
-| DEPLOY-06 | TBD | Pending |
-| DEPLOY-07 | TBD | Pending |
-| NETVAL-01 | TBD | Pending |
-| NETVAL-02 | TBD | Pending |
-| NETVAL-03 | TBD | Pending |
-| NETVAL-04 | TBD | Pending |
-| NETVAL-05 | TBD | Pending |
-| RELY-01 | TBD | Pending |
-| RELY-02 | TBD | Pending |
-| RELY-03 | TBD | Pending |
-| RELY-04 | TBD | Pending |
-| RELY-05 | TBD | Pending |
-| VER-01 | TBD | Pending |
-| VER-02 | TBD | Pending |
-| SIGN-01 | TBD | Pending |
-| SIGN-02 | TBD | Pending |
-| SIGN-03 | TBD | Pending |
-| SIGN-04 | TBD | Pending |
-| SIGN-05 | TBD | Pending |
-| DIST-01 | TBD | Pending |
-| DIST-02 | TBD | Pending |
-| DIST-03 | TBD | Pending |
-| DIST-04 | TBD | Pending |
-| DIST-05 | TBD | Pending |
-| STORE-01 | TBD | Pending |
-| STORE-02 | TBD | Pending |
-| STORE-03 | TBD | Pending |
-| STORE-04 | TBD | Pending |
-| STORE-05 | TBD | Pending |
+| LICENSE-01 | Phase 10 | Pending |
+| DEPLOY-01 | Phase 11 | Pending |
+| DEPLOY-02 | Phase 11 | Pending |
+| DEPLOY-03 | Phase 11 | Pending |
+| DEPLOY-04 | Phase 11 | Pending |
+| DEPLOY-05 | Phase 11 | Pending |
+| DEPLOY-06 | Phase 11 | Pending |
+| DEPLOY-07 | Phase 11 | Pending |
+| NETVAL-01 | Phase 12 | Pending |
+| NETVAL-02 | Phase 12 | Pending |
+| NETVAL-03 | Phase 12 | Pending |
+| NETVAL-04 | Phase 12 | Pending |
+| NETVAL-05 | Phase 12 | Pending |
+| RELY-01 | Phase 13 | Pending |
+| RELY-02 | Phase 13 | Pending |
+| RELY-03 | Phase 13 | Pending |
+| RELY-04 | Phase 13 | Pending |
+| RELY-05 | Phase 13 | Pending |
+| VER-01 | Phase 13 | Pending |
+| VER-02 | Phase 13 | Pending |
+| SIGN-01 | Phase 14 | Pending |
+| SIGN-02 | Phase 14 | Pending |
+| SIGN-03 | Phase 14 | Pending |
+| SIGN-04 | Phase 14 | Pending |
+| SIGN-05 | Phase 14 | Pending |
+| DIST-01 | Phase 15 | Pending |
+| DIST-02 | Phase 15 | Pending |
+| DIST-03 | Phase 15 | Pending |
+| DIST-04 | Phase 15 | Pending |
+| DIST-05 | Phase 15 | Pending |
+| STORE-01 | Phase 16 | Pending |
+| STORE-02 | Phase 16 | Pending |
+| STORE-03 | Phase 16 | Pending |
+| STORE-04 | Phase 16 | Pending |
+| STORE-05 | Phase 16 | Pending |
 
 **Coverage:**
-- v1.2 requirements: 31 total
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 31 ⚠️
+- v1.2 requirements: 35 total (corrected from the 31 figure in this milestone's original definition header; the requirement list itself always had 35 checkbox items — LICENSE 1 + DEPLOY 7 + NETVAL 5 + RELY 5 + VER 2 + SIGN 5 + DIST 5 + STORE 5)
+- Mapped to phases: 35 (roadmap created 2026-07-09)
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-07-09*
-*Last updated: 2026-07-09 after initial definition*
+*Last updated: 2026-07-09 after roadmap creation — all 35 requirements mapped to Phases 10-16*
