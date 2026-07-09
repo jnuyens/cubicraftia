@@ -984,6 +984,9 @@ msgstr "This is taking longer than expected…"
 msgid "ui.netstatus.relay_badge"
 msgstr "Relay"
 
+msgid "ui.netstatus.badge_direct"
+msgstr "Direct"
+
 # ─── Settings — nameplates (Surface 8) ───────────────────────────────────────
 
 msgid "ui.settings.show_nameplates"

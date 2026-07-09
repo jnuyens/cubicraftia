@@ -3,8 +3,8 @@
 #
 # network_hud.gd — Network status HUD (Surface 10, top-right corner).
 #
-# Shows per-peer RTT signal strength icon (1/2/3 bars) and optional "Relay"
-# badge when the connection uses TURN relay. Updates at 1 Hz via Timer (never
+# Shows per-peer RTT signal strength icon (1/2/3 bars) and an always-visible
+# two-state Direct/Relay connection badge. Updates at 1 Hz via Timer (never
 # via _process) to avoid frame-budget impact.
 #
 # RTT buckets per UI-SPEC Surface 10:
@@ -12,13 +12,19 @@
 #   50-150 ms → 2-bar icon (amber)
 #   >150 ms  → 1-bar icon (red)
 #
-# Relay badge: shown when the peer ICE selected-candidate is TURN type (amber
-# #E8890C per CONTEXT-locked semantic colour). Call show_relay_badge(peer_id, true).
+# Connection badge (RELY-05, 13-UI-SPEC.md Surface C): honest, always-visible
+# two-state indicator. Defaults to "Direct" (green) on row build; the peer's
+# ICE selected-candidate-pair state (via NetworkManager.connection_type_changed)
+# drives set_connection_badge(peer_id, is_relay) which flips it to "Relay"
+# (amber #E8890C per CONTEXT-locked semantic colour) or back. Never toggled by
+# .visible (always true), never wired to click/hover/hint text, never updated by
+# the 1 Hz RTT timer.
 #
 # References:
 #   04-UI-SPEC.md Surface 10 — network status HUD
 #   04-08-PLAN.md Task 2 — HUD behaviour spec
 #   04-PATTERNS.md lines 641-663 — Timer pattern + icon cache
+#   13-UI-SPEC.md Surface C: Relay-vs-Direct Connection Badge (13-06-PLAN.md Task 2)
 
 class_name NetworkHud
 extends VBoxContainer
@@ -77,6 +83,8 @@ func _ready() -> void:
 		NetworkManager.peer_disconnected.connect(_on_peer_disconnected)
 		NetworkManager.session_state_changed.connect(_on_session_state_changed)
 		NetworkManager.peer_laggy.connect(_on_peer_laggy)
+		if NetworkManager.has_signal("connection_type_changed"):
+			NetworkManager.connection_type_changed.connect(_on_connection_type_changed)
 
 
 # ─── Signal handlers ──────────────────────────────────────────────────────────
@@ -119,6 +127,12 @@ func _on_peer_laggy(peer_id: int, is_laggy: bool) -> void:
 		icon.modulate = COLOR_AMBER if is_laggy else Color.WHITE
 
 
+## Fires on NetworkManager.connection_type_changed (ICE selected-candidate-pair
+## change) only, never per-frame and never coupled to the 1 Hz RTT timer.
+func _on_connection_type_changed(peer_id: int, is_relay: bool) -> void:
+	set_connection_badge(peer_id, is_relay)
+
+
 # ─── Row management ───────────────────────────────────────────────────────────
 
 ## Build a per-peer HUD row programmatically and add it to self.
@@ -146,13 +160,13 @@ func _build_peer_row(peer_id: int) -> void:
 	username_label.text = _get_peer_username(peer_id)
 	row.add_child(username_label)
 
-	# Relay badge (hidden by default).
+	# Connection badge: always visible, defaults to "Direct" (RELY-05).
 	var relay_badge := Label.new()
 	relay_badge.name = "RelayBadge"
 	relay_badge.add_theme_font_size_override("font_size", 12)
-	relay_badge.add_theme_color_override("font_color", COLOR_AMBER)
-	relay_badge.text = tr("ui.netstatus.relay_badge")
-	relay_badge.visible = false
+	relay_badge.add_theme_color_override("font_color", COLOR_GOOD)
+	relay_badge.text = tr("ui.netstatus.badge_direct")
+	relay_badge.visible = true
 	row.add_child(relay_badge)
 
 	add_child(row)
@@ -225,14 +239,16 @@ func _cache_signal_icons() -> void:
 
 # ─── Public API ───────────────────────────────────────────────────────────────
 
-## Show or hide the Relay badge for a peer row.
-## Called by NetworkManager when ICE selected candidate type is "relay" (TURN).
-## @param peer_id  The peer whose relay badge to toggle.
-## @param show     True to show badge, false to hide.
-func show_relay_badge(peer_id: int, show: bool) -> void:
+## Set the connection badge's text and color for a peer row to one of the two
+## honest states: Direct (green) or Relay (amber). Always visible once the
+## peer row exists (RELY-05); never toggles `.visible`.
+## @param peer_id   The peer whose badge to update.
+## @param is_relay  True if the peer's ICE selected candidate is TURN relay.
+func set_connection_badge(peer_id: int, is_relay: bool) -> void:
 	if not _peer_rows.has(peer_id):
 		return
 	var row: HBoxContainer = _peer_rows[peer_id] as HBoxContainer
 	var badge: Label = row.get_node_or_null("RelayBadge") as Label
 	if badge != null:
-		badge.visible = show
+		badge.text = tr("ui.netstatus.relay_badge") if is_relay else tr("ui.netstatus.badge_direct")
+		badge.add_theme_color_override("font_color", COLOR_AMBER if is_relay else COLOR_GOOD)
