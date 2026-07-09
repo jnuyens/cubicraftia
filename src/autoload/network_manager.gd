@@ -423,7 +423,7 @@ func start_peer(session_id: String, my_peer_id: int) -> void:
 	_connect_signaling()
 	if is_instance_valid(SessionRegistry):
 		SessionRegistry.set_session_id(session_id)
-	# RELY-03: do not optimistically transition to CONNECTED_AS_PEER here — the
+	# RELY-03: do not optimistically transition to CONNECTED_AS_PEER here: the
 	# real WebRTC handshake has not completed yet. Start the bounded Connecting
 	# timeout instead; the transition happens only when _on_peer_connected(1)
 	# genuinely fires.
@@ -629,6 +629,14 @@ func _start_as_peer_rtc(my_peer_id: int) -> void:
 	multiplayer.multiplayer_peer = _rtc_mp
 	if not multiplayer.server_disconnected.is_connected(_on_host_disconnected):
 		multiplayer.server_disconnected.connect(_on_host_disconnected)
+	# CR-01: wire peer_connected/peer_disconnected exactly like _start_as_host_rtc()
+	# and _do_failover_elected() do. RELY-03 removed the optimistic transition to
+	# CONNECTED_AS_PEER, so the state machine now depends entirely on the real
+	# _on_peer_connected(1) callback firing for the join to complete.
+	if not multiplayer.peer_connected.is_connected(_on_peer_connected):
+		multiplayer.peer_connected.connect(_on_peer_connected)
+	if not multiplayer.peer_disconnected.is_connected(_on_peer_disconnected):
+		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	var conn := WebRTCPeerConnection.new()
 	conn.initialize(_build_ice_config())
 	conn.session_description_created.connect(
@@ -1066,7 +1074,7 @@ func _on_signaling_message(msg: Dictionary) -> void:
 				"version_mismatch":
 					report_connection_problem("version_mismatch")
 				"consent_required":
-					# Existing under-13 parental-gate flow — has its own UI,
+					# Existing under-13 parental-gate flow: has its own UI,
 					# not one of the 7 canonical connection_problem reasons.
 					join_blocked.emit("parental_consent_required")
 				_:
@@ -1156,7 +1164,7 @@ func _on_peer_connected(peer_id: int) -> void:
 	else:
 		if not multiplayer.is_server() and peer_id == 1:
 			# The peer's own WebRTC data channel to the host has genuinely
-			# opened — stop the bounded Connecting timeout (RELY-03) and, if
+			# opened: stop the bounded Connecting timeout (RELY-03) and, if
 			# still CONNECTING, complete the transition that start_peer() used
 			# to do optimistically.
 			if is_instance_valid(_connecting_timeout_timer):
@@ -1203,7 +1211,7 @@ func _on_peer_disconnected(peer_id: int) -> void:
 ## attempt never resolved (no peer_connected, no server-side rejection).
 ## Reports "relay_failed" if the peer's WebRTCPeerConnection reports ICE
 ## genuinely exhausted (STATE_FAILED, including TURN), otherwise "timeout"
-## (no response at all — most likely the session/host is unreachable).
+## (no response at all: most likely the session/host is unreachable).
 func _on_connecting_timeout() -> void:
 	if _state != STATE_CONNECTING:
 		return
@@ -1312,7 +1320,7 @@ func _on_peer_connected_during_promotion(peer_id: int) -> void:
 ## Transition 4b: Peer received a snapshot from the new host.
 ## AWAITING → CONNECTED_AS_PEER
 func _on_snapshot_received_during_failover() -> void:
-	# RELY-02: reconnect succeeded — stop the grace window before it can fire.
+	# RELY-02: reconnect succeeded, stop the grace window before it can fire.
 	if is_instance_valid(_reconnect_grace_timer):
 		_reconnect_grace_timer.stop()
 	_set_state(STATE_CONNECTED_AS_PEER)

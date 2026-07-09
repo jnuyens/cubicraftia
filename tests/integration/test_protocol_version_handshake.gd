@@ -44,6 +44,11 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	# CR-01 regression test (below) drives the real start_peer() path, which sets
+	# multiplayer.multiplayer_peer on the shared SceneTree MultiplayerAPI. Reset it
+	# so the wiring doesn't leak into other tests in the same headless GUT session
+	# (mirrors test_failover_fault_injection.gd's after_each).
+	multiplayer.multiplayer_peer = null
 	if is_instance_valid(_nm):
 		_nm.free()
 	_nm = null
@@ -109,3 +114,24 @@ func test_mismatched_version_reports_version_mismatch_reason() -> void:
 func test_reject_connecting_peer_helper_exists() -> void:
 	assert_true(_nm.has_method("_reject_connecting_peer"),
 		"_reject_connecting_peer() must exist on NetworkManager")
+
+
+## test_start_peer_wires_peer_connected_signal (CR-01 regression, WR-04 coverage):
+## drives the real public start_peer() entry point (rather than calling
+## _on_peer_connected directly, as every other test in this file intentionally
+## does) and asserts _start_as_peer_rtc() wires multiplayer.peer_connected /
+## multiplayer.peer_disconnected to _on_peer_connected / _on_peer_disconnected,
+## exactly like _start_as_host_rtc() and _do_failover_elected() already do.
+## Before the CR-01 fix, this wiring was silently missing, so a joining peer's
+## _on_peer_connected(1) could never fire and the join would hang until the
+## Connecting timeout (13-REVIEW.md CR-01).
+func test_start_peer_wires_peer_connected_signal() -> void:
+	_nm.start_peer("test-session", 2)
+
+	assert_true(multiplayer.peer_connected.is_connected(_nm._on_peer_connected),
+		"start_peer() must wire multiplayer.peer_connected to _on_peer_connected "
+		+ "so a real WebRTC handshake can ever complete the join")
+	assert_true(multiplayer.peer_disconnected.is_connected(_nm._on_peer_disconnected),
+		"start_peer() must also wire multiplayer.peer_disconnected")
+	assert_eq(_nm.get_state(), "CONNECTING",
+		"start_peer() transitions to STATE_CONNECTING while the real handshake is pending")
