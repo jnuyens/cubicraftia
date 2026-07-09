@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multiplayer & Distribution
 status: completed
-stopped_at: Completed 13-05-PLAN.md (ConnectionProblemOverlay Surface A + 11 new locale keys)
-last_updated: "2026-07-09T21:18:15.711Z"
-last_activity: "2026-07-09: Phase 13 Plan 05 executed (ConnectionProblemOverlay Surface A, RELY-01 UI); 13-06/13-07 remain"
+stopped_at: Completed 13-06-PLAN.md (JoinScreen error-UI migration to ConnectionProblemOverlay + Connecting spinner + NetworkHud Direct/Relay badge)
+last_updated: "2026-07-09T21:38:14.616Z"
+last_activity: "2026-07-09: Phase 13 Plan 06 executed (JoinScreen migrated off ad-hoc error UI onto ConnectionProblemOverlay, Connecting spinner added, Reconnecting copy corrected, RELY-01/02/03 UI closed; NetworkHud always-visible Direct/Relay badge, RELY-05 UI closed); 13-07 remains. Phase 10 Plan 01 Task 3 (attorney sign-off, checkpoint:human-verify gate=blocking) remains open and not auto-approved"
 progress:
   total_phases: 9
   completed_phases: 1
   total_plans: 8
-  completed_plans: 6
+  completed_plans: 7
   percent: 11
 ---
 
@@ -43,7 +43,7 @@ Plan: 10-01 (engineering done: LicenseRef-AppStore-Exception.txt, LICENSING.md, 
 Status: LICENSE-01 remains OPEN pending attorney sign-off (D-04); see Blockers below. Note: the auto-synced frontmatter `progress` block above counts 10-01 as "completed" because a SUMMARY.md exists on disk (a tooling artifact of the file-presence heuristic, not an indication that LICENSE-01 or Task 3's human gate is resolved). Do not treat phase 10 as done until attorney sign-off is recorded.
 Last activity: 2026-07-09: Phase 10 Plan 01 Tasks 1-2 executed; Task 3 (checkpoint:human-verify, gate=blocking) reached and awaiting attorney review, not auto-approved
 
-**Parallel track — Phase 13 (Reliability & Version-Match Hardening):** independent of the Phase 10 blocker above (Phase 13 depends on Phase 12, not Phase 10). Plans 13-01..13-04 complete; 13-05 (ConnectionProblemOverlay Surface A, RELY-01 UI) complete this session — commits `febc392` (locale keys) and `df56dae` (overlay + test). Remaining: 13-06 (JoinScreen spinner + error-delegation migration to ConnectionProblemOverlay, NetworkHud connection badge), 13-07. See `.planning/phases/13-reliability-version-match-hardening/13-05-SUMMARY.md` for the interim state note: `JoinScreen.gd` still references 2 keys removed by 13-05 (`ui.join.error_connection`, plus `error_session_full`/`error_expired` are unreferenced) until 13-06 migrates it — expected per plan wave ordering, not a regression to fix ad hoc.
+**Parallel track — Phase 13 (Reliability & Version-Match Hardening):** independent of the Phase 10 blocker above (Phase 13 depends on Phase 12, not Phase 10). Plans 13-01..13-05 complete; 13-06 (JoinScreen error-UI migration + Connecting spinner + Reconnecting copy fix, RELY-01/02/03 UI; NetworkHud always-visible Direct/Relay badge, RELY-05 UI) complete this session — commits `099c8a2`/`2c23efb`/`2036f83` (JoinScreen) and `061d656`/`cf6c7f1` (NetworkHud). JoinScreen's dangling `ui.join.error_connection` reference (removed from locale by 13-05) is resolved: JoinScreen no longer owns any local error UI at all. Remaining: 13-07 (final scene-tree wiring).
 
 ## Quick Tasks Completed
 
@@ -362,12 +362,14 @@ All items documented in `.planning/v1.0-MILESTONE-AUDIT.md` § Tech Debt.
 - [Phase 13]: version-handshake-gate-host-only: _on_peer_connected's peer_connected.emit gate is deferred only on the host side (multiplayer.is_server()); the joining peer's own local emission (peer_id==1) still fires immediately since only a reject RPC exists, not an accept RPC (13-04)
 - [Phase 13]: ice-candidate-type-heuristic: get_connection_type() classifies host/srflx candidates as direct and relay-only as relay, srflx/host always overrides a prior relay-only classification; real-world accuracy validated on real devices in Phase 12, per plan's own scope boundary (13-04)
 - [Phase 13]: connproblem-generic-host-key: Added ui.common.generic_host i18n key (your host / je host) for the ConnectionProblemOverlay {host} fallback, since JoinScreen's existing fallback is a hardcoded English literal (13-05)
+- [Phase 13]: joinscreen-frees-on-any-connection-problem: JoinScreen queue_free()s itself on ANY NetworkManager.connection_problem reason (not filtered to join-relevant ones); ConnectionProblemOverlay is the sole error-rendering surface, accepted per T-13-06-02, no functional loss (13-06)
+- [Phase 13]: networkhud-badge-always-visible-two-state: NetworkHud's connection badge (set_connection_badge, replacing show_relay_badge) is visible from row build onward, defaulting to Direct/green until NetworkManager.connection_type_changed says otherwise (RELY-05) (13-06)
 
 ## Session Continuity
 
 - **Last workflow:** `/gsd:new-milestone` (roadmapper step) — v1.2 ROADMAP.md authored (Phases 10-16), REQUIREMENTS.md traceability filled (35/35 mapped), STATE.md phase roster updated
 - **Last update:** 2026-07-09
-- **Stopped at:** Completed 13-04-PLAN.md (PROTOCOL_VERSION join-handshake reject gate + ICE connection-type tracking)
+- **Stopped at:** Completed 13-06-PLAN.md (JoinScreen error-UI migration to ConnectionProblemOverlay + Connecting spinner + NetworkHud Direct/Relay badge)
 - **Next workflow:** `/gsd:plan-phase 10` (Licensing Gate) once the roadmap is approved — Phase 11 (Backend Go-Live) can plan in parallel since it has no dependency on Phase 10
 
 ## Deferred Items
@@ -407,6 +409,7 @@ Note: 08-VERIFICATION.md frontmatter still reads `gaps_found` from 2026-06-09; t
 | Phase 13 P01 | 25min | 2 tasks | 4 files |
 | Phase 13 P04 | 55min | 2 tasks | 3 files |
 | Phase 13 P05 | 45min | 2 tasks | 5 files |
+| Phase 13 P06 | 25min | 2 tasks | 7 files |
 
 ## Operator Next Steps
 

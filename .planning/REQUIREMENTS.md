@@ -43,7 +43,7 @@ Requirements for this milestone. Each maps to a roadmap phase.
 - [x] **RELY-02**: A brief network blip triggers a silent auto-reconnect grace window before surfacing failure
 - [x] **RELY-03**: The "Connecting…" state is non-frozen, with a sane timeout and a clear failure path
 - [x] **RELY-04**: Stale or invalid invite links resolve to a clear, actionable error
-- [ ] **RELY-05**: A relay-vs-direct connection-quality badge shows the honest connection type
+- [x] **RELY-05**: A relay-vs-direct connection-quality badge shows the honest connection type
 
 ### Version — build compatibility gate
 
@@ -129,7 +129,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | RELY-02 | Phase 13 | Complete |
 | RELY-03 | Phase 13 | Complete |
 | RELY-04 | Phase 13 | Complete |
-| RELY-05 | Phase 13 | Pending |
+| RELY-05 | Phase 13 | Complete |
 | VER-01 | Phase 13 | Complete |
 | VER-02 | Phase 13 | Complete |
 | SIGN-01 | Phase 14 | Pending |
