@@ -295,6 +295,9 @@ func clear_all_peers() -> void:
 	_join_order.clear()
 	_surviving_peers.clear()
 	_missed_keepalive_count.clear()
+	# WR-02: mirror unregister_peer()'s cleanup so a promoted-host reset can't leak a
+	# stale version verdict onto a future peer that reuses the same numeric peer_id.
+	_peer_protocol_version.clear()
 	_join_counter = 0
 
 # ─── Session metadata ──────────────────────────────────────────────────────────
