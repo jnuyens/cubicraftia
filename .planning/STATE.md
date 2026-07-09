@@ -2,15 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: Multiplayer & Distribution
-status: planning
-last_updated: "2026-07-09T09:00:00.000Z"
-last_activity: 2026-07-09
+status: "Roadmap created (Phases 10-16), ready for `/gsd:plan-phase 10`"
+stopped_at: v1.2 roadmap created, awaiting user approval
+last_updated: "2026-07-09T19:38:58.543Z"
+last_activity: 2026-07-09 — v1.2 roadmap authored (Phases 10-16, 35/35 requirements mapped, 0 unmapped)
 progress:
-  total_phases: 7
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_phases: 9
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
+  percent: 11
 ---
 
 # Cubicraftia — STATE
@@ -37,10 +38,10 @@ progress:
 
 ## Current Position
 
-Phase: 10 (Licensing Gate) — not started
-Plan: —
-Status: Roadmap created (Phases 10-16), ready for `/gsd:plan-phase 10`
-Last activity: 2026-07-09 — v1.2 roadmap authored (Phases 10-16, 35/35 requirements mapped, 0 unmapped)
+Phase: 10 (Licensing Gate), Plan 01: Tasks 1-2 landed, Task 3 (attorney sign-off) BLOCKED, plan NOT complete
+Plan: 10-01 (engineering done: LicenseRef-AppStore-Exception.txt, LICENSING.md, README, CONTRIBUTING.md; commits 1a6d232, 4af6030)
+Status: LICENSE-01 remains OPEN pending attorney sign-off (D-04); see Blockers below. Note: the auto-synced frontmatter `progress` block above counts 10-01 as "completed" because a SUMMARY.md exists on disk (a tooling artifact of the file-presence heuristic, not an indication that LICENSE-01 or Task 3's human gate is resolved). Do not treat phase 10 as done until attorney sign-off is recorded.
+Last activity: 2026-07-09: Phase 10 Plan 01 Tasks 1-2 executed; Task 3 (checkpoint:human-verify, gate=blocking) reached and awaiting attorney review, not auto-approved
 
 ## Quick Tasks Completed
 
@@ -156,7 +157,8 @@ All items documented in `.planning/v1.0-MILESTONE-AUDIT.md` § Tech Debt.
 
 ### Blockers
 
-None — v1.2 roadmap authored (Phases 10-16, 35/35 requirements mapped). Ready for `/gsd:plan-phase 10`. Note: iOS work in Phases 14/16 is spike-gated/best-effort per the licensing (Phase 10) and CI-export-spike dependencies; Android + all desktop channels are must-ship and unaffected.
+- v1.2 roadmap authored (Phases 10-16, 35/35 requirements mapped). Ready for `/gsd:plan-phase 10`. Note: iOS work in Phases 14/16 is spike-gated/best-effort per the licensing (Phase 10) and CI-export-spike dependencies; Android + all desktop channels are must-ship and unaffected.
+- LICENSE-01 (Phase 10 Plan 01) engineering landed (LicenseRef-AppStore-Exception.txt, LICENSING.md, README, CONTRIBUTING.md, commits 1a6d232/4af6030) but attorney sign-off on the exact clause wording is NOT yet recorded. Phase 14 SIGN-05 and Phase 16 STORE-02 (iOS track only) must not begin until sign-off is recorded here per D-04. Non-iOS work in Phases 11-13 and non-iOS Phase 14 is unaffected.
 
 ## Research Trail
 
@@ -351,6 +353,7 @@ None — v1.2 roadmap authored (Phases 10-16, 35/35 requirements mapped). Ready 
 - **anim-05-hostile-soft-body-wobble-live:** 08-05 re-wired cube_slime (all 3 tiers, sized via _art_target_height 0.6/0.9/1.3 so SMALL<MEDIUM<LARGE) + ghost to ShaderWobbleAnimator (BodyType.SLIME #3DB560 / GHOST #F1F0EA); _setup_procedural_anim calls removed; _art_mesh_root hidden so textured Meshy art does not double-render; full unit suite 340 tests 0 failing; combat (hop/split/wall-pass/bed-bubble/chime) preserved — completes SC1's soft-body set (3 slime tiers + ghost, fish from 08-04) (SC1/ANIM-01)
 - **anim-05-visual-verify-deferred:** in-viewport slime squash/stretch + tier sizing + split and ghost float/alpha + wall-pass + bed-bubble repel (no doubled mesh) confirmation auto-approved-but-deferred per auto-mode (code + headless tests done, 0 failing); blocking checkpoint how-to-verify preserved verbatim in 08-05-SUMMARY.md; mirrors 08-03/08-04 deferral precedent
 - **locale-03-deferred-hardware-gated:** LOCALE-03 visual in-game pass deferred following the established hardware-gated deferral pattern (same precedent as UAT-01/02/03, Phase 1/2/3/4/6 deferrals); code-side NL correctness confirmed: 552 msgid keys translated, wordlist corrected (3 typos, 10 false positives, 7 Flemish additions), 7 GUT regression tests green, native Flemish speaker sign-off in nl.po header (jnuyens 2026-06-21); visual pass requires display (see 09-03-SCREENSHOTS.md) (09-03)
+- **licensing-gate-tasks-1-2-landed:** LICENSES/LicenseRef-AppStore-Exception.txt, LICENSING.md, README.md License section, and CONTRIBUTING.md landed 2026-07-09 (commits 1a6d232, 4af6030); reuse lint confirmed zero new non-compliance. LICENSE-01 remains OPEN pending attorney sign-off on the exact clause wording (D-04); Phase 14 SIGN-05 and Phase 16 STORE-02 stay blocked until that sign-off is recorded here. (10-01)
 
 ## Session Continuity
 
