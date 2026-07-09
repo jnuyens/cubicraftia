@@ -100,7 +100,7 @@ Plans:
 - [x] 13-02-PLAN.md — BuildInfo.PROTOCOL_VERSION + SessionRegistry per-peer version tracking + failover-election exclusion filter (VER-01/02)
 - [x] 13-03-PLAN.md — Fix silent stale/invalid invite-redeem bug in FriendsClient + title_scene (RELY-04)
 - [x] 13-04-PLAN.md — PROTOCOL_VERSION P2P join-handshake + host-authoritative reject + ICE candidate-type tracking for the relay badge (VER-01/02, RELY-05)
-- [ ] 13-05-PLAN.md — ConnectionProblemOverlay (Surface A) + 10 new i18n keys (RELY-01)
+- [x] 13-05-PLAN.md — ConnectionProblemOverlay (Surface A) + 10 new i18n keys (RELY-01)
 - [ ] 13-06-PLAN.md — JoinScreen migration (spinner + delegate to overlay) + NetworkHud Direct/Relay badge (RELY-01/02/03/05)
 - [ ] 13-07-PLAN.md — Wire all three UI surfaces into title_scene/main_scene + human-verify checkpoint (RELY-01/02/03/05)
 **UI hint**: yes
@@ -160,7 +160,7 @@ Plans:
 | 10. Licensing Gate | v1.2 | 0/1 | Not started | - |
 | 11. Backend Go-Live | v1.2 | 0/TBD | Not started | - |
 | 12. Real-Device Multiplayer Validation | v1.2 | 0/TBD | Not started | - |
-| 13. Reliability & Version-Match Hardening | v1.2 | 4/7 | In Progress|  |
+| 13. Reliability & Version-Match Hardening | v1.2 | 5/7 | In Progress|  |
 | 14. Cross-Platform Code Signing | v1.2 | 0/TBD | Not started | - |
 | 15. Desktop Distribution & Auto-Update | v1.2 | 0/TBD | Not started | - |
 | 16. Mobile Store Submission | v1.2 | 0/TBD | Not started | - |
