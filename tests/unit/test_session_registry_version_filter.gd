@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# test_session_registry_version_filter.gd: Unit tests for the host-failover-election
+# test_session_registry_version_filter.gd — Unit tests for the host-failover-election
 # version-mismatch exclusion filter (D-09, VER-02).
 #
 # Proves that compute_elected_host() can never select a peer whose reported
@@ -13,9 +13,9 @@
 #     back to the unfiltered set rather than crash / return an invalid peer_id
 #
 # Anchors:
-#   13-CONTEXT.md D-09: version-mismatched peer excluded from failover election
-#   13-02-PLAN.md Task 2: behavior spec
-#   tests/integration/test_failover_fault_injection.gd: RTT pre-seeding pattern mirrored here
+#   13-CONTEXT.md D-09 — version-mismatched peer excluded from failover election
+#   13-02-PLAN.md Task 2 — behavior spec
+#   tests/integration/test_failover_fault_injection.gd — RTT pre-seeding pattern mirrored here
 
 extends GutTest
 
@@ -36,7 +36,7 @@ func after_each() -> void:
 # ─── Version-mismatch election-exclusion tests ────────────────────────────────
 
 ## test_version_mismatched_peer_excluded_despite_best_rtt: peer 2 has the best RTT of
-## the survivors {2, 3} but reports a mismatched PROTOCOL_VERSION (2 vs local 1), it
+## the survivors {2, 3} but reports a mismatched PROTOCOL_VERSION (2 vs local 1) — it
 ## must be excluded from election, so peer 3 (matched version) wins instead.
 func test_version_mismatched_peer_excluded_despite_best_rtt() -> void:
 	_sr.register_peer(1, "uid-1", "host")
@@ -75,7 +75,7 @@ func test_no_recorded_versions_behaves_unaffected() -> void:
 
 ## test_all_survivors_mismatched_falls_back_to_unfiltered: extreme edge case where every
 ## surviving peer is recorded as version-mismatched. Filtering must not leave election
-## with zero candidates (would crash / return an invalid peer_id), it must fall back
+## with zero candidates (would crash / return an invalid peer_id) — it must fall back
 ## to the unfiltered candidate set and still return a valid peer_id.
 func test_all_survivors_mismatched_falls_back_to_unfiltered() -> void:
 	_sr.register_peer(1, "uid-1", "host")
