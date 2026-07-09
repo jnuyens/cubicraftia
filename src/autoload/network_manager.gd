@@ -68,8 +68,20 @@ const STATE_FAILOVER_WAITING   := "FAILOVER_WAITING"
 const STATE_RECONNECTING       := "RECONNECTING"
 const STATE_DISCONNECTED       := "DISCONNECTED"
 
+## Canonical set of reasons the shared connection-problem screen understands
+## (13-CONTEXT.md D-01). Anything outside this list is still surfaced (never
+## silently dropped) but push_warning()s first as a defensive signal.
+const CONNECTION_PROBLEM_REASONS: Array[String] = [
+	"expired", "full", "ended", "blocked", "version_mismatch", "relay_failed", "timeout",
+]
+
 ## Current state. Use _set_state() to transition (emits session_state_changed).
 var _state: String = STATE_IDLE
+
+## Most recent reason passed to report_connection_problem(), one of
+## CONNECTION_PROBLEM_REASONS. Empty string means no connection problem has
+## been reported yet this run.
+var last_failure_reason: String = ""
 
 # ─── Private state ────────────────────────────────────────────────────────────
 
@@ -223,6 +235,12 @@ signal freeze_build_changed(peer_id: int, frozen: bool)
 ## Server-side Go relay is the hard gate; this client signal is UX-only.
 signal join_blocked(reason: String)
 
+## Emitted for every connection failure that should surface the shared
+## connection-problem screen (13-CONTEXT.md D-01/D-02): server-side reject,
+## connecting timeout, or failover-reconnect timeout. reason is one of
+## CONNECTION_PROBLEM_REASONS. See report_connection_problem().
+signal connection_problem(reason: String)
+
 # ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 func _ready() -> void:
@@ -368,6 +386,19 @@ func get_session_id() -> String:
 ## Used by unit and integration tests to assert state transitions.
 func get_state() -> String:
 	return _state
+
+
+## Report a connection problem to the shared connection-problem screen
+## (13-CONTEXT.md D-01/D-02). Sets last_failure_reason and emits
+## connection_problem(reason). Callers include the signaling "error" mapping,
+## the Connecting timeout, and the failover-reconnect grace timeout.
+## Defensive: an unrecognised reason is still set/emitted (never silently
+## dropped) but push_warning()s first so the mismatch is visible in logs.
+func report_connection_problem(reason: String) -> void:
+	if not CONNECTION_PROBLEM_REASONS.has(reason):
+		push_warning("NetworkManager.report_connection_problem: reason '%s' is not in CONNECTION_PROBLEM_REASONS" % reason)
+	last_failure_reason = reason
+	connection_problem.emit(reason)
 
 
 ## Broadcast an accepted Inventory event to all connected peers.
@@ -862,6 +893,30 @@ func _on_signaling_message(msg: Dictionary) -> void:
 			# A new host has taken over; reconnect as peer to new host.
 			if _state == STATE_FAILOVER_WAITING:
 				_do_failover_waiting_reconnect(payload)
+
+		"error":
+			# Go signaling server rejected a request or reported a wire-protocol
+			# problem. Map whitelisted codes to the shared connection_problem
+			# reason enum (13-CONTEXT.md D-01/D-02); everything else is logged
+			# server-side only via push_warning (T-13-01-01: no raw error text
+			# ever reaches the player-facing overlay).
+			var code: String = payload.get("code", "")
+			var message: String = payload.get("message", "")
+			match code:
+				"blocked":
+					report_connection_problem("blocked")
+				"session_full":
+					report_connection_problem("full")
+				"peer_not_found":
+					report_connection_problem("ended")
+				"version_mismatch":
+					report_connection_problem("version_mismatch")
+				"consent_required":
+					# Existing under-13 parental-gate flow — has its own UI,
+					# not one of the 7 canonical connection_problem reasons.
+					join_blocked.emit("parental_consent_required")
+				_:
+					push_warning("NetworkManager: unhandled signaling error code=%s message=%s" % [code, message])
 
 		_:
 			pass  # Unknown message type — ignore silently (forward compat).
