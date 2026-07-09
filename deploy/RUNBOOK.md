@@ -27,9 +27,14 @@ No DNS changes required.
 
 | Public | nginx TLS terminates -> | Backend |
 |--------|------------------------|---------|
-| `wss://signal.cubicraftia.com` | proxy_pass | `127.0.0.1:8080` (Go signaling, systemd) |
+| `wss://signal.cubicraftia.com` | proxy_pass | `127.0.0.1:8129` (Go signaling, systemd) |
 | `https://supabase.cubicraftia.com` | proxy_pass | `127.0.0.1:8000` (Supabase Kong, docker) |
-| `https://api.cubicraftia.com` | (alias for signaling REST/admin) | `127.0.0.1:8080` |
+| `https://api.cubicraftia.com` | (alias for signaling REST/admin) | `127.0.0.1:8129` |
+
+> **Port note:** signaling runs on **8129**, not 8080. On m1, 8080 is already owned by an
+> existing Java/Jetty service. Lesson: this is a shared host, always pick a free port (`ss -tlnH`)
+> and never assume a default is free. Supabase Kong (8000) and Postgres (5432) must likewise be
+> checked, and Supabase's Postgres stays inside Docker so it cannot collide with the host's 5432.
 | STUN/TURN `turn.cubicraftia.com:3478/5349` | direct (bypasses nginx) | coturn (systemd) |
 
 Client already defaults STUN/TURN to `cubicraftia.com:3478` and resolves signaling/Supabase URLs
