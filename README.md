@@ -83,9 +83,13 @@ roadmap, and requirements live in `.planning/`.
 
 ## Licence
 
-Cubicraftia is licensed under the **GNU General Public License v3.0 or later**
-(`GPL-3.0-or-later`). See [LICENSE](LICENSE) for the full text.
+Cubicraftia's effective license is **GPL-3.0-or-later WITH the App Store Distribution Exception**:
+the **GNU General Public License v3.0 or later** (`GPL-3.0-or-later`, see [LICENSE](LICENSE) for
+the full text), plus a narrow additional permission under GPLv3 section 7 that allows official
+signed binaries to be distributed through the Apple App Store. See
+**[LICENSING.md](LICENSING.md)** for the full explanation of what the exception does and does not
+change.
 
 Third-party component licences are listed in [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)
-and [NOTICE](NOTICE). The project follows the [REUSE](https://reuse.software/) specification —
+and [NOTICE](NOTICE). The project follows the [REUSE](https://reuse.software/) specification:
 every source file carries an SPDX header.
