@@ -93,7 +93,16 @@ Plans:
   3. The "Connecting…" state never appears frozen — it always resolves to success or a clear failure within a sane timeout — and a stale or invalid invite link resolves to an actionable error rather than a hang.
   4. The connection-quality badge honestly reflects relay vs. direct at all times, matching what Phase 12 validated on real networks.
   5. A coarse `protocol_version` field accompanies the build stamp and is exchanged in the join handshake; a build carrying a mismatched version is cleanly rejected — including when it is evaluated as a host-failover candidate — and never connects-and-silently-desyncs.
-**Plans**: TBD
+**Plans**: 7 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — NetworkManager reason plumbing + signaling "error" wiring + Connecting/failover-reconnect bounded timeouts (RELY-01/02/03)
+- [ ] 13-02-PLAN.md — BuildInfo.PROTOCOL_VERSION + SessionRegistry per-peer version tracking + failover-election exclusion filter (VER-01/02)
+- [ ] 13-03-PLAN.md — Fix silent stale/invalid invite-redeem bug in FriendsClient + title_scene (RELY-04)
+- [ ] 13-04-PLAN.md — PROTOCOL_VERSION P2P join-handshake + host-authoritative reject + ICE candidate-type tracking for the relay badge (VER-01/02, RELY-05)
+- [ ] 13-05-PLAN.md — ConnectionProblemOverlay (Surface A) + 10 new i18n keys (RELY-01)
+- [ ] 13-06-PLAN.md — JoinScreen migration (spinner + delegate to overlay) + NetworkHud Direct/Relay badge (RELY-01/02/03/05)
+- [ ] 13-07-PLAN.md — Wire all three UI surfaces into title_scene/main_scene + human-verify checkpoint (RELY-01/02/03/05)
 **UI hint**: yes
 
 ### Phase 14: Cross-Platform Code Signing
@@ -151,7 +160,7 @@ Plans:
 | 10. Licensing Gate | v1.2 | 0/1 | Not started | - |
 | 11. Backend Go-Live | v1.2 | 0/TBD | Not started | - |
 | 12. Real-Device Multiplayer Validation | v1.2 | 0/TBD | Not started | - |
-| 13. Reliability & Version-Match Hardening | v1.2 | 0/TBD | Not started | - |
+| 13. Reliability & Version-Match Hardening | v1.2 | 0/7 | Not started | - |
 | 14. Cross-Platform Code Signing | v1.2 | 0/TBD | Not started | - |
 | 15. Desktop Distribution & Auto-Update | v1.2 | 0/TBD | Not started | - |
 | 16. Mobile Store Submission | v1.2 | 0/TBD | Not started | - |
