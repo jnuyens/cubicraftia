@@ -9,16 +9,27 @@
 ;       - Heading: Label (20px, brick-white)
 ;       - Spinner: AnimatedSprite2D (icon_spinner, 2 Hz)
 ;       - StatusLabel: Label (14px, brick-white 70%)
-;     - ErrorContent: VBoxContainer (error heading + body + back button, centred, hidden by default)
-;       - ErrorHeading: Label (16px, destructive red)
-;       - ErrorBody: Label (14px, brick-white)
-;       - BackButton: Button (secondary, 200px)
+;
+; All error rendering has moved to ConnectionProblemOverlay (13-05/13-06 — D-01
+; migration); JoinScreen owns no local error UI of its own anymore.
 ;
 ; All text set at runtime — zero hardcoded English strings.
 
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/ui/join_screen.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/textures/icons/icon_spinner.png" id="2_icon_spinner"]
+
+[sub_resource type="SpriteFrames" id="1_spinner_frames"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_icon_spinner")
+}],
+"loop": true,
+"name": &"default",
+"speed": 2.0
+}]
 
 [node name="JoinScreen" type="CanvasLayer"]
 layer = 20
@@ -58,47 +69,17 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 20
 theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
 
+[node name="Spinner" type="AnimatedSprite2D" parent="Overlay/Content"]
+layout_mode = 2
+position = Vector2(0.0, 0.0)
+scale = Vector2(1.5, 1.5)
+sprite_frames = SubResource("1_spinner_frames")
+autoplay = "default"
+centered = true
+
 [node name="StatusLabel" type="Label" parent="Overlay/Content"]
 layout_mode = 2
 text = ""
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 14
 theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 0.7)
-
-[node name="ErrorContent" type="VBoxContainer" parent="Overlay"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -80.0
-offset_right = 200.0
-offset_bottom = 80.0
-grow_horizontal = 2
-grow_vertical = 2
-visible = false
-alignment = 1
-theme_override_constants/separation = 12
-
-[node name="ErrorHeading" type="Label" parent="Overlay/ErrorContent"]
-layout_mode = 2
-text = ""
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 16
-theme_override_colors/font_color = Color(0.839, 0.220, 0.157, 1.0)
-
-[node name="ErrorBody" type="Label" parent="Overlay/ErrorContent"]
-layout_mode = 2
-text = ""
-horizontal_alignment = 1
-autowrap_mode = 3
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.945, 0.941, 0.918, 1.0)
-
-[node name="BackButton" type="Button" parent="Overlay/ErrorContent"]
-layout_mode = 2
-custom_minimum_size = Vector2(200, 0)
-size_flags_horizontal = 4
-text = ""

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Cubicraftia contributors
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# test_join_screen_migration.gd — headless proof of the JoinScreen → shared
+# test_join_screen_migration.gd: headless proof of the JoinScreen-to-shared
 # ConnectionProblemOverlay migration (13-06-PLAN.md Task 1).
 #
 # Covers:
@@ -61,7 +61,7 @@ func test_show_error_method_removed() -> void:
 	add_child_autofree(screen)
 
 	assert_false(screen.has_method("_show_error"),
-		"_show_error must be removed — ConnectionProblemOverlay owns all error rendering")
+		"_show_error must be removed: ConnectionProblemOverlay owns all error rendering")
 
 
 func test_on_connection_problem_handler_exists_and_frees_join_screen() -> void:
@@ -115,6 +115,6 @@ func test_disconnected_state_no_longer_handled_locally() -> void:
 		return
 	add_child_autofree(screen)
 
-	# Must not error/crash — the arm is simply absent from the match statement.
+	# Must not error/crash: the arm is simply absent from the match statement.
 	screen._on_session_state_changed(NetworkManager.STATE_DISCONNECTED)
 	assert_null(screen.get_node_or_null("Overlay/ErrorContent"))

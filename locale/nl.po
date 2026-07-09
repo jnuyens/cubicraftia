@@ -828,6 +828,9 @@ msgstr "Verbinding maken…"
 msgid "ui.join.status_loading"
 msgstr "Wereld laden…"
 
+msgid "ui.join.status_reconnecting"
+msgstr "Opnieuw verbinden…"
+
 msgid "ui.join.new_friends_toast"
 msgstr "Jij en {username} zijn nu vrienden."
 

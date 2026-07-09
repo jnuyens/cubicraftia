@@ -39,11 +39,8 @@ var _invite_token: String = ""
 
 @onready var _content: VBoxContainer = $Overlay/Content
 @onready var _heading: Label = $Overlay/Content/Heading
+@onready var _spinner: AnimatedSprite2D = $Overlay/Content/Spinner
 @onready var _status_label: Label = $Overlay/Content/StatusLabel
-@onready var _error_content: VBoxContainer = $Overlay/ErrorContent
-@onready var _error_heading: Label = $Overlay/ErrorContent/ErrorHeading
-@onready var _error_body: Label = $Overlay/ErrorContent/ErrorBody
-@onready var _back_button: Button = $Overlay/ErrorContent/BackButton
 
 # ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -52,14 +49,10 @@ func _ready() -> void:
 	if is_instance_valid(NetworkManager):
 		NetworkManager.session_state_changed.connect(_on_session_state_changed)
 		NetworkManager.peer_connected.connect(_on_peer_connected)
+		NetworkManager.connection_problem.connect(_on_connection_problem)
 
-	# Wire back button.
-	_back_button.text = tr("ui.join.back")
-	_back_button.pressed.connect(queue_free)
-
-	# Initial state: content visible, error hidden.
+	# Initial state: content visible, spinner playing.
 	_content.visible = true
-	_error_content.visible = false
 	_status_label.text = tr("ui.join.status_connecting")
 	_heading.text = tr("ui.join.heading").replace("{username}", _get_host_username())
 
@@ -77,7 +70,6 @@ func _on_session_state_changed(state: String) -> void:
 		NetworkManager.STATE_CONNECTING:
 			show()
 			_content.visible = true
-			_error_content.visible = false
 			_heading.text = tr("ui.join.heading").replace("{username}", _get_host_username())
 			_status_label.text = tr("ui.join.status_connecting")
 
@@ -90,16 +82,26 @@ func _on_session_state_changed(state: String) -> void:
 			if published_at > 0 and is_instance_valid(FriendsClient) \
 					and not FriendsClient.is_email_verified() \
 					and (Time.get_unix_time_from_system() - published_at) > 86400:
-				_show_error(tr("ui.join.error_unverified_session_age"))
+				# Distinct, already-shipped gate (not one of the 7
+				# connection_problem reasons); rendered via the reused
+				# StatusLabel (ConnectionProblemOverlay's ErrorContent no
+				# longer exists here to render into).
+				_content.visible = true
+				_status_label.text = tr("ui.join.error_unverified_session_age")
+				_status_label.add_theme_color_override("font_color", Color(0.839, 0.220, 0.157, 1.0))
 				verification_required_for_old_session.emit()
 				return
 			_on_join_success()
 
 		NetworkManager.STATE_FAILOVER_WAITING, NetworkManager.STATE_RECONNECTING:
-			_status_label.text = tr("ui.join.status_loading")
+			_status_label.text = tr("ui.join.status_reconnecting")
 
-		NetworkManager.STATE_DISCONNECTED:
-			_show_error(tr("ui.join.error_connection"))
+
+## Fires on ANY NetworkManager.connection_problem reason. JoinScreen owns no
+## local error UI anymore (D-01 migration): ConnectionProblemOverlay is the
+## sole error-rendering surface, so JoinScreen simply tears itself down.
+func _on_connection_problem(_reason: String) -> void:
+	queue_free()
 
 
 func _on_peer_connected(_peer_id: int) -> void:
@@ -116,18 +118,6 @@ func _on_join_success() -> void:
 			"info"
 		)
 	queue_free()
-
-
-func _show_error(reason: String) -> void:
-	_content.visible = false
-	_error_content.visible = true
-	# CR-09: The .replace(reason, "") call was wrong — it attempted to remove the
-	# reason string from the heading key, but tr() keys never contain the reason
-	# text, so the heading was shown unchanged (best case) or corrupted (worst case).
-	# The heading should always show the generic connection-error label; the body
-	# shows the specific reason.
-	_error_heading.text = tr("ui.join.error_connection")
-	_error_body.text = reason
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────

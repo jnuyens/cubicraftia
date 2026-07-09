@@ -842,6 +842,9 @@ msgstr "Connecting…"
 msgid "ui.join.status_loading"
 msgstr "Loading world…"
 
+msgid "ui.join.status_reconnecting"
+msgstr "Reconnecting…"
+
 msgid "ui.join.new_friends_toast"
 msgstr "You and {username} are now friends."
 
