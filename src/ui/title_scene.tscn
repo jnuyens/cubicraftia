@@ -6,17 +6,28 @@
 ; Run/main_scene registered in project.godot (Plan 06-03).
 ; Root: CanvasLayer (layer=0). All UI nodes are built programmatically
 ; in title_scene.gd _build_ui() to keep .tscn minimal and avoid
-; hard node-path dependencies.
+; hard node-path dependencies. The single exception is Plan 13-07's
+; ConnectionProblemOverlay below, a static instance (own CanvasLayer,
+; self-subscribing script) added directly here rather than in _build_ui().
 ;
 ; Background TextureRect with UV-pan ShaderMaterial is created in script.
 ; Logo (96px Label "Cubicraftia"), tagline, 5 buttons, legal footer, version
 ; label, and AudioStreamPlayer are all children built in _build_ui().
 
-[gd_scene load_steps=2 format=3 uid="uid://b06title0003"]
+[gd_scene load_steps=3 format=3 uid="uid://b06title0003"]
 
 [ext_resource type="Script" path="res://src/ui/title_scene.gd" id="1_title"]
+[ext_resource type="PackedScene" path="res://src/ui/connection_problem_overlay.tscn" id="2_connproblem"]
 
 ; ─── Root: CanvasLayer layer=0 ───────────────────────────────────────────────
 [node name="TitleScene" type="CanvasLayer"]
 layer = 0
 script = ExtResource("1_title")
+
+; ─── Plan 13-07: ConnectionProblemOverlay (Surface A, layer=110) ─────────────
+; Covers the pre-join stale-invite failure path (Plan 13-03), which reports
+; NetworkManager.report_connection_problem("expired") while still on
+; title_scene, before any session/peer connection is ever attempted.
+; Self-subscribes to NetworkManager.connection_problem in its own _ready();
+; no additional wiring is required here beyond instancing it into the tree.
+[node name="ConnectionProblemOverlay" parent="." instance=ExtResource("2_connproblem")]
