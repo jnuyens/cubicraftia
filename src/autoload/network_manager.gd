@@ -137,6 +137,15 @@ var _failover_timer: Timer = null
 ## Periodic snapshot timer (30 s while host).
 var _snapshot_timer: Timer = null
 
+## One-shot bounded timeout for the initial join "Connecting..." state (RELY-03).
+## Started in start_peer(); stopped when _on_peer_connected(1) genuinely fires.
+var _connecting_timeout_timer: Timer = null
+
+## One-shot silent grace window covering both FAILOVER_WAITING (waiting for
+## update_host) and the subsequent RECONNECTING attempt (RELY-02, D-03).
+## Started in _do_failover_waiting(); stopped on a successful reconnect.
+var _reconnect_grace_timer: Timer = null
+
 ## Adaptive broadcast rate limit (seconds between event broadcasts).
 ## Controlled by set_update_rate_hz(). Default 20 Hz.
 var _broadcast_rate_limit: float = 1.0 / 20.0
@@ -184,6 +193,19 @@ const KEEPALIVE_TIMEOUT_S    := 6.0
 
 ## Emit peer_laggy(true) at this miss count (3 s).
 const KEEPALIVE_WARN_THRESHOLD := 3
+
+# ─── Bounded connection-problem timeout constants (RELY-02/RELY-03) ───────────
+
+## Bounded timeout for the initial join "Connecting..." state (RELY-03).
+## Within the D-04 10-15 s range. If _on_peer_connected(1) has not fired by
+## the time this elapses, the join resolves to connection_problem (never an
+## indefinite hang).
+const CONNECTING_TIMEOUT_S: float = 12.0
+
+## Silent failover-reconnect grace window (RELY-02, D-03's "~5 s tunable
+## const"). Covers both FAILOVER_WAITING (waiting for update_host) and the
+## following RECONNECTING attempt.
+const FAILOVER_RECONNECT_TIMEOUT_S: float = 5.0
 
 # ─── Signals ──────────────────────────────────────────────────────────────────
 
@@ -265,6 +287,21 @@ func _ready() -> void:
 	_snapshot_timer.wait_time = 30.0
 	_snapshot_timer.timeout.connect(_on_snapshot_timer_timeout)
 	add_child(_snapshot_timer)
+
+	# Bounded Connecting timeout (RELY-03; one-shot, started in start_peer()).
+	_connecting_timeout_timer = Timer.new()
+	_connecting_timeout_timer.one_shot = true
+	_connecting_timeout_timer.wait_time = CONNECTING_TIMEOUT_S
+	_connecting_timeout_timer.timeout.connect(_on_connecting_timeout)
+	add_child(_connecting_timeout_timer)
+
+	# Silent failover-reconnect grace window (RELY-02; one-shot, started in
+	# _do_failover_waiting()).
+	_reconnect_grace_timer = Timer.new()
+	_reconnect_grace_timer.one_shot = true
+	_reconnect_grace_timer.wait_time = FAILOVER_RECONNECT_TIMEOUT_S
+	_reconnect_grace_timer.timeout.connect(_on_reconnect_grace_timeout)
+	add_child(_reconnect_grace_timer)
 
 	# iOS / desktop background focus hook: save a snapshot when the app loses focus
 	# so the world is safe if iOS suspends the process (Pitfall 1 mobile safety net).
@@ -364,7 +401,13 @@ func start_peer(session_id: String, my_peer_id: int) -> void:
 	_connect_signaling()
 	if is_instance_valid(SessionRegistry):
 		SessionRegistry.set_session_id(session_id)
-	_set_state(STATE_CONNECTED_AS_PEER)
+	# RELY-03: do not optimistically transition to CONNECTED_AS_PEER here — the
+	# real WebRTC handshake has not completed yet. Start the bounded Connecting
+	# timeout instead; the transition happens only when _on_peer_connected(1)
+	# genuinely fires.
+	if is_instance_valid(_connecting_timeout_timer):
+		_connecting_timeout_timer.wait_time = CONNECTING_TIMEOUT_S
+		_connecting_timeout_timer.start()
 
 
 ## Returns true if a session is active (not idle or disconnected).
@@ -958,6 +1001,16 @@ func _on_peer_connected(peer_id: int) -> void:
 	if _state in [STATE_FAILOVER_PROMOTING, STATE_FAILOVER_COMPLETE]:
 		_on_peer_connected_during_promotion(peer_id)
 	else:
+		if not multiplayer.is_server() and peer_id == 1:
+			# The peer's own WebRTC data channel to the host has genuinely
+			# opened — stop the bounded Connecting timeout (RELY-03) and, if
+			# still CONNECTING, complete the transition that start_peer() used
+			# to do optimistically.
+			if is_instance_valid(_connecting_timeout_timer):
+				_connecting_timeout_timer.stop()
+			if _state == STATE_CONNECTING:
+				_set_state(STATE_CONNECTED_AS_PEER)
+		# VER-01 protocol-version report hook added in Plan 13-04
 		# Phase 5 (Plan 05-10): Block-aware peer display suppression.
 		# Resolve the peer's UID from SessionRegistry and check if blocked locally.
 		# If blocked: peer is still connected at the WebRTC level (server-side hard gate
@@ -977,6 +1030,25 @@ func _on_peer_disconnected(peer_id: int) -> void:
 		_on_host_disconnected()
 	else:
 		_disconnect_peer(peer_id)
+
+
+## RELY-03: fires when the bounded Connecting timeout elapses while the join
+## attempt never resolved (no peer_connected, no server-side rejection).
+## Reports "relay_failed" if the peer's WebRTCPeerConnection reports ICE
+## genuinely exhausted (STATE_FAILED, including TURN), otherwise "timeout"
+## (no response at all — most likely the session/host is unreachable).
+func _on_connecting_timeout() -> void:
+	if _state != STATE_CONNECTING:
+		return
+	var reason: String = "timeout"
+	if is_instance_valid(_rtc_mp):
+		var peer_data: Dictionary = _rtc_mp.get_peer(1)
+		var conn: WebRTCPeerConnection = peer_data.get("connection")
+		if is_instance_valid(conn) and conn.has_method("get_connection_state"):
+			if conn.get_connection_state() == WebRTCPeerConnection.STATE_FAILED:
+				reason = "relay_failed"
+	report_connection_problem(reason)
+	_set_state(STATE_DISCONNECTED)
 
 # ─── Failover state machine ───────────────────────────────────────────────────
 
@@ -1039,6 +1111,11 @@ func _do_failover_waiting() -> void:
 	_set_state(STATE_FAILOVER_WAITING)
 	# The new host will send update_host via the signaling server; handled in
 	# _on_signaling_message → "update_host" → _do_failover_waiting_reconnect().
+	# RELY-02: start the silent grace window (D-03) covering both this wait
+	# and the subsequent RECONNECTING attempt. No new UI fires while it runs.
+	if is_instance_valid(_reconnect_grace_timer):
+		_reconnect_grace_timer.wait_time = FAILOVER_RECONNECT_TIMEOUT_S
+		_reconnect_grace_timer.start()
 
 
 ## Called when the signaling server delivers "update_host" while FAILOVER_WAITING.
@@ -1068,8 +1145,23 @@ func _on_peer_connected_during_promotion(peer_id: int) -> void:
 ## Transition 4b: Peer received a snapshot from the new host.
 ## AWAITING → CONNECTED_AS_PEER
 func _on_snapshot_received_during_failover() -> void:
+	# RELY-02: reconnect succeeded — stop the grace window before it can fire.
+	if is_instance_valid(_reconnect_grace_timer):
+		_reconnect_grace_timer.stop()
 	_set_state(STATE_CONNECTED_AS_PEER)
 	host_failover_complete.emit(1)
+
+
+## RELY-02: fires when the silent failover-reconnect grace window elapses
+## without a successful reconnect (no update_host received, or update_host
+## received but the subsequent snapshot never arrived). Defensive double-guard:
+## a no-op if the state already moved past FAILOVER_WAITING/RECONNECTING
+## (the timer was stopped on success but may already be queued to fire).
+func _on_reconnect_grace_timeout() -> void:
+	if _state not in [STATE_FAILOVER_WAITING, STATE_RECONNECTING]:
+		return
+	report_connection_problem("ended")
+	_set_state(STATE_DISCONNECTED)
 
 # ─── Snapshot timer ───────────────────────────────────────────────────────────
 
