@@ -210,6 +210,34 @@ func (h *Hub) handleRegister(client *Client, payload json.RawMessage) {
 	}
 	resp, _ := json.Marshal(sessionListMsg{V: 1, Type: "session_list", Payload: []sessionListEntry{}})
 	client.send <- resp
+
+	// Issue short-lived TURN credentials (coturn use-auth-secret) so the client can use
+	// TURN relay fallback for symmetric-NAT/CGNAT peers. Re-issued on every (re)register,
+	// including reconnect and host-failover promotion, so a fresh credential is always in hand.
+	if h.cfg.TURNSharedSecret != "" {
+		creds := GenerateTURNCredentials(client.uid, h.cfg.TURNSharedSecret, turnCredentialTTLSeconds)
+		type turnCredsPayload struct {
+			Username   string `json:"username"`
+			Credential string `json:"credential"`
+			TTL        int64  `json:"ttl"`
+		}
+		type turnCredsMsg struct {
+			V       int              `json:"v"`
+			Type    string           `json:"type"`
+			Payload turnCredsPayload `json:"payload"`
+		}
+		if b, err := json.Marshal(turnCredsMsg{
+			V:    1,
+			Type: "turn_credentials",
+			Payload: turnCredsPayload{
+				Username:   creds.Username,
+				Credential: creds.Credential,
+				TTL:        turnCredentialTTLSeconds,
+			},
+		}); err == nil {
+			client.send <- b
+		}
+	}
 }
 
 // handlePublishSession processes a "publish_session" message.

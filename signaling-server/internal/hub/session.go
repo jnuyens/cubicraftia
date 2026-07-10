@@ -30,6 +30,11 @@ type TURNCredentials struct {
 	Credential string
 }
 
+// turnCredentialTTLSeconds is the lifetime of an issued TURN credential (1 hour).
+// The client refreshes on every (re)register, so sessions longer than this still get
+// fresh credentials on any reconnect or host-failover promotion.
+const turnCredentialTTLSeconds int64 = 3600
+
 // GenerateTURNCredentials creates time-limited TURN credentials for a session
 // using coturn's use-auth-secret mode. The username is
 // "<unix_timestamp_ttl>:<session_id>" and the credential is the HMAC-SHA1 of

@@ -2,6 +2,7 @@ package hub
 
 import (
 	"crypto/hmac"
+	"crypto/sha1" //nolint:gosec // coturn use-auth-secret requires HMAC-SHA1 (matches session.go)
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -440,5 +441,97 @@ func TestConsentTokenSingleUse(t *testing.T) {
 	ch.HandleConfirm(w2, req2)
 	if w2.Code != http.StatusNotFound {
 		t.Errorf("second confirm (token reuse): got HTTP %d, want 404", w2.Code)
+	}
+}
+
+// TestHandleRegisterIssuesTURNCredentials verifies that registering issues a
+// short-lived TURN credential whose password is the correct HMAC-SHA1 of the
+// username under the shared secret (coturn use-auth-secret). Regression guard for
+// the wired ephemeral-TURN flow (server never sent creds before this).
+func TestHandleRegisterIssuesTURNCredentials(t *testing.T) {
+	cfg := &config.Config{
+		Port:             8080,
+		JWTSecret:        "test-secret",
+		TURNSharedSecret: "turn-shared-secret",
+		MaxSessions:      200,
+	}
+	h := NewHub(cfg)
+	client := &Client{
+		uid:  "test-uid",
+		send: make(chan []byte, sendBufferSize),
+	}
+
+	payloadBytes, _ := json.Marshal(map[string]interface{}{"uid": "test-uid"})
+	h.handleRegister(client, json.RawMessage(payloadBytes))
+
+	gotTURN := false
+	for i := 0; i < 2; i++ {
+		select {
+		case msg := <-client.send:
+			var env envelope
+			if err := json.Unmarshal(msg, &env); err != nil {
+				t.Fatalf("message %d not valid JSON: %v", i, err)
+			}
+			if env.Type != "turn_credentials" {
+				continue
+			}
+			gotTURN = true
+			var p struct {
+				Username   string `json:"username"`
+				Credential string `json:"credential"`
+				TTL        int64  `json:"ttl"`
+			}
+			if err := json.Unmarshal(env.Payload, &p); err != nil {
+				t.Fatalf("turn_credentials payload not parseable: %v", err)
+			}
+			if p.Username == "" || p.Credential == "" {
+				t.Fatalf("turn_credentials missing fields: %+v", p)
+			}
+			mac := hmac.New(sha1.New, []byte(cfg.TURNSharedSecret))
+			mac.Write([]byte(p.Username))
+			want := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+			if p.Credential != want {
+				t.Errorf("credential = %q, want HMAC-SHA1 %q for username %q", p.Credential, want, p.Username)
+			}
+			if p.TTL <= 0 {
+				t.Errorf("ttl = %d, want > 0", p.TTL)
+			}
+		default:
+			t.Fatalf("expected message %d in client.send, got nothing", i)
+		}
+	}
+	if !gotTURN {
+		t.Error("handleRegister did not issue turn_credentials")
+	}
+}
+
+// TestHandleRegisterNoTURNSecretSkipsCredentials verifies no turn_credentials
+// message is sent when TURNSharedSecret is unset (only session_list).
+func TestHandleRegisterNoTURNSecretSkipsCredentials(t *testing.T) {
+	cfg := &config.Config{Port: 8080, JWTSecret: "s", MaxSessions: 200}
+	h := NewHub(cfg)
+	client := &Client{uid: "u", send: make(chan []byte, sendBufferSize)}
+	payloadBytes, _ := json.Marshal(map[string]interface{}{"uid": "u"})
+	h.handleRegister(client, json.RawMessage(payloadBytes))
+	// Drain: should be exactly one message (session_list), no turn_credentials.
+	select {
+	case msg := <-client.send:
+		var env envelope
+		_ = json.Unmarshal(msg, &env)
+		if env.Type == "turn_credentials" {
+			t.Fatal("issued turn_credentials despite empty TURNSharedSecret")
+		}
+	default:
+		t.Fatal("expected session_list message")
+	}
+	select {
+	case msg := <-client.send:
+		var env envelope
+		_ = json.Unmarshal(msg, &env)
+		if env.Type == "turn_credentials" {
+			t.Fatal("issued turn_credentials despite empty TURNSharedSecret")
+		}
+	default:
+		// good: no second message
 	}
 }

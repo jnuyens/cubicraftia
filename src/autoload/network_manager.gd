@@ -1051,6 +1051,18 @@ func _on_signaling_message(msg: Dictionary) -> void:
 			if peer_id > 0:
 				_disconnect_peer(peer_id)
 
+		"turn_credentials":
+			# The signaling server issued short-lived coturn use-auth-secret credentials.
+			# Apply them so TURN relay fallback works for symmetric-NAT/CGNAT peers. These
+			# arrive right after register (before any peer connection is built) and are
+			# refreshed on every reconnect / failover re-register, so a valid credential is
+			# always in hand when the ICE config is assembled.
+			var tu: String = payload.get("username", "")
+			var tc: String = payload.get("credential", "")
+			if not tu.is_empty() and not tc.is_empty():
+				_turn_user = tu
+				_turn_credential = tc
+
 		"update_host":
 			# A new host has taken over; reconnect as peer to new host.
 			if _state == STATE_FAILOVER_WAITING:

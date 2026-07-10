@@ -4,19 +4,17 @@ Hands-on two-device procedure against the **live** backend (m1). Discharges the 
 WebRTC tests (NETVAL-01..05), the Phase 13 in-viewport human-verify checkpoint, and the DEPLOY-07
 smoke. Requires real hardware; cannot be run headless.
 
-## ⚠ Known gap to resolve first (or expect NETVAL-02 to fail)
+## TURN relay: ephemeral credentials wired (2026-07-10)
 
-**Ephemeral TURN credentials are not wired end-to-end.** The signaling server has
-`GenerateTURNCredentials()` (session.go, HMAC-SHA1, matches coturn `use-auth-secret`) but **never
-calls it or sends creds to the client**, and the client handles no `turn_credentials` message — it
-uses empty static `_turn_user`/`_turn_credential`. So coturn will reject relay allocations and
-**TURN fallback (NETVAL-02, symmetric-NAT/CGNAT peers) will not work** until this is closed.
+The ephemeral-TURN-credential flow is now closed. On every (re)register the signaling server calls
+`GenerateTURNCredentials(uid, TURN_SHARED_SECRET, 3600)` and sends a `turn_credentials` message; the
+client applies it in `_on_signaling_message` (sets `_turn_user`/`_turn_credential`), refreshed on
+reconnect/failover. Covered by `TestHandleRegisterIssuesTURNCredentials` (server) and
+`tests/unit/test_turn_credentials.gd` (client). The updated binary is deployed on m1.
 
-Direct P2P, sign-in, friends, Supabase, and the STUN path are unaffected.
-
-Fix options (pick one before NETVAL-02):
-- **(recommended) Wire ephemeral creds:** server calls `GenerateTURNCredentials(sessionID, TURN_SHARED_SECRET, 3600)` on join and sends `{"type":"turn_credentials","username":..,"credential":..}`; client handles it in `_on_signaling_message` -> sets `_turn_user`/`_turn_credential` and refreshes the ICE config. Small, testable; re-issue on failover/reconnect.
-- **(stopgap) Static long-term cred:** switch coturn to `lt-cred-mech` + a fixed `user=cubi:<pw>`, set `network/turn_user.release`/`network/turn_credential.release` to match. Simpler, less secure (shared fixed cred embedded in client). Fine at 2-4-friend scale.
+So NETVAL-02 relay is expected to work. To confirm during testing: in the coturn log
+(`sudo journalctl -u coturn -f`) you should see an allocation succeed for the relay case, and the
+Direct/Relay badge should reach **Relay** when both peers are on cellular/CGNAT.
 
 ## Prerequisites
 
