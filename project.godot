@@ -246,3 +246,9 @@ textures/vram_compression/import_etc2_astc=true
 [voxel]
 
 threads/main/time_budget_ms=6
+
+[network]
+
+signaling_url.release="wss://signal.cubicraftia.com/ws"
+supabase_url.release="https://supabase.cubicraftia.com"
+supabase_anon_key.release="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlzcyI6InN1cGFiYXNlIiwiaWF0IjoxNzgzNjM3ODA4LCJleHAiOjIwOTg5OTc4MDh9.dkEVuP5fWRj6AD8Y2WB_b17iYQjcnKICxzxSLSIknlg"
