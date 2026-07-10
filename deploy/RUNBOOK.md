@@ -1,5 +1,21 @@
 # Cubicraftia Backend Deploy Runbook (Phase 11)
 
+## DEPLOYED STATE (2026-07-10)
+
+Live and publicly verified on m1:
+- **Signaling** (DEPLOY-02): `cubicraftia-signaling.service` on `127.0.0.1:8129`, public `https://signal.cubicraftia.com/health` -> 200 `ok`.
+- **Supabase** (DEPLOY-03): 11 containers healthy in `/opt/cubicraftia/supabase/docker`; Kong `127.0.0.1:8000`; public `https://supabase.cubicraftia.com` (401 without apikey = reachable). Migrations 001-009 applied (friendships/invites/profiles/blocks/reports/parental_consents/username_change_log).
+- **nginx + certbot** (DEPLOY-01): `conf.d/signal.cubicraftia.com.conf` + `conf.d/supabase.cubicraftia.com.conf`, Let's Encrypt cert (SAN both, expires 2026-10-07, auto-renew), HTTP->HTTPS redirect. `nginx -t`-gated; the other ~12 sites untouched.
+- **Secret parity** (DEPLOY-05): `/etc/cubicraftia/secrets.env` shared JWT + service key across signaling and Supabase.
+- **Backups** (DEPLOY-06): OWNED BY OPERATOR (existing backup active per project owner). `pg-backup.sh` unused.
+
+**Docker networking exception (required, applied):** m1's `/etc/modprobe.d/modulejail-blacklist.conf` blocks ~6344 modules including `veth`/`br_netfilter`/`iptable_nat`/`iptable_filter` (Docker bridge). Added `/etc/modprobe.d/00-cubicraftia-docker-net.conf` (sorts before the jail; first-match-wins) re-enabling exactly those four. Reversible: delete that file + reboot to restore the full jail.
+
+Remaining: **DEPLOY-04 coturn**, **DEPLOY-07** client release-endpoint config + end-to-end smoke.
+
+---
+
+
 Target host: **m1.linuxbe.com** (88.99.136.145, Ubuntu 24.04, 8 vCPU / 38 GiB / 228 GB free).
 Operator: `jnuyens` (passwordless sudo).
 
