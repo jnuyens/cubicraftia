@@ -44,6 +44,7 @@ BlockModal="*res://src/ui/block_modal.gd"
 ReportModal="*res://src/ui/report_modal.gd"
 OnboardingTelemetry="*res://src/autoload/onboarding_telemetry.gd"
 BuildInfo="*res://src/autoload/build_info.gd"
+AutoUpdate="*res://src/autoload/auto_update.gd"
 
 [editor_plugins]
 

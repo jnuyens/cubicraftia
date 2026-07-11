@@ -1907,3 +1907,9 @@ msgstr "Diamanten harnas"
 
 msgid "bricks.chestplate_diamond.name"
 msgstr "Diamanten harnas"
+
+msgid "ui.update.available"
+msgstr "Update beschikbaar ({version})"
+
+msgid "ui.update.download"
+msgstr "Downloaden"

@@ -1910,3 +1910,9 @@ msgstr "Diamond chestplate"
 
 msgid "bricks.chestplate_diamond.name"
 msgstr "Diamond chestplate"
+
+msgid "ui.update.available"
+msgstr "Update available ({version})"
+
+msgid "ui.update.download"
+msgstr "Download"
