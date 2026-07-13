@@ -469,6 +469,10 @@ func _on_sign_in_pressed(create_account_mode: bool) -> void:
 		return
 
 	var panel: Node = panel_scene.instantiate()
+	# sign_in_panel.tscn ships `visible = false` by contract (see its own header comment). The
+	# caller must explicitly show it. This line was missing, which made BOTH "Sign in" and
+	# "Create account" appear to do nothing when clicked (real-device report).
+	panel.visible = true
 
 	# Set back button and tab pre-selection via the properties added in this plan.
 	if panel.has_method("set") and "show_back_button" in panel:
@@ -594,6 +598,10 @@ func _show_inline_sign_in_for_invite(token: String) -> void:
 		return
 
 	var panel: Node = panel_scene.instantiate()
+	# sign_in_panel.tscn ships `visible = false` by contract (see its own header comment); the
+	# same missing-visible fix applied to _on_sign_in_pressed also applies here, the invite
+	# deep-link entry point (identical root cause, same one-line fix).
+	panel.visible = true
 
 	# Abbreviated mode: email + password + DOB only; no full tab bar.
 	if panel.has_method("set_abbreviated_mode"):
