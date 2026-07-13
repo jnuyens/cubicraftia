@@ -49,6 +49,7 @@ Last activity: 2026-07-09: Phase 10 Plan 01 Tasks 1-2 executed; Task 3 (checkpoi
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
+| 260713-evx | Chest/bed near spawn (exclude MOUNTAIN from spawn search); submarine cave seabed-anchored + jungle temple ground-flush; Create-account button made visible (+deep-link sibling) | 2026-07-13 | 3bc16c0 | [260713-evx-chest-and-bed-near-spawn-submarine-cave-](./quick/260713-evx-chest-and-bed-near-spawn-submarine-cave-/) |
 | 260611-qyz | Add include_filter to all export presets so non-resource data files ship in the pck | 2026-06-11 | f2c42ab | [260611-qyz-add-include-filter-to-all-export-presets](./quick/260611-qyz-add-include-filter-to-all-export-presets/) |
 | 260621-ur7 | Coral reefs on seabed, climbable (solid) whales, villagers gated to correct biome | 2026-06-21 | 51b60b0 | [260621-ur7-coral-whale-villager-fixes](./quick/260621-ur7-coral-whale-villager-fixes/) |
 | 260622-t2n | Add tools/render_ui_scene.gd — Godot UI-scene + locale capture-to-PNG tool | 2026-06-22 | 2af4784 | [260622-t2n-add-tools-render-ui-scene-gd-godot-ui-sc](./quick/260622-t2n-add-tools-render-ui-scene-gd-godot-ui-sc/) |
