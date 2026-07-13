@@ -96,6 +96,10 @@ const DUNGEON_Y: int = -32
 const HEIGHT_AMPLITUDE: float = 8.0
 const SEA_LEVEL: float = 12.0
 const HEIGHT_NOISE_FREQUENCY: float = 0.01
+## Mirrors multipass_generator.gd's OCEAN branch exactly. Used only by _temple_anchor_y so
+## underwater temple variants anchor on the real submerged seabed, not the land formula.
+const OCEAN_FLOOR_DEPTH: int = 9
+const OCEAN_FLOOR_RELIEF: int = 4
 
 ## Template directories per structure type.
 const TEMPLATE_DIRS: Dictionary = {
@@ -237,7 +241,13 @@ func should_place_structure_at_cell(structure_type: String,
 	# the REAL terrain surface at the structure's XZ (a pure noise function — no VoxelTool),
 	# so house-brick floors (local cell Y=0) rest on the generated ground on uneven terrain
 	# instead of floating/sinking at the old placeholder SURFACE_Y.
-	var anchor_y: int = DUNGEON_Y if structure_type == "dungeon" else _surface_y_at(anchor_x, anchor_z)
+	var anchor_y: int
+	if structure_type == "dungeon":
+		anchor_y = DUNGEON_Y
+	elif structure_type == "temple":
+		anchor_y = _temple_anchor_y(anchor_x, anchor_z)
+	else:
+		anchor_y = _surface_y_at(anchor_x, anchor_z)
 
 	# ── Biome-restriction gate ────────────────────────────────────────────────
 	if _biome_map != null and not template.allowed_biomes.is_empty():
@@ -495,6 +505,27 @@ func _surface_y_at(x: int, z: int) -> int:
 	var noise_val: float = _height_noise.get_noise_2d(float(x), float(z))
 	var solid_top: int = int(noise_val * HEIGHT_AMPLITUDE + SEA_LEVEL)
 	return solid_top + 1
+
+
+## Temple-specific anchor Y. Every temple template (jungle_temple_*, underwater_temple_*)
+## authors its lowest brick at LOCAL cell Y=1, not Y=0 (unlike village/dungeon, which start at
+## Y=0), so the generic "_surface_y_at() = first air cell" convention floats the floor one
+## block above the real ground/seabed. This helper returns (ground-or-seabed top) - 1 so local
+## Y=1 lands exactly flush. Additionally: when the column's biome is OCEAN (true for all
+## underwater_temple_* variants, whose allowed_biomes gate already restricts them there), this
+## uses the OCEAN seabed formula (mirrors main_scene._seabed_surface_at) instead of the land
+## formula, so the temple rests on the real, deepened seabed rather than standing exposed above
+## the waterline ("on land").
+## Pure function: deterministic, thread-safe (read-only noise + biome_map).
+func _temple_anchor_y(x: int, z: int) -> int:
+	if _biome_map != null and _biome_map.has_method("biome_at") \
+			and int(_biome_map.biome_at(float(x), float(z))) == int(BiomeMapScript.Biome.OCEAN):
+		if _height_noise == null:
+			_build_height_noise()
+		var noise_val: float = _height_noise.get_noise_2d(float(x), float(z))
+		var seabed_solid_top: int = int(SEA_LEVEL) - OCEAN_FLOOR_DEPTH + int(noise_val * OCEAN_FLOOR_RELIEF)
+		return seabed_solid_top  # local Y=1 floor lands at seabed_solid_top + 1, below SEA_LEVEL
+	return _surface_y_at(x, z) - 1  # local Y=1 floor lands at solid_top + 1, flush with ground
 
 
 ## Deterministic hash for (world_seed, structure_type, cell_x, cell_z).

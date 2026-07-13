@@ -149,3 +149,64 @@ func test_non_lighthouse_structure_is_not_climbable() -> void:
 	assert_false(ws.is_in_group("climbable"),
 		"#18: a non-lighthouse structure must NOT be in the 'climbable' group")
 	ws.queue_free()
+
+
+# ─── Task 2: temple anchor (submarine cave submerged, jungle temple flush) ────
+
+## Bug #2 regression: underwater_temple variants (allowed_biomes=[OCEAN]) must anchor so their
+## floor (local Y=1) sits BELOW sea level: i.e. genuinely submerged, never "on land".
+func test_underwater_temple_anchors_below_sea_level() -> void:
+	const SEA_LEVEL: float = 12.0
+	var found_one: bool = false
+	for seed_v in range(1, 60):
+		var bm := BiomeMap.new(seed_v)
+		var placer: RefCounted = _make_placer(seed_v, bm)
+		for bx in range(-3, 4):
+			for bz in range(-3, 4):
+				var result: Dictionary = placer.should_place_structure_at_cell("temple", bx, bz)
+				if result.is_empty():
+					continue
+				var template: Resource = result.get("template")
+				if not ("underwater" in str(template.resource_path)):
+					continue
+				found_one = true
+				var anchor: Vector3i = result.get("anchor")
+				var floor_world_y: int = anchor.y + 1  # local cell Y=1 is the lowest authored brick
+				assert_true(floor_world_y < int(SEA_LEVEL),
+					"underwater temple floor at world Y=%d must be below sea level (%d), found standing on/above land" % [floor_world_y, int(SEA_LEVEL)])
+	assert_true(found_one, "test setup: no underwater_temple placement found in the scanned seed/cell range, widen the scan")
+
+
+## Bug #3 regression: temple floor (local Y=1) must land exactly flush with the real ground,
+## not one block above it. Uses the same land-height formula the plan mirrors from
+## structure_placer._surface_y_at (solid_top + 1), replicated locally per the project's existing
+## test_spawn_on_land.gd pattern (build an identical FastNoiseLite rather than reaching into
+## private members).
+func test_jungle_temple_floor_flush_with_ground() -> void:
+	var found_one: bool = false
+	for seed_v in range(1, 60):
+		var bm := BiomeMap.new(seed_v)
+		var placer: RefCounted = _make_placer(seed_v, bm)
+		var noise := FastNoiseLite.new()
+		noise.noise_type = FastNoiseLite.TYPE_SIMPLEX
+		noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+		noise.fractal_octaves = 4
+		noise.fractal_lacunarity = 2.0
+		noise.fractal_gain = 0.5
+		noise.frequency = 0.01
+		noise.seed = seed_v
+		for bx in range(-3, 4):
+			for bz in range(-3, 4):
+				var result: Dictionary = placer.should_place_structure_at_cell("temple", bx, bz)
+				if result.is_empty():
+					continue
+				var template: Resource = result.get("template")
+				if not ("jungle" in str(template.resource_path)):
+					continue
+				found_one = true
+				var anchor: Vector3i = result.get("anchor")
+				var floor_world_y: int = anchor.y + 1
+				var expected_ground_top: int = int(noise.get_noise_2d(float(anchor.x), float(anchor.z)) * 8.0 + 12.0) + 1
+				assert_eq(floor_world_y, expected_ground_top,
+					"jungle temple floor at world Y=%d must equal the real ground top (%d), found floating" % [floor_world_y, expected_ground_top])
+	assert_true(found_one, "test setup: no jungle_temple placement found in the scanned seed/cell range, widen the scan")
