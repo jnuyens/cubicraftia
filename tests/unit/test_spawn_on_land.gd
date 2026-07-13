@@ -98,3 +98,17 @@ func test_spawn_y_matches_generator_surface_formula() -> void:
 		var expected_top: float = float(int(noise.get_noise_2d(spawn.x, spawn.z) * 8.0 + SEA_LEVEL)) + 1.0
 		assert_almost_eq(spawn.y, expected_top, 0.01,
 			"seed %d: spawn.y=%.2f != generator surface top %.2f" % [seed_v, spawn.y, expected_top])
+
+
+## The spawn column must not be MOUNTAIN either. A mountain column's REAL terrain height
+## (used by _terrain_surface_at / spawn_starter_chest_and_bed to ground the starter chest, bed,
+## and welcome sign) includes _mountain_lift_at, which this pure search does not replicate. If
+## the search ever chose a mountain column, the chest/bed would be grounded at the true (much
+## higher) mountain surface tens of metres away from the builder (placed without the lift):
+## the real-device "chest and bed not near spawn" bug.
+func test_spawn_column_is_not_mountain() -> void:
+	for seed_v: int in SEEDS:
+		var bm := BiomeMap.new(seed_v)
+		var spawn: Vector3 = MainScene.search_land_spawn(bm, _height_noise(seed_v), SEA_LEVEL)
+		assert_ne(int(bm.biome_at(spawn.x, spawn.z)), int(BiomeMap.Biome.MOUNTAIN),
+			"seed %d: spawn (%.0f,%.0f) is in a MOUNTAIN column, chest/bed would ground at the real (lifted) surface, far from the builder" % [seed_v, spawn.x, spawn.z])

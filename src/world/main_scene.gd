@@ -2747,9 +2747,10 @@ static func search_land_spawn(biome_map: RefCounted, height_noise: FastNoiseLite
 				var a: float = float(ang) * (TAU / 8.0)
 				candidates.append(Vector2(roundf(cos(a) * r), roundf(sin(a) * r)))
 		for c: Vector2 in candidates:
-			if biome_map != null and biome_map.has_method("biome_at") \
-					and int(biome_map.biome_at(c.x, c.y)) == int(BiomeMap.Biome.OCEAN):
-				continue
+			if biome_map != null and biome_map.has_method("biome_at"):
+				var candidate_biome: int = int(biome_map.biome_at(c.x, c.y))
+				if candidate_biome == int(BiomeMap.Biome.OCEAN) or candidate_biome == int(BiomeMap.Biome.MOUNTAIN):
+					continue
 			# Replicates terrain_generator/_terrain_surface_at: surface_y = int(noise*8+12),
 			# ground top face at +1.
 			var sy: int = int(height_noise.get_noise_2d(float(int(c.x)), float(int(c.y))) \
