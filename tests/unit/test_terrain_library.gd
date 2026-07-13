@@ -16,14 +16,14 @@
 #
 # Anchors:
 #   src/world/terrain.tscn          — VoxelTerrain + VoxelMesherBlocky + VoxelBlockyLibrary
-#   src/world/multipass_generator.gd — VoxelGeneratorMultipassCB, 13 voxel IDs (0..12)
+#   src/world/multipass_generator.gd — VoxelGeneratorMultipassCB, 15 voxel IDs (0..14)
 
 extends GutTest
 
 const TERRAIN_SCENE := "res://src/world/terrain.tscn"
 
-## Voxel IDs 0..12 the generator writes — the library MUST provide a model for each.
-const EXPECTED_MODEL_COUNT: int = 13
+## Voxel IDs 0..14 the generator writes — the library MUST provide a model for each.
+const EXPECTED_MODEL_COUNT: int = 15
 
 var _terrain: Node = null
 

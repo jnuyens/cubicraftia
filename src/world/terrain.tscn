@@ -25,6 +25,9 @@
 ;       9  = savannah_grass   (#FFB84D — SAVANNAH surface; from savannah brief ambient tint)
 ;      10  = wood_log         (#7A4A23 — tree column voxel; BrickPalette brown=15 token)
 ;      11  = dirt             (#6B4A2F — sub-surface for GRASSLAND_FOREST/JUNGLE/SAVANNAH)
+;      12  = leaves           (dark forest green: tree canopy voxel)
+;      13  = bedrock          (#16171A: Ex5 bugfix, absolute world floor)
+;      14  = lava             (#FA600E: Ex5 bugfix, floor band above bedrock)
 ;   - Collision: terrain layer 1, mask 0 (water model has no collision)
 ;   - Generator: multipass_generator.gd (VoxelGeneratorMultipassCB — Plan 02-08)
 ;               Pass 0: height-map terrain (same algorithm as terrain_generator.gd)
@@ -33,7 +36,7 @@
 ; Lighting channel: terrain renders in visual channel only (light_cull_mask = 1 for sun/moon).
 ; The VoxelTerrain collision_layer = 1 (builders stand on it).
 
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://src/world/multipass_generator.gd" id="1_tgen"]
 
@@ -115,10 +118,24 @@ color = Color(0.243, 0.502, 0.141, 1)
 transparency_index = 1
 culls_neighbors = false
 
-; ─── VoxelBlockyLibrary: 13 models (air + 12 terrain blocks) ─────────────────
-; Index order MUST match multipass_generator.gd constants (AIR_ID=0, GRASS_ID=1, …, LEAVES_ID=12).
+; ─── ID 13: Bedrock -- absolute world floor (Ex5 bugfix; #16171A near-black) ───────────
+; Written only by multipass_generator.gd's _generate_block_fallback, for any block strictly
+; below the generator's column region. Fully solid/opaque/collidable like stone -- this is
+; the backstop that guarantees digging straight down can never reach open void.
+[sub_resource type="VoxelBlockyModelCube" id="15_bedrock"]
+color = Color(0.086, 0.090, 0.098, 1)
+
+; ─── ID 14: Lava -- world floor band just above bedrock (Ex5 bugfix; #FA600E bright orange) ──
+; Written by multipass_generator.gd pass 0 at the bottom LAVA_BAND_THICKNESS layers of every
+; column. Fully solid/opaque/collidable (a walkable floor a player hits when digging down),
+; matching the plan spec "solid/lava bottom to every column" -- not a FluidSim liquid.
+[sub_resource type="VoxelBlockyModelCube" id="16_lava"]
+color = Color(0.980, 0.376, 0.055, 1)
+
+; ─── VoxelBlockyLibrary: 15 models (air + 14 terrain blocks) ─────────────────
+; Index order MUST match multipass_generator.gd constants (AIR_ID=0, GRASS_ID=1, …, LAVA_ID=14).
 [sub_resource type="VoxelBlockyLibrary" id="4_library"]
-models = [SubResource("3_air"), SubResource("2_grass"), SubResource("4_sand"), SubResource("5_snow"), SubResource("6_stone"), SubResource("7_sandstone"), SubResource("8_ice"), SubResource("9_water"), SubResource("10_jungle_grass"), SubResource("11_savannah_grass"), SubResource("12_wood_log"), SubResource("13_dirt"), SubResource("14_leaves")]
+models = [SubResource("3_air"), SubResource("2_grass"), SubResource("4_sand"), SubResource("5_snow"), SubResource("6_stone"), SubResource("7_sandstone"), SubResource("8_ice"), SubResource("9_water"), SubResource("10_jungle_grass"), SubResource("11_savannah_grass"), SubResource("12_wood_log"), SubResource("13_dirt"), SubResource("14_leaves"), SubResource("15_bedrock"), SubResource("16_lava")]
 
 ; ─── VoxelMesherBlocky wired with the library ────────────────────────────────
 [sub_resource type="VoxelMesherBlocky" id="5_mesher"]
