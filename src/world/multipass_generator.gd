@@ -95,6 +95,23 @@ const LEAVES_ID: int = 12
 ## Number of dirt/biome-material layers below surface before transitioning to stone.
 const DIRT_LAYERS: int = 3
 
+## BEDROCK voxel ID (Ex5 bugfix -- absolute world floor, written only by
+## _generate_block_fallback for blocks entirely below the generated column; index 13,
+## must match a new terrain.tscn VoxelBlockyLibrary entry).
+const BEDROCK_ID: int = 13
+
+## LAVA voxel ID (Ex5 bugfix -- floor band at the bottom of every column, written by pass 0;
+## index 14, must match a new terrain.tscn VoxelBlockyLibrary entry).
+const LAVA_ID: int = 14
+
+## Thickness (voxels) of the LAVA band forced at the bottom of every generated column, so
+## digging straight down always ends in a visible lava floor instead of open void. Anchored
+## to area_min.y (the column's actual floor for pass 0, extent 0) rather than a hardcoded Y,
+## so it stays correct even if column_base_y_blocks is retuned later. No biome's surface
+## comes anywhere near this depth (lowest is the OCEAN seabed at roughly Y=-1..-5), so the
+## band never collides with normal terrain generation.
+const LAVA_BAND_THICKNESS: int = 4
+
 ## Y-voxel depth threshold: mineshafts only spawn in areas where Y < MINESHAFT_DEPTH_GATE.
 ## Matches CONTEXT.md D-08 "deeper stone layers" + plan spec "Y < -8".
 const MINESHAFT_DEPTH_GATE: int = -8
@@ -306,6 +323,22 @@ func _get_used_channels_mask() -> int:
 	return 1
 
 
+## VoxelGeneratorMultipassCB override: called for every block OUTSIDE the column region
+## (Y < column_base_y_blocks*CHUNK_SIZE, or Y >= (column_base_y_blocks+column_height_blocks)
+## *CHUNK_SIZE). Ex5 bugfix: this was NOT implemented before, so godot_voxel's default
+## (zero-filled = AIR_ID) buffer was used -- a player digging straight down past the column
+## floor (world Y=-64 with the addon's default column_base_y_blocks=-4) fell into permanent
+## open void. Below the column: solid BEDROCK, unconditionally and infinitely -- the true
+## backstop that guarantees no void regardless of what pass 1 (mineshaft carving) does inside
+## the column itself. Above the column: AIR (open sky), matching the class doc's own example.
+func _generate_block_fallback(out_buffer: VoxelBuffer, origin_in_voxels: Vector3i) -> void:
+	var column_floor_y: int = column_base_y_blocks * CHUNK_SIZE
+	if origin_in_voxels.y < column_floor_y:
+		out_buffer.fill(BEDROCK_ID)
+	else:
+		out_buffer.fill(AIR_ID)
+
+
 # ─── Pass 0: base terrain ─────────────────────────────────────────────────────
 
 ## Generate height-map terrain for a column of blocks.
@@ -353,7 +386,13 @@ func _generate_base_terrain(voxel_tool: VoxelToolMultipassGenerator) -> void:
 
 			for y: int in range(area_min.y, area_max.y):
 				var voxel_id: int
-				if y > surface_y:
+				if y < area_min.y + LAVA_BAND_THICKNESS:
+					# World floor lava band (Ex5 bugfix). area_min.y is always this column's
+					# absolute floor for pass 0 (extent 0). Anything below the column entirely
+					# is handled by _generate_block_fallback (BEDROCK) -- see that method for
+					# the true backstop.
+					voxel_id = LAVA_ID
+				elif y > surface_y:
 					voxel_id = AIR_ID  # above surface
 				elif y == surface_y:
 					voxel_id = surface_id  # surface layer

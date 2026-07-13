@@ -16,6 +16,9 @@
 #   10. test_dead_end_has_regular_chest — corridor_dead_end.tres has regular chest
 #   11. test_room_has_bronze_chest — corridor_room.tres has bronze chest
 #   12. test_all_pieces_have_allowed_biomes_empty — depth-gated, not biome-gated
+#   13. test_generate_block_fallback_returns_bedrock_below_column — Ex5 bugfix: BEDROCK below column floor
+#   14. test_generate_block_fallback_returns_air_above_column — Ex5 bugfix: AIR above column ceiling
+#   15. test_lava_floor_band_at_column_bottom — Ex5 bugfix: LAVA band at the bottom of every column
 #
 # Note: MineshaftGenerator extends VoxelGeneratorMultipassCB (experimental in godot_voxel
 # at addon commit 4a9d311). Type hints use plain Object/RefCounted to avoid class_name
@@ -179,3 +182,51 @@ func test_all_pieces_have_allowed_biomes_empty() -> void:
 		assert_not_null(piece, "BrickTemplate must be loadable: %s" % path)
 		assert_eq(piece.allowed_biomes.size(), 0,
 			"Mineshaft pieces must have allowed_biomes=[] (depth-gated, not biome-gated): %s" % path)
+
+
+# ─── Test 13: _generate_block_fallback returns BEDROCK below the column ───────
+
+func test_generate_block_fallback_returns_bedrock_below_column() -> void:
+	var gen = _make_generator()
+	var column_floor_y: int = int(gen.column_base_y_blocks) * MineshaftGeneratorScript.CHUNK_SIZE
+	var buf := VoxelBuffer.new()
+	buf.create(16, 16, 16)
+	gen._generate_block_fallback(buf, Vector3i(0, column_floor_y - MineshaftGeneratorScript.CHUNK_SIZE, 0))
+	for x in [0, 8, 15]:
+		for z in [0, 8, 15]:
+			assert_eq(buf.get_voxel(x, 0, z), MineshaftGeneratorScript.BEDROCK_ID,
+				"block below the column floor must be solid BEDROCK, not void, at local (%d,0,%d)" % [x, z])
+			assert_eq(buf.get_voxel(x, 15, z), MineshaftGeneratorScript.BEDROCK_ID,
+				"block below the column floor must be solid BEDROCK throughout, at local (%d,15,%d)" % [x, z])
+
+
+# ─── Test 14: _generate_block_fallback returns AIR above the column ──────────
+
+func test_generate_block_fallback_returns_air_above_column() -> void:
+	var gen = _make_generator()
+	var column_ceiling_y: int = (int(gen.column_base_y_blocks) + int(gen.column_height_blocks)) * MineshaftGeneratorScript.CHUNK_SIZE
+	var buf := VoxelBuffer.new()
+	buf.create(16, 16, 16)
+	gen._generate_block_fallback(buf, Vector3i(0, column_ceiling_y, 0))
+	assert_eq(buf.get_voxel(8, 8, 8), MineshaftGeneratorScript.AIR_ID,
+		"block above the column ceiling must be AIR (open sky)")
+
+
+# ─── Test 15: lava floor band at the bottom of every column ───────────────────
+
+func test_lava_floor_band_at_column_bottom() -> void:
+	# Column (block coords 0,0), world_seed=1234: deterministically no mineshaft spawn on
+	# this column (verified roll ~0.867 vs. the 0.35 threshold), so the bottom band is pure
+	# pass-0 output with no pass-1 corridor carving to confuse the assertion.
+	var gen = _make_generator(1234)
+	var blocks: Array = gen.debug_generate_test_column(Vector2i(0, 0))
+	assert_true(blocks.size() > 0, "debug_generate_test_column must return at least one block")
+	if blocks.is_empty():
+		return
+	var bottom_block: VoxelBuffer = blocks[0]
+	for i in range(MineshaftGeneratorScript.LAVA_BAND_THICKNESS):
+		assert_eq(bottom_block.get_voxel(0, i, 0), MineshaftGeneratorScript.LAVA_ID,
+			"world floor local Y=%d must be LAVA (Ex5 bugfix -- no open void at the column bottom)" % i)
+	assert_eq(bottom_block.get_voxel(0, MineshaftGeneratorScript.LAVA_BAND_THICKNESS, 0),
+		MineshaftGeneratorScript.STONE_ID,
+		"just above the lava band must resume normal STONE, not lava filling the whole block")
