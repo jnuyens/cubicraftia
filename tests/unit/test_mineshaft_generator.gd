@@ -16,9 +16,9 @@
 #   10. test_dead_end_has_regular_chest — corridor_dead_end.tres has regular chest
 #   11. test_room_has_bronze_chest — corridor_room.tres has bronze chest
 #   12. test_all_pieces_have_allowed_biomes_empty — depth-gated, not biome-gated
-#   13. test_generate_block_fallback_returns_bedrock_below_column — Ex5 bugfix: BEDROCK below column floor
-#   14. test_generate_block_fallback_returns_air_above_column — Ex5 bugfix: AIR above column ceiling
-#   15. test_lava_floor_band_at_column_bottom — Ex5 bugfix: LAVA band at the bottom of every column
+#   13. test_generate_block_fallback_returns_bedrock_below_column (Ex5 bugfix: BEDROCK below column floor)
+#   14. test_generate_block_fallback_returns_air_above_column (Ex5 bugfix: AIR above column ceiling)
+#   15. test_lava_floor_band_at_column_bottom (Ex5 bugfix: LAVA band at the bottom of every column)
 #
 # Note: MineshaftGenerator extends VoxelGeneratorMultipassCB (experimental in godot_voxel
 # at addon commit 4a9d311). Type hints use plain Object/RefCounted to avoid class_name
