@@ -18,7 +18,7 @@ Live and publicly verified on m1:
 - `wss://signal.cubicraftia.com` (signaling)
 - `https://supabase.cubicraftia.com` (Supabase API/auth)
 - STUN/TURN `cubicraftia.com:3478` and `turn.cubicraftia.com:3478/5349` (TURN secret via ephemeral REST)
-- `https://cubicraftia.com` (apex): static site + `updates/latest.json` (auto-update manifest) + `downloads/Cubicraftia.zip` (DIST-05, notify-and-link). Root `/var/www/cubicraftia`, cert auto-renew. Publish a new build with `deploy/publish-update.sh <zip>`.
+- `https://cubicraftia.com` (apex): static site + `updates/latest.json` (auto-update manifest) + `downloads/Cubicraftia.zip` (DIST-05, notify-and-link). Root `/var/www/cubicraftia`, cert auto-renew. Publish a new build: `bash scripts/stamp-version.sh` then `godot --headless --path . --export-release "macOS" build/macOS/Cubicraftia.dmg` then `bash deploy/publish-update.sh`. The script EXTRACTS the fresh app from the .dmg (Godot's export writes only the .dmg; the standalone build/macOS/Cubicraftia.app can be a stale leftover), ad-hoc-signs it, zips, reads the version by booting the packed app, refreshes dist/macOS, and uploads + bumps the manifest. `CUBI_NO_UPLOAD=1` builds locally without uploading.
 
 Remaining: **DEPLOY-07** — set these into the client's release export presets (signaling + Supabase URLs currently default to localhost; STUN/TURN already default to `cubicraftia.com:3478`), then an end-to-end smoke test (dovetails with Phase 12 real-device validation).
 
